@@ -1,0 +1,107 @@
+:root {
+  /* ═══════════════════════════════════════════
+     ORIN DESIGN SYSTEM v2 — Premium Tokens
+     ═══════════════════════════════════════════ */
+
+  /* Core Palette — Strict Hierarchy */
+  --color-ink: #000000;
+  --color-paper: #F7F7F2;
+  --color-mist: #CBD5E1;
+  --color-spark: #F4E409;
+  --color-pulse: #EE4266;
+  --color-ember: #F69226;
+  --color-bloom: #0BAB77;
+
+  /* Supporting Neutrals */
+  --color-text-secondary: #0F172A;
+  --color-text-tertiary: #64748B;
+  --color-border: #E2E8F0;
+  --color-border-strong: #CBD5E1;
+  --color-surface: #FFFFFF;
+  --color-surface-dim: #F1F5F9;
+  --color-surface-hover: #F8FAFC;
+
+  /* Semantic Mapping */
+  --color-text-primary: var(--color-ink);
+  --color-bg-primary: var(--color-paper);
+  --color-bg-alt: #F0EDE6;
+  --color-highlight: var(--color-spark);
+  --color-primary-cta: var(--color-pulse);
+  --color-secondary-cta: var(--color-ember);
+  --color-success: var(--color-bloom);
+
+  /* Fonts */
+  --font-heading: var(--font-serif), Georgia, serif;
+  --font-body: var(--font-sans), system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  /* Radii — Rounded, premium feel */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+  --radius-3xl: 32px;
+  --radius-full: 9999px;
+
+  /* Shadows — Soft, layered */
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.03);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.04), 0 2px 4px -2px rgba(0,0,0,0.03);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -4px rgba(0,0,0,0.03);
+  --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.03);
+  --shadow-2xl: 0 25px 50px -12px rgba(0,0,0,0.12);
+  --shadow-glow-pulse: 0 0 24px rgba(238,66,102,0.18);
+  --shadow-glow-ember: 0 0 24px rgba(246,146,38,0.18);
+  --shadow-glow-bloom: 0 0 24px rgba(11,171,119,0.18);
+  --shadow-glow-spark: 0 0 24px rgba(244,228,9,0.25);
+  --shadow-colored-pulse: 0 4px 14px rgba(238,66,102,0.25);
+  --shadow-colored-ember: 0 4px 14px rgba(246,146,38,0.25);
+  --shadow-colored-bloom: 0 4px 14px rgba(11,171,119,0.25);
+
+  /* Spacing Scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-spring: 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* Dashboard / UI Color System */
+  --color-primary-emerald: var(--color-bloom);
+  --color-primary-emerald-light: #0DCA88;
+  --color-primary-soft: rgba(11, 171, 119, 0.08);
+  --color-primary-orange: var(--color-ember);
+
+  --color-neutral-text: var(--color-ink);
+  --color-neutral-text-secondary: #475569;
+  --color-neutral-text-tertiary: #94A3B8;
+  --color-neutral-border: var(--color-border);
+  --color-neutral-border-strong: var(--color-border-strong);
+  --color-neutral-surface: var(--color-surface);
+  --color-neutral-surface-alt: #F8FAFC;
+  --color-neutral-bg: var(--color-paper);
+
+  --color-accent-green: var(--color-bloom);
+  --color-accent-gold: var(--color-spark);
+
+  --color-danger: #EF4444;
+  --color-danger-strong: #DC2626;
+
+  --color-bg-emerald-light: rgba(11, 171, 119, 0.06);
+  --color-bg-orange-light: rgba(246, 146, 38, 0.06);
+  --color-bg-pulse-light: rgba(238, 66, 102, 0.06);
+  --color-bg-spark-light: rgba(244, 228, 9, 0.12);
+}

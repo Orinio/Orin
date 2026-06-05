@@ -1,0 +1,95 @@
+import { NextRequest, NextResponse } from 'next/server';
+
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3001';
+
+export async function forwardToBackend(
+  req: NextRequest,
+  path: string,
+  options?: { method?: string; body?: any; streaming?: boolean }
+): Promise<NextResponse> {
+  const authHeader = req.headers.get('Authorization');
+  if (!authHeader) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const headers: Record<string, string> = {
+    'Authorization': authHeader,
+  };
+
+  const contentType = req.headers.get('Content-Type');
+  if (contentType) {
+    headers['Content-Type'] = contentType;
+  }
+
+  const accept = req.headers.get('Accept');
+  if (accept) {
+    headers['Accept'] = accept;
+  }
+
+  const method = options?.method || req.method;
+  let body: string | undefined;
+
+  if (method !== 'GET' && method !== 'HEAD') {
+    if (options?.body) {
+      body = JSON.stringify(options.body);
+    } else {
+      try {
+        const clonedReq = req.clone();
+        body = await clonedReq.text();
+      } catch {}
+    }
+  }
+
+  try {
+    const backendRes = await fetch(`${BACKEND_URL}${path}`, {
+      method,
+      headers,
+      body,
+    });
+
+    if (options?.streaming && backendRes.headers.get('Content-Type')?.includes('text/event-stream')) {
+      const reader = backendRes.body?.getReader();
+      if (!reader) {
+        return new NextResponse('No stream', { status: 500 });
+      }
+
+      const stream = new ReadableStream({
+        async start(controller) {
+          try {
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              controller.enqueue(value);
+            }
+          } finally {
+            controller.close();
+          }
+        },
+      });
+
+      return new NextResponse(stream, {
+        headers: {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+        },
+      });
+    }
+
+    const responseText = await backendRes.text();
+    let responseData: any;
+    try {
+      responseData = JSON.parse(responseText);
+    } catch {
+      responseData = responseText;
+    }
+
+    return NextResponse.json(responseData, { status: backendRes.status });
+  } catch (error) {
+    console.error(`Backend request failed for ${path}:`, error);
+    return NextResponse.json(
+      { error: 'Backend service unavailable' },
+      { status: 502 }
+    );
+  }
+}

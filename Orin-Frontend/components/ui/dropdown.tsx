@@ -91,7 +91,7 @@ interface SelectOption {
   disabled?: boolean;
 }
 
-interface SelectProps {
+export interface SelectProps {
   value: string;
   onChange: (value: string) => void;
   options: SelectOption[];

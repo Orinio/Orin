@@ -6,7 +6,7 @@ import { X } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { Button } from './button';
 
-interface ModalProps {
+export interface ModalProps {
   open: boolean;
   onClose: () => void;
   title?: string;
@@ -112,7 +112,7 @@ export function Modal({
   return createPortal(modalContent, document.body);
 }
 
-interface ConfirmDialogProps {
+export interface ConfirmDialogProps {
   open: boolean;
   onClose: () => void;
   onConfirm: () => void;

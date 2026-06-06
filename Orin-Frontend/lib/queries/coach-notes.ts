@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { mapDbCoachNoteToCoachNote } from '@/lib/utils';
 import type { CoachNote } from '@/lib/types';
 
-export function useCoachNotes(userId: string | null, options?: { limit?: number; type?: string }) {
+export function useCoachNotes(userId: string | null, options?: { limit?: number; type?: 'daily' | 'weekly' | 'milestone' | 'ad_hoc' }) {
   return useQuery({
     queryKey: ['coach-notes', userId, options],
     enabled: !!userId,

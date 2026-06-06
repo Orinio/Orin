@@ -71,7 +71,7 @@ function SignInForm() {
 
     const { error: signInError } = await signIn(email, password);
     if (signInError) {
-      setError(getFriendlyErrorMessage(signInError.message));
+      setError(getFriendlyErrorMessage({ message: signInError.message, status: signInError.status }));
       setLoading(false);
       return;
     }

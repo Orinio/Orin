@@ -85,7 +85,7 @@ export function Dropdown({ trigger, items, align = 'right', className }: Dropdow
   );
 }
 
-interface SelectOption {
+export interface SelectOption {
   value: string;
   label: string;
   disabled?: boolean;

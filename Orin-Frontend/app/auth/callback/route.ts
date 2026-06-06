@@ -4,20 +4,18 @@ import { createServerClient } from '@supabase/ssr';
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
-  const token = searchParams.get('token');
-  const type = searchParams.get('type');
   const next = searchParams.get('next') ?? '/dashboard';
   const error = searchParams.get('error');
   const errorDescription = searchParams.get('error_description');
 
-  // Handle OAuth errors
+  // Handle OAuth errors from provider
   if (error) {
     return NextResponse.redirect(
       `${origin}/signin?error=${encodeURIComponent(error)}${errorDescription ? `&error_description=${encodeURIComponent(errorDescription)}` : ''}`
     );
   }
 
-  // Create response first
+  // Create response that will carry cookies
   const response = NextResponse.redirect(new URL(next, origin));
 
   const supabase = createServerClient(
@@ -40,7 +38,7 @@ export async function GET(request: NextRequest) {
     }
   );
 
-  // Handle OAuth code exchange (PKCE flow)
+  // Exchange authorization code for session (works for OAuth + email confirmation)
   if (code) {
     const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
 
@@ -50,35 +48,17 @@ export async function GET(request: NextRequest) {
 
     console.error('Auth callback exchange error:', exchangeError.message);
     return NextResponse.redirect(
-      `${origin}/signin?error=exchange_failed&error_description=${encodeURIComponent(exchangeError.message)}`
+      `${origin}/signin?error=auth_failed&error_description=${encodeURIComponent(exchangeError.message)}`
     );
   }
 
-  // Handle email confirmation (magic link / signup confirmation)
-  // Supabase sends token + type=signup or type=magiclink
-  if (token && type) {
-    const { error: verifyError } = await supabase.auth.verifyOtp({
-      token,
-      type: type as 'signup' | 'magiclink' | 'recovery',
-    });
-
-    if (!verifyError) {
-      return NextResponse.redirect(new URL('/signin?confirmed=email', origin));
-    }
-
-    console.error('Auth callback verify error:', verifyError.message);
-    return NextResponse.redirect(
-      `${origin}/signin?error=verify_failed&error_description=${encodeURIComponent(verifyError.message)}`
-    );
-  }
-
-  // No code or token - check if there's already a session
+  // No code - check if user already has a session (e.g. page refresh)
   const { data: { session } } = await supabase.auth.getSession();
 
   if (session) {
     return response;
   }
 
-  // No session, no code - redirect to signin
+  // Nothing to process - go to signin
   return NextResponse.redirect(`${origin}/signin`);
 }

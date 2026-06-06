@@ -1,69 +1,12 @@
 /**
- * Orin AI - Comprehensive Tool Registry
- * 30+ tools for AI agents to interact with the world
+ * Orin AI - Tool Definitions
+ * Registers all 17+ tools for AI agents to interact with the world.
+ * Delegates storage to core/tool-registry.ts for shared access.
  */
 
+import { registerTool } from '../core/tool-registry.js';
 import { logger } from '../../logger.js';
 import { supabase } from '../../supabase.js';
-
-// ============================================================
-// Tool Types
-// ============================================================
-export interface Tool {
-  name: string;
-  description: string;
-  category: 'verification' | 'search' | 'analysis' | 'safety' | 'data' | 'learning' | 'career' | 'code' | 'web' | 'memory';
-  parameters: {
-    type: 'object';
-    properties: Record<string, { type: string; description: string; enum?: string[] }>;
-    required: string[];
-  };
-  execute: (args: Record<string, any>, context?: ToolContext) => Promise<ToolResult>;
-}
-
-export interface ToolResult {
-  success: boolean;
-  data?: any;
-  error?: string;
-  metadata?: Record<string, any>;
-}
-
-export interface ToolContext {
-  userId?: string;
-  sessionId?: string;
-  conversationHistory?: Array<{ role: string; content: string }>;
-}
-
-// ============================================================
-// Tool Registry
-// ============================================================
-const toolRegistry = new Map<string, Tool>();
-
-export function registerTool(tool: Tool): void {
-  toolRegistry.set(tool.name, tool);
-}
-
-export function getToolByName(name: string): Tool | undefined {
-  return toolRegistry.get(name);
-}
-
-export function getToolsByNames(names: string[]): Tool[] {
-  return names.map(name => toolRegistry.get(name)).filter(Boolean) as Tool[];
-}
-
-export function getToolsByCategory(category: Tool['category']): Tool[] {
-  return Array.from(toolRegistry.values()).filter(t => t.category === category);
-}
-
-export function getAllTools(): Tool[] {
-  return Array.from(toolRegistry.values());
-}
-
-export function getToolDescriptions(): string {
-  return getAllTools().map(t =>
-    `- ${t.name}(${Object.entries(t.parameters.properties).map(([k, v]) => `${k}: ${v.type}`).join(', ')}): ${t.description}`
-  ).join('\n');
-}
 
 // ============================================================
 // VERIFICATION TOOLS
@@ -859,18 +802,10 @@ registerTool({
 });
 
 // ============================================================
-// Initialize all tools
+// Initialize — just logs (tools self-register at module load)
 // ============================================================
-export function initTools(): void {
-  logger.info(`Initialized ${toolRegistry.size} AI tools`);
-}
+import { getAllTools as _getAllTools } from '../core/tool-registry.js';
 
-export default {
-  registerTool,
-  getToolByName,
-  getToolsByNames,
-  getToolsByCategory,
-  getAllTools,
-  getToolDescriptions,
-  initTools
-};
+export function initTools(): void {
+  logger.info(`Initialized ${_getAllTools().length} AI tools`);
+}

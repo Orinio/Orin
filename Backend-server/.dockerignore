@@ -1,0 +1,15 @@
+node_modules
+dist
+.env
+.env.local
+.env.*.local
+*.log
+coverage
+.nyc_output
+.vscode
+.idea
+.DS_Store
+__tests__
+test-models.js
+*.test.ts
+*.spec.ts

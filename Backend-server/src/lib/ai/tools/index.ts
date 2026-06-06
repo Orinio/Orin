@@ -1,1 +1,2 @@
-export * from './tool-registry.js';
+export * from '../core/tool-registry.js';
+export { initTools } from './tool-registry.js';

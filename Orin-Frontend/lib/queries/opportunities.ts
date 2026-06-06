@@ -4,7 +4,7 @@ import { mapDbOpportunityToOpportunity } from '@/lib/utils';
 import type { Opportunity } from '@/lib/types';
 
 export function useOpportunities(filters?: {
-  type?: string;
+  type?: 'hackathon' | 'other' | 'internship' | 'job' | 'scholarship' | 'mentorship' | 'research';
   search?: string;
   sortBy?: 'match' | 'recent' | 'salary';
 }) {

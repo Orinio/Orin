@@ -1,6 +1,6 @@
 'use client';
 
-import { Toaster as SonnerToaster, toast as sonnerToast, type ToastOptions } from 'sonner';
+import { Toaster as SonnerToaster, toast as sonnerToast } from 'sonner';
 
 export function Toaster() {
   return (
@@ -20,7 +20,7 @@ export function Toaster() {
   );
 }
 
-export interface ToastOptions extends ToastOptions {
+export interface ToastOptions {
   action?: {
     label: string;
     onClick: () => void;

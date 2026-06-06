@@ -5,7 +5,7 @@ import { AgentDashboard } from '@/components/ai/AgentDashboard';
 import { AgentChat } from '@/components/ai/AgentChat';
 import { CareerAnalysisWorkflow } from '@/components/ai/WorkflowVisualization';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { MessageSquare, BarChart3, Workflow } from 'lucide-react';
+import { MessageSquare, BarChart3, Network } from 'lucide-react';
 
 type Tab = 'chat' | 'dashboard' | 'workflows';
 
@@ -64,7 +64,7 @@ function AIAgentsContent() {
               : 'bg-[var(--color-neutral-surface)] text-[var(--color-neutral-text-secondary)] hover:bg-[var(--color-neutral-surface-alt)]'
           }`}
         >
-          <Workflow className="h-4 w-4" />
+          <Network className="h-4 w-4" />
           Workflows
         </button>
       </div>

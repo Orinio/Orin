@@ -332,3 +332,98 @@ export function globalAIRateLimitMiddleware(_req: Request, res: Response, next: 
   res.setHeader('X-RateLimit-Remaining', Math.max(0, info.limit - info.current).toString());
   next();
 }
+
+// ============================================================
+// Auth Rate Limiter (in-memory, per IP)
+// Protects auth endpoints from brute-force attacks
+// ============================================================
+
+interface AuthRateLimitEntry {
+  attempts: number;
+  firstAttempt: number;
+  lastAttempt: number;
+  blockedUntil?: number;
+}
+
+const authRateLimitMap = new Map<string, AuthRateLimitEntry>();
+
+const AUTH_RATE_LIMITS = {
+  signin: { maxAttempts: 10, windowMs: 15 * 60 * 1000, blockDurationMs: 30 * 60 * 1000 },
+  signup: { maxAttempts: 5, windowMs: 60 * 60 * 1000, blockDurationMs: 60 * 60 * 1000 },
+  resetPassword: { maxAttempts: 3, windowMs: 60 * 60 * 1000, blockDurationMs: 60 * 60 * 1000 },
+};
+
+function getAuthRateLimitKey(ip: string, action: string): string {
+  return `auth:${action}:${ip}`;
+}
+
+function checkAuthRateLimit(ip: string, action: keyof typeof AUTH_RATE_LIMITS): { allowed: boolean; retryAfterMs: number } {
+  const config = AUTH_RATE_LIMITS[action];
+  const key = getAuthRateLimitKey(ip, action);
+  const now = Date.now();
+
+  const entry = authRateLimitMap.get(key);
+
+  if (!entry) {
+    authRateLimitMap.set(key, { attempts: 1, firstAttempt: now, lastAttempt: now });
+    return { allowed: true, retryAfterMs: 0 };
+  }
+
+  // Check if currently blocked
+  if (entry.blockedUntil && now < entry.blockedUntil) {
+    return { allowed: false, retryAfterMs: entry.blockedUntil - now };
+  }
+
+  // Reset if window has passed
+  if (now - entry.firstAttempt > config.windowMs) {
+    authRateLimitMap.set(key, { attempts: 1, firstAttempt: now, lastAttempt: now });
+    return { allowed: true, retryAfterMs: 0 };
+  }
+
+  // Check rate limit
+  entry.attempts++;
+  entry.lastAttempt = now;
+
+  if (entry.attempts > config.maxAttempts) {
+    entry.blockedUntil = now + config.blockDurationMs;
+    authRateLimitMap.set(key, entry);
+    return { allowed: false, retryAfterMs: config.blockDurationMs };
+  }
+
+  authRateLimitMap.set(key, entry);
+  return { allowed: true, retryAfterMs: 0 };
+}
+
+export function authRateLimitMiddleware(action: keyof typeof AUTH_RATE_LIMITS) {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    const ip = req.ip || req.socket.remoteAddress || 'unknown';
+    const result = checkAuthRateLimit(ip, action);
+
+    if (!result.allowed) {
+      const retryAfterSec = Math.ceil(result.retryAfterMs / 1000);
+      res.setHeader('Retry-After', retryAfterSec.toString());
+      res.status(429).json({
+        error: {
+          code: 'AUTH_RATE_LIMITED',
+          message: `Too many attempts. Try again in ${Math.ceil(retryAfterSec / 60)} minutes.`,
+          retryAfterMs: result.retryAfterMs,
+        },
+      });
+      return;
+    }
+
+    next();
+  };
+}
+
+// Cleanup old entries periodically (every 5 minutes)
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of authRateLimitMap.entries()) {
+    if (entry.blockedUntil && now > entry.blockedUntil) {
+      authRateLimitMap.delete(key);
+    } else if (now - entry.firstAttempt > 60 * 60 * 1000) {
+      authRateLimitMap.delete(key);
+    }
+  }
+}, 5 * 60 * 1000);

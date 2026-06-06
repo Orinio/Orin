@@ -39,21 +39,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [initialized, setInitialized] = useState(false);
-  const refreshTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const clearRefreshTimer = useCallback(() => {
     if (refreshTimer.current) {
-      clearInterval(refreshTimer.current);
+      clearTimeout(refreshTimer.current);
       refreshTimer.current = null;
     }
   }, []);
 
   const refreshSession = useCallback(async () => {
     if (!supabase) return;
-    const { data, error } = await supabase.auth.refreshSession();
-    if (!error && data.session) {
-      setSession(data.session);
-      setUser(data.session.user);
+    try {
+      const { data, error } = await supabase.auth.refreshSession();
+      if (!error && data.session) {
+        setSession(data.session);
+        setUser(data.session.user);
+        // Schedule next refresh for the new session
+        startSessionRefresh(data.session);
+      }
+    } catch (err) {
+      console.error('Session refresh failed:', err);
     }
   }, []);
 
@@ -66,7 +72,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         expiresAt - now - SESSION_REFRESH_BUFFER_MS,
         60_000
       );
-      refreshTimer.current = setInterval(() => {
+      // Use setTimeout for one-shot refresh, then schedule the next one
+      refreshTimer.current = setTimeout(() => {
         refreshSession();
       }, timeUntilRefresh);
     }

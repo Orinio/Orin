@@ -10,7 +10,7 @@ export interface TabItem {
   disabled?: boolean;
 }
 
-interface TabsProps {
+export interface TabsProps {
   tabs: TabItem[];
   value: string;
   onChange: (value: string) => void;

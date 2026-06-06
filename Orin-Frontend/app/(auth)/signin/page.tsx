@@ -56,6 +56,26 @@ function SignInForm() {
     setSocialLoading(null);
   };
 
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    const emailErr = validateEmail(email);
+    const passwordErr = validatePassword(password);
+    if (emailErr || passwordErr) {
+      setFieldErrors({ email: emailErr ?? undefined, password: passwordErr ?? undefined });
+      setLoading(false);
+      return;
+    }
+
+    const { error: signInError } = await signIn(email, password);
+    if (signInError) {
+      setError(getFriendlyErrorMessage(signInError.message));
+    }
+    setLoading(false);
+  };
+
   if (!initialized) {
     return (
       <div className="flex items-center justify-center py-20">

@@ -19,12 +19,12 @@ export const urlSchema = z.string().url('Invalid URL format').max(2048);
 
 export const signInSchema = z.object({
   email: emailSchema,
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
 });
 
 export const signUpSchema = z.object({
   email: emailSchema,
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
   fullName: z.string().min(1, 'Name is required').max(100).optional(),
   username: usernameSchema.optional(),
 });

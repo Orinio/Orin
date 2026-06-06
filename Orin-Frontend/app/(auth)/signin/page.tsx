@@ -52,8 +52,12 @@ function SignInForm() {
   const handleSocialLogin = async (provider: 'github' | 'google') => {
     setSocialLoading(provider);
     setError(null);
-    await signInWithOAuth(provider);
-    setSocialLoading(null);
+    try {
+      await signInWithOAuth(provider);
+    } catch (err: any) {
+      setError(getFriendlyErrorMessage({ message: err?.message }));
+      setSocialLoading(null);
+    }
   };
 
   const handleSignIn = async (e: React.FormEvent) => {

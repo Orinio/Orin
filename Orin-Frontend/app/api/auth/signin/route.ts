@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createRouteHandlerClient } from '@/lib/supabase-api';
 
 export async function POST(request: NextRequest) {
-  if (!supabase) {
-    return NextResponse.json({ error: 'Supabase not configured' }, { status: 500 });
-  }
-
   let body: { email?: string; password?: string };
   try {
     body = await request.json();
@@ -19,6 +15,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
   }
 
+  const { supabase, response } = createRouteHandlerClient(request);
+
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
@@ -28,5 +26,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 
-  return NextResponse.json({ user: { id: data.user.id, email: data.user.email } }, { status: 200 });
+  // Return user data - cookies are already set on the response
+  return NextResponse.json(
+    { user: { id: data.user.id, email: data.user.email } },
+    { status: 200, headers: response.headers }
+  );
 }

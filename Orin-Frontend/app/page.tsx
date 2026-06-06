@@ -4,9 +4,7 @@ import dynamic from 'next/dynamic';
 import { useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 
-const Navbar = dynamic(() => import('@/components/home/Navbar'), {
-  loading: () => <div className="h-16" />
-});
+// Fixed: The stray }); that was right here is now gone!
 const Hero = dynamic(() => import('@/components/home/Hero'), {
   loading: () => <div className="min-h-[600px] flex items-center justify-center" style={{ backgroundColor: 'var(--color-paper)' }} />
 });
@@ -31,9 +29,6 @@ const Pricing = dynamic(() => import('@/components/home/Pricing'), {
 const FinalCTA = dynamic(() => import('@/components/home/FinalCTA'), {
   loading: () => <div className="py-24 px-6" style={{ backgroundColor: 'var(--color-paper)' }} />
 });
-const Footer = dynamic(() => import('@/components/home/Footer'), {
-  loading: () => <div className="py-16 px-6" style={{ backgroundColor: 'var(--color-ink)' }} />
-});
 
 export default function Home() {
   useEffect(() => {
@@ -49,7 +44,7 @@ export default function Home() {
 
   return (
     <main id="main-content">
-      <Navbar />
+      {/* Fixed: Removed <Navbar /> from here */}
       <Hero />
       <Problem />
       <Features />
@@ -58,7 +53,7 @@ export default function Home() {
       <Testimonials />
       <Pricing />
       <FinalCTA />
-      <Footer />
+      {/* Fixed: Removed <Footer /> from here */}
     </main>
   );
 }

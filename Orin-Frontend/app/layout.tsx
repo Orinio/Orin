@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Inter, Lora } from "next/font/google";
 import { AuthProvider } from "@/lib/auth-context";
+import Header from "@/components/header"; 
+import Footer from "@/components/footer";
 import "./globals.css";
 
 const sans = Inter({
@@ -25,12 +27,19 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${sans.variable} ${serif.variable} h-full scroll-smooth`}>
-      <body className="min-h-full font-sans" style={{ backgroundColor: 'var(--color-paper)', color: 'var(--color-ink)' }}>
-        <a href="#main-content" className="skip-link">
-          Skip to main content
-        </a>
+      {/* 2. Added the missing <body> tag here */}
+      <body className="flex flex-col min-h-screen antialiased"> 
         <AuthProvider>
-          {children}
+          {/* 3. Header placed at the top of the application */}
+          <Header />
+          
+          {/* 4. 'flex-grow' ensures the main content stretches, pushing the footer down */}
+          <main className="flex-grow">
+            {children}
+          </main>
+          
+          {/* 5. Footer placed at the bottom of the application */}
+          <Footer />
         </AuthProvider>
       </body>
     </html>

@@ -4,7 +4,7 @@ import { createServerClient } from '@supabase/ssr';
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
-  const tokenHash = searchParams.get('token_hash');
+  const token = searchParams.get('token');
   const type = searchParams.get('type');
   const next = searchParams.get('next') ?? '/dashboard';
   const error = searchParams.get('error');
@@ -29,11 +29,9 @@ export async function GET(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          // Set cookies on request for the exchange to read
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           );
-          // Set cookies on response to send to browser
           cookiesToSet.forEach(({ name, value, options }) =>
             response.cookies.set(name, value, options)
           );
@@ -57,14 +55,14 @@ export async function GET(request: NextRequest) {
   }
 
   // Handle email confirmation (magic link / signup confirmation)
-  if (tokenHash && type) {
+  // Supabase sends token + type=signup or type=magiclink
+  if (token && type) {
     const { error: verifyError } = await supabase.auth.verifyOtp({
-      tokenHash,
-      type: type as any,
+      token,
+      type: type as 'signup' | 'magiclink' | 'recovery',
     });
 
     if (!verifyError) {
-      // Email confirmed, redirect to dashboard
       return NextResponse.redirect(new URL('/signin?confirmed=email', origin));
     }
 
@@ -74,7 +72,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // No code or token_hash - check if there's already a session
+  // No code or token - check if there's already a session
   const { data: { session } } = await supabase.auth.getSession();
 
   if (session) {

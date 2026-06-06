@@ -72,8 +72,12 @@ function SignInForm() {
     const { error: signInError } = await signIn(email, password);
     if (signInError) {
       setError(getFriendlyErrorMessage(signInError.message));
+      setLoading(false);
+      return;
     }
-    setLoading(false);
+
+    // Redirect on success
+    router.push(redirectTo);
   };
 
   if (!initialized) {

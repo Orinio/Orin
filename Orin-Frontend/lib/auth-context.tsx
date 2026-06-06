@@ -42,11 +42,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   function syncToken(s: Session | null) {
-    if (s?.access_token) {
-      localStorage.setItem('token', s.access_token);
-    } else {
-      localStorage.removeItem('token');
-    }
+    // Token is stored in httpOnly cookies by @supabase/ssr middleware
+    // No localStorage needed - more secure
   }
 
   const clearRefreshTimer = useCallback(() => {
@@ -174,7 +171,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     setUser(null);
     setSession(null);
-    localStorage.removeItem('token');
   }, [clearRefreshTimer]);
 
   const resetPassword = useCallback(async (email: string) => {

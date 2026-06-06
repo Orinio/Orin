@@ -149,7 +149,8 @@ export function CareerAnalysisWorkflow({ onComplete }: CareerAnalysisWorkflowPro
     setSteps(prev => prev.map((s, i) => i === 0 ? { ...s, status: 'running' } : s));
 
     try {
-      const { results } = await api.workflows.careerAnalysis(query);
+      const data = await api.workflows.careerAnalysis(query);
+      const results = data?.results ?? {};
 
       setSteps(prev => prev.map((step) => {
         const agentResult = results[step.agentId];
@@ -165,7 +166,7 @@ export function CareerAnalysisWorkflow({ onComplete }: CareerAnalysisWorkflowPro
       }));
 
       onComplete?.(results);
-    } catch (error) {
+    } catch {
       setSteps(prev => prev.map(s => 
         s.status === 'running' ? { ...s, status: 'failed' } : s
       ));

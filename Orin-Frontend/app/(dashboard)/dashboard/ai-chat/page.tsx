@@ -1,7 +1,19 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Send, MessageSquare, User, Sparkles, Loader2, Trash2, Lightbulb } from 'lucide-react';
+import {
+  Send,
+  MessageSquare,
+  User,
+  Sparkles,
+  Loader2,
+  Trash2,
+  Lightbulb,
+  Brain,
+  Clock,
+  Zap,
+  Bot,
+} from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 
@@ -15,12 +27,12 @@ interface Message {
 }
 
 const SUGGESTIONS = [
-  'What skills should I learn next?',
-  'How can I improve my GitHub profile?',
-  'What certifications should I pursue?',
-  'Help me prepare for technical interviews',
-  'What projects should I add to my portfolio?',
-  'How do I stand out to recruiters?',
+  { text: 'What skills should I learn next?', icon: Zap },
+  { text: 'How can I improve my GitHub profile?', icon: Bot },
+  { text: 'What certifications should I pursue?', icon: Sparkles },
+  { text: 'Help me prepare for technical interviews', icon: Brain },
+  { text: 'What projects should I add to my portfolio?', icon: Lightbulb },
+  { text: 'How do I stand out to recruiters?', icon: MessageSquare },
 ];
 
 export default function AIChatPage() {
@@ -48,6 +60,10 @@ function AIChatContent() {
     scrollToBottom();
   }, [messages]);
 
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
   const sendMessage = async (text: string) => {
     if (!text.trim() || loading) return;
 
@@ -62,7 +78,6 @@ function AIChatContent() {
     setInput('');
     setLoading(true);
 
-    // Add placeholder for streaming response
     const assistantId = (Date.now() + 1).toString();
     const assistantMessage: Message = {
       id: assistantId,
@@ -107,43 +122,34 @@ function AIChatContent() {
         for (const line of lines) {
           if (line.startsWith('data: ')) {
             const data = line.slice(6).trim();
-            if (data === '[DONE]') {
-              break;
-            }
+            if (data === '[DONE]') break;
             try {
               const parsed = JSON.parse(data);
-              if (parsed.error) {
-                throw new Error(parsed.error);
-              }
+              if (parsed.error) throw new Error(parsed.error);
               if (parsed.content) {
                 fullContent += parsed.content;
-                setMessages(prev => prev.map(m => 
-                  m.id === assistantId 
-                    ? { ...m, content: fullContent }
-                    : m
+                setMessages(prev => prev.map(m =>
+                  m.id === assistantId ? { ...m, content: fullContent } : m
                 ));
               }
             } catch (e) {
-              if (e instanceof Error && e.message !== 'Unexpected end of JSON input') {
-                throw e;
-              }
+              if (e instanceof Error && e.message !== 'Unexpected end of JSON input') throw e;
             }
           }
         }
       }
 
-      // If no content was streamed, use fallback
       if (!fullContent) {
-        setMessages(prev => prev.map(m => 
-          m.id === assistantId 
+        setMessages(prev => prev.map(m =>
+          m.id === assistantId
             ? { ...m, content: 'I apologize, but I was unable to generate a response. Please try again.' }
             : m
         ));
       }
     } catch (error) {
       console.error('Chat error:', error);
-      setMessages(prev => prev.map(m => 
-        m.id === assistantId 
+      setMessages(prev => prev.map(m =>
+        m.id === assistantId
           ? { ...m, content: 'Sorry, I encountered an error. Please try again.' }
           : m
       ));
@@ -175,48 +181,57 @@ function AIChatContent() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-5rem)]">
-      <header className="flex items-center justify-between mb-4">
-        <div>
-          <h1 className="text-2xl font-semibold text-[var(--color-neutral-text)] font-serif flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-[var(--color-primary-emerald)]" />
-            AI Assistant
-          </h1>
-          <p className="text-sm text-[var(--color-neutral-text-secondary)]">
-            Ask anything about your career, skills, and portfolio.
-          </p>
+      {/* Header */}
+      <header className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-[var(--radius-md)] flex items-center justify-center" style={{ backgroundColor: 'var(--color-primary-soft)' }}>
+            <Sparkles className="w-5 h-5" style={{ color: 'var(--color-bloom)' }} />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold" style={{ color: 'var(--color-ink)' }}>AI Assistant</h1>
+            <p className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>Ask anything about your career, skills, and portfolio</p>
+          </div>
         </div>
         {messages.length > 0 && (
           <button
             onClick={clearChat}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--color-neutral-border)] px-3 py-2 text-sm text-[var(--color-neutral-text-secondary)] hover:bg-[var(--color-neutral-surface)]"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-[var(--radius-md)] text-xs font-medium transition-all duration-200 border"
+            style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-tertiary)', backgroundColor: 'var(--color-surface)' }}
           >
-            <Trash2 className="h-4 w-4" />
+            <Trash2 className="w-3.5 h-3.5" />
             Clear
           </button>
         )}
       </header>
 
-      <div className="flex-1 overflow-y-auto rounded-xl border border-[var(--color-neutral-border)] bg-[var(--color-neutral-surface)] p-4 space-y-4">
+      {/* Chat Area */}
+      <div className="flex-1 overflow-y-auto rounded-[var(--radius-xl)] border p-5 space-y-4" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)', boxShadow: 'var(--shadow-md)' }}>
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center">
-            <div className="w-16 h-16 rounded-full bg-[var(--color-primary-soft)] flex items-center justify-center mb-4">
-              <MessageSquare className="h-8 w-8 text-[var(--color-primary-emerald)]" />
+            <div className="w-16 h-16 rounded-[var(--radius-2xl)] flex items-center justify-center mb-5" style={{ backgroundColor: 'var(--color-primary-soft)' }}>
+              <MessageSquare className="h-8 w-8" style={{ color: 'var(--color-bloom)' }} />
             </div>
-            <h2 className="text-lg font-semibold text-[var(--color-neutral-text)] mb-2">How can I help you?</h2>
-            <p className="text-sm text-[var(--color-neutral-text-secondary)] max-w-md mb-6">
+            <h2 className="text-lg font-bold mb-1" style={{ color: 'var(--color-ink)' }}>How can I help you?</h2>
+            <p className="text-sm max-w-md mb-6" style={{ color: 'var(--color-text-tertiary)' }}>
               I can analyze your portfolio, suggest skills to learn, recommend certifications, and help with career planning.
             </p>
-            <div className="grid grid-cols-2 gap-2 max-w-lg">
-              {SUGGESTIONS.map((suggestion) => (
-                <button
-                  key={suggestion}
-                  onClick={() => sendMessage(suggestion)}
-                  className="rounded-lg border border-[var(--color-neutral-border)] bg-[var(--color-neutral-bg)] p-3 text-left text-sm text-[var(--color-neutral-text-secondary)] hover:border-[var(--color-primary-emerald)] hover:text-[var(--color-primary-emerald)] transition"
-                >
-                  <Lightbulb className="h-4 w-4 mb-1 text-[var(--color-primary-emerald)]" />
-                  {suggestion}
-                </button>
-              ))}
+            <div className="grid grid-cols-2 gap-2 max-w-lg w-full">
+              {SUGGESTIONS.map((suggestion) => {
+                const Icon = suggestion.icon;
+                return (
+                  <button
+                    key={suggestion.text}
+                    onClick={() => sendMessage(suggestion.text)}
+                    className="flex items-center gap-2.5 p-3 rounded-[var(--radius-lg)] text-left text-sm transition-all duration-200 border"
+                    style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)', backgroundColor: 'var(--color-surface)' }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--color-bloom)'; e.currentTarget.style.color = 'var(--color-bloom)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.color = 'var(--color-text-secondary)'; }}
+                  >
+                    <Icon className="h-4 w-4 flex-shrink-0" style={{ color: 'var(--color-bloom)' }} />
+                    <span className="truncate">{suggestion.text}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
@@ -224,38 +239,63 @@ function AIChatContent() {
         {messages.map((message) => (
           <div key={message.id} className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             {message.role === 'assistant' && (
-                <div className="h-8 w-8 rounded-full bg-[var(--color-primary-soft)] flex items-center justify-center flex-shrink-0">
-                  <MessageSquare className="h-4 w-4 text-[var(--color-primary-emerald)]" />
-                </div>
+              <div className="w-8 h-8 rounded-[var(--radius-md)] flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'var(--color-primary-soft)' }}>
+                <Bot className="h-4 w-4" style={{ color: 'var(--color-bloom)' }} />
+              </div>
             )}
-            <div className={`max-w-[75%] rounded-xl p-4 ${
-              message.role === 'user'
-                ? 'bg-[var(--color-primary-emerald)] text-white'
-                : 'bg-[var(--color-neutral-bg)] text-[var(--color-neutral-text)]'
-            }`}>
-              <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+            <div className={`max-w-[75%] ${message.role === 'user' ? '' : 'space-y-2'}`}>
+              <div
+                className="rounded-[var(--radius-lg)] px-4 py-3"
+                style={{
+                  backgroundColor: message.role === 'user' ? 'var(--color-ink)' : 'var(--color-surface-dim)',
+                  color: message.role === 'user' ? 'var(--color-paper)' : 'var(--color-ink)',
+                  boxShadow: message.role === 'user' ? 'var(--shadow-md)' : 'var(--shadow-xs)',
+                  border: message.role === 'assistant' ? '1px solid var(--color-border)' : 'none',
+                }}
+              >
+                <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
+              </div>
+
               {message.thinking && (
-                <div className="mt-2">
+                <div className="rounded-[var(--radius-md)] overflow-hidden border" style={{ borderColor: 'var(--color-border)' }}>
                   <button
                     onClick={() => toggleThinking(message.id)}
-                    className="text-xs text-[var(--color-neutral-text-tertiary)] hover:text-[var(--color-neutral-text-secondary)]"
+                    className="w-full flex items-center justify-between px-3 py-2 text-xs font-medium transition-colors"
+                    style={{ backgroundColor: 'var(--color-surface-dim)', color: 'var(--color-text-secondary)' }}
                   >
-                    {showThinking[message.id] ? 'Hide reasoning' : 'Show reasoning'}
+                    <div className="flex items-center gap-1.5">
+                      <Brain className="w-3 h-3" />
+                      <span>Reasoning</span>
+                    </div>
+                    <span style={{ color: 'var(--color-text-tertiary)' }}>{showThinking[message.id] ? 'Hide' : 'Show'}</span>
                   </button>
                   {showThinking[message.id] && (
-                    <p className="mt-1 text-xs italic text-[var(--color-neutral-text-tertiary)]">{message.thinking}</p>
+                    <div className="px-3 py-2 text-[11px] leading-relaxed" style={{ backgroundColor: 'var(--color-surface)', color: 'var(--color-text-tertiary)' }}>
+                      {message.thinking}
+                    </div>
                   )}
                 </div>
               )}
-              {message.tokensUsed && message.tokensUsed > 0 && (
-                <p className="mt-1 text-[10px] text-[var(--color-neutral-text-tertiary)]">
-                  {message.tokensUsed} tokens
-                </p>
+
+              {message.role === 'assistant' && (
+                <div className="flex items-center gap-3 text-[10px]" style={{ color: 'var(--color-text-tertiary)' }}>
+                  <span className="flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                  {message.tokensUsed && message.tokensUsed > 0 && (
+                    <span className="flex items-center gap-1">
+                      <Zap className="w-3 h-3" />
+                      {message.tokensUsed} tokens
+                    </span>
+                  )}
+                </div>
               )}
             </div>
+
             {message.role === 'user' && (
-              <div className="h-8 w-8 rounded-full bg-[var(--color-neutral-surface-alt)] flex items-center justify-center flex-shrink-0">
-                <User className="h-4 w-4 text-[var(--color-neutral-text-secondary)]" />
+              <div className="w-8 h-8 rounded-[var(--radius-md)] flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'var(--color-surface-dim)' }}>
+                <User className="h-4 w-4" style={{ color: 'var(--color-text-secondary)' }} />
               </div>
             )}
           </div>
@@ -263,13 +303,17 @@ function AIChatContent() {
 
         {loading && (
           <div className="flex gap-3 justify-start">
-            <div className="h-8 w-8 rounded-full bg-[var(--color-primary-soft)] flex items-center justify-center flex-shrink-0">
-              <MessageSquare className="h-4 w-4 text-[var(--color-primary-emerald)]" />
+            <div className="w-8 h-8 rounded-[var(--radius-md)] flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'var(--color-primary-soft)' }}>
+              <Bot className="h-4 w-4" style={{ color: 'var(--color-bloom)' }} />
             </div>
-            <div className="rounded-xl bg-[var(--color-neutral-bg)] p-4">
-              <div className="flex items-center gap-2 text-sm text-[var(--color-neutral-text-secondary)]">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Thinking...
+            <div className="rounded-[var(--radius-lg)] px-4 py-3 border" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-dim)' }}>
+              <div className="flex items-center gap-2">
+                <div className="flex gap-1">
+                  <div className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ backgroundColor: 'var(--color-bloom)', animationDelay: '0ms' }} />
+                  <div className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ backgroundColor: 'var(--color-bloom)', animationDelay: '150ms' }} />
+                  <div className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ backgroundColor: 'var(--color-bloom)', animationDelay: '300ms' }} />
+                </div>
+                <span className="text-xs font-medium" style={{ color: 'var(--color-text-tertiary)' }}>Thinking...</span>
               </div>
             </div>
           </div>
@@ -278,6 +322,7 @@ function AIChatContent() {
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Input */}
       <form onSubmit={handleSubmit} className="mt-4 flex gap-2">
         <textarea
           ref={inputRef}
@@ -286,14 +331,23 @@ function AIChatContent() {
           onKeyDown={handleKeyDown}
           placeholder="Ask about your career, skills, or portfolio..."
           rows={1}
-          className="flex-1 resize-none rounded-lg border border-[var(--color-neutral-border)] bg-[var(--color-neutral-bg)] px-4 py-3 text-sm text-[var(--color-neutral-text)] placeholder:text-[var(--color-neutral-text-tertiary)] focus:border-[var(--color-primary-emerald)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-soft)]"
+          className="flex-1 resize-none rounded-[var(--radius-lg)] px-4 py-3 text-sm transition-all duration-200 focus:outline-none focus:ring-2"
+          style={{
+            border: '1px solid var(--color-border)',
+            backgroundColor: 'var(--color-surface)',
+            color: 'var(--color-ink)',
+          }}
         />
         <button
           type="submit"
           disabled={!input.trim() || loading}
-          className="inline-flex items-center gap-2 rounded-lg bg-[var(--color-primary-emerald)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[var(--color-primary-emerald)]/90 disabled:opacity-60"
+          className="flex items-center justify-center w-11 h-11 rounded-[var(--radius-lg)] transition-all duration-200 disabled:opacity-40"
+          style={{
+            backgroundColor: input.trim() ? 'var(--color-bloom)' : 'var(--color-surface-dim)',
+            color: input.trim() ? 'white' : 'var(--color-text-tertiary)',
+          }}
         >
-          <Send className="h-4 w-4" />
+          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
         </button>
       </form>
     </div>

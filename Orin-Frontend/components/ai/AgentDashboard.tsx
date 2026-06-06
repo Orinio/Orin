@@ -1,12 +1,45 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useChat } from '@/hooks/use-ai';
 import { api, type Agent, type Tool, type AgentResult } from '@/lib/api-client';
+import {
+  Bot,
+  Wrench,
+  Workflow,
+  Play,
+  Loader2,
+  Brain,
+  Clock,
+  Zap,
+  ChevronRight,
+  Sparkles,
+  Target,
+  BarChart3,
+  BookOpen,
+  Trophy,
+  Shield,
+} from 'lucide-react';
 
-// ============================================================
-// Agent Dashboard Component
-// ============================================================
+const AGENT_ICONS: Record<string, typeof Bot> = {
+  chat: Bot,
+  coach: Target,
+  skillAnalyst: BarChart3,
+  opportunityMatcher: Zap,
+  learningPathAdvisor: BookOpen,
+  portfolioScorer: Trophy,
+  verifier: Shield,
+};
+
+const AGENT_COLORS: Record<string, string> = {
+  chat: 'var(--color-bloom)',
+  coach: 'var(--color-pulse)',
+  skillAnalyst: 'var(--color-ember)',
+  opportunityMatcher: 'var(--color-spark)',
+  learningPathAdvisor: 'var(--color-bloom)',
+  portfolioScorer: 'var(--color-ember)',
+  verifier: 'var(--color-pulse)',
+};
+
 export function AgentDashboard() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [tools, setTools] = useState<Tool[]>([]);
@@ -28,7 +61,6 @@ export function AgentDashboard() {
 
   async function handleRunAgent() {
     if (!selectedAgent || !query.trim()) return;
-
     setIsLoading(true);
     try {
       const result = await api.agents.run(selectedAgent.id, query);
@@ -42,19 +74,19 @@ export function AgentDashboard() {
 
   async function handleCareerAnalysis() {
     if (!query.trim()) return;
-
     setIsLoading(true);
     try {
-      const { results } = await api.workflows.careerAnalysis(query);
-      // Combine results from all agents
+      const data = await api.workflows.careerAnalysis(query);
+      const results = data?.results ?? {};
+      const entries = Object.values(results);
       const combinedResult: AgentResult = {
         agentId: 'career-analysis',
-        answer: Object.values(results).map(r => r.answer).join('\n\n'),
-        thinking: Object.values(results).map(r => r.thinking).join('\n'),
-        toolCalls: Object.values(results).flatMap(r => r.toolCalls),
-        iterations: Object.values(results).reduce((sum, r) => sum + r.iterations, 0),
-        tokensUsed: Object.values(results).reduce((sum, r) => sum + r.tokensUsed, 0),
-        durationMs: Object.values(results).reduce((sum, r) => sum + r.durationMs, 0)
+        answer: entries.map(r => r?.answer ?? '').join('\n\n'),
+        thinking: entries.map(r => r?.thinking ?? '').join('\n'),
+        toolCalls: entries.flatMap(r => r?.toolCalls ?? []),
+        iterations: entries.reduce((sum, r) => sum + (r?.iterations ?? 0), 0),
+        tokensUsed: entries.reduce((sum, r) => sum + (r?.tokensUsed ?? 0), 0),
+        durationMs: entries.reduce((sum, r) => sum + (r?.durationMs ?? 0), 0),
       };
       setResult(combinedResult);
     } catch (error) {
@@ -64,99 +96,138 @@ export function AgentDashboard() {
     }
   }
 
-  return (
-    <div className="max-w-6xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6">Orin AI Agents</h1>
+  const tabs = [
+    { id: 'agents' as const, label: 'Agents', count: agents.length, icon: Bot },
+    { id: 'tools' as const, label: 'Tools', count: tools.length, icon: Wrench },
+    { id: 'workflows' as const, label: 'Workflows', count: 1, icon: Workflow },
+  ];
 
+  return (
+    <div className="space-y-5">
       {/* Tabs */}
-      <div className="flex space-x-4 mb-6">
-        <button
-          onClick={() => setActiveTab('agents')}
-          className={`px-4 py-2 rounded-lg ${activeTab === 'agents' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-        >
-          Agents ({agents.length})
-        </button>
-        <button
-          onClick={() => setActiveTab('tools')}
-          className={`px-4 py-2 rounded-lg ${activeTab === 'tools' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-        >
-          Tools ({tools.length})
-        </button>
-        <button
-          onClick={() => setActiveTab('workflows')}
-          className={`px-4 py-2 rounded-lg ${activeTab === 'workflows' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-        >
-          Workflows
-        </button>
+      <div className="flex gap-1 p-1 rounded-[var(--radius-lg)]" style={{ backgroundColor: 'var(--color-surface-dim)' }}>
+        {tabs.map(tab => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-[var(--radius-md)] text-sm font-medium transition-all duration-200 flex-1 justify-center"
+              style={{
+                backgroundColor: isActive ? 'var(--color-surface)' : 'transparent',
+                color: isActive ? 'var(--color-ink)' : 'var(--color-text-tertiary)',
+                boxShadow: isActive ? 'var(--shadow-sm)' : 'none',
+              }}
+            >
+              <Icon className="w-4 h-4" />
+              {tab.label}
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold" style={{ backgroundColor: isActive ? 'var(--color-primary-soft)' : 'var(--color-surface)', color: isActive ? 'var(--color-bloom)' : 'var(--color-text-tertiary)' }}>
+                {tab.count}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Agents Tab */}
       {activeTab === 'agents' && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           {/* Agent List */}
-          <div className="md:col-span-1 bg-white rounded-lg shadow p-4">
-            <h2 className="text-xl font-semibold mb-4">Available Agents</h2>
-            <div className="space-y-2">
-              {agents.map(agent => (
-                <div
+          <div className="lg:col-span-1 space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--color-text-tertiary)' }}>Available Agents</p>
+            {agents.map(agent => {
+              const Icon = AGENT_ICONS[agent.id] || Bot;
+              const color = AGENT_COLORS[agent.id] || 'var(--color-bloom)';
+              const isSelected = selectedAgent?.id === agent.id;
+              return (
+                <button
                   key={agent.id}
                   onClick={() => setSelectedAgent(agent)}
-                  className={`p-3 rounded-lg cursor-pointer transition ${
-                    selectedAgent?.id === agent.id
-                      ? 'bg-blue-100 border-2 border-blue-500'
-                      : 'bg-gray-50 hover:bg-gray-100'
-                  }`}
+                  className="w-full text-left p-3.5 rounded-[var(--radius-lg)] transition-all duration-200 border"
+                  style={{
+                    backgroundColor: isSelected ? color + '08' : 'var(--color-surface)',
+                    borderColor: isSelected ? color : 'var(--color-border)',
+                    boxShadow: isSelected ? `0 0 0 1px ${color}20` : 'var(--shadow-xs)',
+                  }}
                 >
-                  <p className="font-medium">{agent.name}</p>
-                  <p className="text-sm text-gray-500">{agent.role}</p>
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    {agent.tools.slice(0, 3).map(tool => (
-                      <span key={tool} className="text-xs bg-gray-200 px-2 py-1 rounded">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-[var(--radius-md)] flex items-center justify-center flex-shrink-0" style={{ backgroundColor: color + '12' }}>
+                      <Icon className="w-4.5 h-4.5" style={{ color }} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold truncate" style={{ color: 'var(--color-ink)' }}>{agent.name}</p>
+                      <p className="text-[11px] truncate" style={{ color: 'var(--color-text-tertiary)' }}>{agent.role}</p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: isSelected ? color : 'var(--color-mist)' }} />
+                  </div>
+                  <div className="flex flex-wrap gap-1 mt-2 ml-12">
+                    {agent.tools.slice(0, 2).map(tool => (
+                      <span key={tool} className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={{ backgroundColor: 'var(--color-surface-dim)', color: 'var(--color-text-tertiary)' }}>
                         {tool}
                       </span>
                     ))}
-                    {agent.tools.length > 3 && (
-                      <span className="text-xs bg-gray-200 px-2 py-1 rounded">
-                        +{agent.tools.length - 3}
+                    {agent.tools.length > 2 && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={{ backgroundColor: 'var(--color-surface-dim)', color: 'var(--color-text-tertiary)' }}>
+                        +{agent.tools.length - 2}
                       </span>
                     )}
                   </div>
-                </div>
-              ))}
-            </div>
+                </button>
+              );
+            })}
           </div>
 
-          {/* Agent Details & Query */}
-          <div className="md:col-span-2 bg-white rounded-lg shadow p-4">
+          {/* Agent Details */}
+          <div className="lg:col-span-2 rounded-[var(--radius-xl)] border p-6" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)', boxShadow: 'var(--shadow-md)' }}>
             {selectedAgent ? (
-              <>
-                <h2 className="text-xl font-semibold mb-2">{selectedAgent.name}</h2>
-                <p className="text-gray-600 mb-4">{selectedAgent.description}</p>
-                
-                <div className="mb-4">
-                  <p className="text-sm text-gray-500">Model: {selectedAgent.model}</p>
-                  <p className="text-sm text-gray-500">Tools: {selectedAgent.tools.join(', ')}</p>
+              <div className="space-y-5">
+                <div>
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-10 h-10 rounded-[var(--radius-md)] flex items-center justify-center" style={{ backgroundColor: (AGENT_COLORS[selectedAgent.id] || 'var(--color-bloom)') + '12' }}>
+                      {(() => { const I = AGENT_ICONS[selectedAgent.id] || Bot; return <I className="w-5 h-5" style={{ color: AGENT_COLORS[selectedAgent.id] || 'var(--color-bloom)' }} />; })()}
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-bold" style={{ color: 'var(--color-ink)' }}>{selectedAgent.name}</h2>
+                      <p className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>{selectedAgent.model}</p>
+                    </div>
+                  </div>
+                  <p className="text-sm leading-relaxed" style={{ color: 'var(--color-neutral-text-secondary)' }}>{selectedAgent.description}</p>
+                </div>
+
+                <div className="flex flex-wrap gap-1.5">
+                  {selectedAgent.tools.map(tool => (
+                    <span key={tool} className="text-[11px] px-2 py-1 rounded-full font-medium border" style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)', backgroundColor: 'var(--color-surface-dim)' }}>
+                      {tool}
+                    </span>
+                  ))}
                 </div>
 
                 <textarea
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Enter your query..."
-                  className="w-full border rounded-lg p-3 mb-4"
+                  placeholder="Enter your query for this agent..."
+                  className="w-full rounded-[var(--radius-lg)] px-4 py-3 text-sm resize-none transition-all duration-200 focus:outline-none focus:ring-2"
+                  style={{ border: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface-dim)', color: 'var(--color-ink)' }}
                   rows={4}
                 />
 
                 <button
                   onClick={handleRunAgent}
                   disabled={isLoading || !query.trim()}
-                  className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-[var(--radius-lg)] text-sm font-semibold transition-all duration-200 disabled:opacity-40"
+                  style={{ backgroundColor: 'var(--color-bloom)', color: 'white' }}
                 >
+                  {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
                   {isLoading ? 'Running...' : 'Run Agent'}
                 </button>
-              </>
+              </div>
             ) : (
-              <div className="text-center text-gray-500 py-12">
-                Select an agent to get started
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <div className="w-14 h-14 rounded-[var(--radius-xl)] flex items-center justify-center mb-4" style={{ backgroundColor: 'var(--color-surface-dim)' }}>
+                  <Sparkles className="w-7 h-7" style={{ color: 'var(--color-mist)' }} />
+                </div>
+                <p className="text-sm font-medium" style={{ color: 'var(--color-text-tertiary)' }}>Select an agent to get started</p>
               </div>
             )}
           </div>
@@ -165,14 +236,17 @@ export function AgentDashboard() {
 
       {/* Tools Tab */}
       {activeTab === 'tools' && (
-        <div className="bg-white rounded-lg shadow p-4">
-          <h2 className="text-xl font-semibold mb-4">Available Tools ({tools.length})</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--color-text-tertiary)' }}>Available Tools ({tools.length})</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {tools.map(tool => (
-              <div key={tool.name} className="border rounded-lg p-4">
-                <h3 className="font-medium">{tool.name}</h3>
-                <p className="text-sm text-gray-500 mb-2">{tool.description}</p>
-                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+              <div key={tool.name} className="p-4 rounded-[var(--radius-lg)] border transition-all duration-200 hover:shadow-md" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}>
+                <div className="flex items-center gap-2 mb-2">
+                  <Wrench className="w-4 h-4" style={{ color: 'var(--color-bloom)' }} />
+                  <h3 className="text-sm font-semibold truncate" style={{ color: 'var(--color-ink)' }}>{tool.name}</h3>
+                </div>
+                <p className="text-xs leading-relaxed mb-3" style={{ color: 'var(--color-text-tertiary)' }}>{tool.description}</p>
+                <span className="text-[10px] px-2 py-1 rounded-full font-medium" style={{ backgroundColor: 'var(--color-primary-soft)', color: 'var(--color-bloom)' }}>
                   {tool.category}
                 </span>
               </div>
@@ -183,83 +257,99 @@ export function AgentDashboard() {
 
       {/* Workflows Tab */}
       {activeTab === 'workflows' && (
-        <div className="bg-white rounded-lg shadow p-4">
-          <h2 className="text-xl font-semibold mb-4">AI Workflows</h2>
-          
-          <div className="border rounded-lg p-4 mb-4">
-            <h3 className="font-medium text-lg">Career Analysis Workflow</h3>
-            <p className="text-gray-600 mb-4">
-              Runs multiple agents in sequence: Skill Analysis → Portfolio Scoring → 
-              Opportunity Matching → Learning Path → Career Coaching
-            </p>
-            
-            <textarea
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Describe your career goals and current skills..."
-              className="w-full border rounded-lg p-3 mb-4"
-              rows={4}
-            />
-
-            <button
-              onClick={handleCareerAnalysis}
-              disabled={isLoading || !query.trim()}
-              className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50"
-            >
-              {isLoading ? 'Running Analysis...' : 'Run Career Analysis'}
-            </button>
+        <div className="rounded-[var(--radius-xl)] border p-6" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)', boxShadow: 'var(--shadow-md)' }}>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-[var(--radius-md)] flex items-center justify-center" style={{ backgroundColor: 'var(--color-primary-soft)' }}>
+              <Workflow className="w-5 h-5" style={{ color: 'var(--color-bloom)' }} />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold" style={{ color: 'var(--color-ink)' }}>Career Analysis Workflow</h3>
+              <p className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>Multi-agent pipeline for comprehensive career insights</p>
+            </div>
           </div>
+
+          <div className="flex items-center gap-2 mb-5 text-[11px]" style={{ color: 'var(--color-text-tertiary)' }}>
+            {['Skill Analysis', 'Portfolio Scoring', 'Opportunity Matching', 'Learning Path', 'Career Coaching'].map((step, i) => (
+              <span key={step} className="flex items-center gap-2">
+                <span className="px-2 py-1 rounded-full font-medium" style={{ backgroundColor: 'var(--color-surface-dim)', color: 'var(--color-text-secondary)' }}>{step}</span>
+                {i < 4 && <span style={{ color: 'var(--color-mist)' }}>\u2192</span>}
+              </span>
+            ))}
+          </div>
+
+          <textarea
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Describe your career goals and current skills..."
+            className="w-full rounded-[var(--radius-lg)] px-4 py-3 text-sm resize-none transition-all duration-200 focus:outline-none focus:ring-2 mb-4"
+            style={{ border: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface-dim)', color: 'var(--color-ink)' }}
+            rows={4}
+          />
+
+          <button
+            onClick={handleCareerAnalysis}
+            disabled={isLoading || !query.trim()}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-[var(--radius-lg)] text-sm font-semibold transition-all duration-200 disabled:opacity-40"
+            style={{ backgroundColor: 'var(--color-bloom)', color: 'white' }}
+          >
+            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+            {isLoading ? 'Running Analysis...' : 'Run Career Analysis'}
+          </button>
         </div>
       )}
 
       {/* Result Display */}
       {result && (
-        <div className="mt-6 bg-white rounded-lg shadow p-4">
-          <h2 className="text-xl font-semibold mb-4">Result</h2>
-          
-          <div className="grid grid-cols-4 gap-4 mb-4 text-center">
-            <div className="bg-blue-50 rounded-lg p-3">
-              <p className="text-2xl font-bold text-blue-600">{result.toolCalls.length}</p>
-              <p className="text-sm text-gray-500">Tools Used</p>
-            </div>
-            <div className="bg-green-50 rounded-lg p-3">
-              <p className="text-2xl font-bold text-green-600">{result.iterations}</p>
-              <p className="text-sm text-gray-500">Iterations</p>
-            </div>
-            <div className="bg-purple-50 rounded-lg p-3">
-              <p className="text-2xl font-bold text-purple-600">{result.tokensUsed}</p>
-              <p className="text-sm text-gray-500">Tokens</p>
-            </div>
-            <div className="bg-orange-50 rounded-lg p-3">
-              <p className="text-2xl font-bold text-orange-600">{(result.durationMs / 1000).toFixed(1)}s</p>
-              <p className="text-sm text-gray-500">Duration</p>
-            </div>
+        <div className="rounded-[var(--radius-xl)] border p-6 space-y-5" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)', boxShadow: 'var(--shadow-lg)' }}>
+          <h3 className="text-lg font-bold" style={{ color: 'var(--color-ink)' }}>Result</h3>
+
+          {/* Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[
+              { label: 'Tools Used', value: (result.toolCalls ?? []).length, color: 'var(--color-bloom)', icon: Wrench },
+              { label: 'Iterations', value: result.iterations ?? 0, color: 'var(--color-ember)', icon: Target },
+              { label: 'Tokens', value: result.tokensUsed ?? 0, color: 'var(--color-pulse)', icon: Zap },
+              { label: 'Duration', value: `${((result.durationMs ?? 0) / 1000).toFixed(1)}s`, color: 'var(--color-spark)', icon: Clock },
+            ].map(stat => (
+              <div key={stat.label} className="p-3 rounded-[var(--radius-lg)] text-center" style={{ backgroundColor: stat.color + '08' }}>
+                <stat.icon className="w-4 h-4 mx-auto mb-1" style={{ color: stat.color }} />
+                <p className="text-xl font-bold" style={{ color: stat.color }}>{stat.value}</p>
+                <p className="text-[10px] font-medium" style={{ color: 'var(--color-text-tertiary)' }}>{stat.label}</p>
+              </div>
+            ))}
           </div>
 
+          {/* Thinking */}
           {result.thinking && (
-            <div className="bg-gray-50 rounded-lg p-3 mb-4">
-              <p className="text-sm font-medium text-gray-700 mb-1">Thinking:</p>
-              <p className="text-sm text-gray-600">{result.thinking}</p>
+            <div className="p-4 rounded-[var(--radius-lg)] border" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-dim)' }}>
+              <div className="flex items-center gap-2 mb-2">
+                <Brain className="w-4 h-4" style={{ color: 'var(--color-ember)' }} />
+                <p className="text-xs font-semibold" style={{ color: 'var(--color-ink)' }}>Reasoning</p>
+              </div>
+              <p className="text-sm leading-relaxed" style={{ color: 'var(--color-neutral-text-secondary)' }}>{result.thinking}</p>
             </div>
           )}
 
-          <div className="bg-blue-50 rounded-lg p-4">
-            <p className="font-medium text-blue-800 mb-2">Answer:</p>
-            <p className="whitespace-pre-wrap">{result.answer}</p>
+          {/* Answer */}
+          <div className="p-4 rounded-[var(--radius-lg)]" style={{ backgroundColor: 'var(--color-primary-soft)' }}>
+            <p className="text-xs font-semibold mb-2" style={{ color: 'var(--color-bloom)' }}>Answer</p>
+            <p className="text-sm whitespace-pre-wrap leading-relaxed" style={{ color: 'var(--color-ink)' }}>{result.answer}</p>
           </div>
 
-          {result.toolCalls.length > 0 && (
-            <div className="mt-4">
-              <p className="font-medium mb-2">Tool Calls:</p>
-              <div className="space-y-2">
-                {result.toolCalls.map((tc, i) => (
-                  <div key={i} className="bg-gray-50 rounded-lg p-2 text-sm">
-                    <span className="font-medium">{tc.tool}</span>
-                    <span className="text-gray-500 ml-2">
-                      {JSON.stringify(tc.args).substring(0, 100)}...
-                    </span>
-                    {tc.result.success && (
-                      <span className="text-green-500 ml-2">✓</span>
+          {/* Tool Calls */}
+          {(result.toolCalls ?? []).length > 0 && (
+            <div>
+              <p className="text-xs font-semibold mb-2" style={{ color: 'var(--color-text-tertiary)' }}>Tool Calls</p>
+              <div className="space-y-1.5">
+                {(result.toolCalls ?? []).map((tc, i) => (
+                  <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-[var(--radius-md)] text-xs" style={{ backgroundColor: 'var(--color-surface-dim)' }}>
+                    <Wrench className="w-3 h-3" style={{ color: 'var(--color-bloom)' }} />
+                    <span className="font-mono font-medium" style={{ color: 'var(--color-ink)' }}>{tc.tool}</span>
+                    <span className="truncate flex-1" style={{ color: 'var(--color-text-tertiary)' }}>{JSON.stringify(tc.args).substring(0, 80)}...</span>
+                    {tc.result?.success !== undefined && (
+                      tc.result.success
+                        ? <span style={{ color: 'var(--color-bloom)' }}>\u2713</span>
+                        : <span style={{ color: 'var(--color-pulse)' }}>\u2717</span>
                     )}
                   </div>
                 ))}

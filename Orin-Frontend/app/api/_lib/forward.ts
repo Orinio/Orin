@@ -1,13 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createServerSupabaseClient } from '@/lib/supabase-server';
 
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3001';
+
+async function resolveAuthToken(req: NextRequest): Promise<string | null> {
+  const headerToken = req.headers.get('Authorization');
+  if (headerToken) return headerToken;
+
+  try {
+    const supabase = await createServerSupabaseClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) {
+      return `Bearer ${session.access_token}`;
+    }
+  } catch {
+    // Fall through
+  }
+
+  return null;
+}
 
 export async function forwardToBackend(
   req: NextRequest,
   path: string,
   options?: { method?: string; body?: any; streaming?: boolean }
 ): Promise<NextResponse> {
-  const authHeader = req.headers.get('Authorization');
+  const authHeader = await resolveAuthToken(req);
   if (!authHeader) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }

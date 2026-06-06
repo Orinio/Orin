@@ -66,7 +66,7 @@ export const toast = {
     },
     options?: ToastOptions
   ) =>
-    sonnerToast.promise(promise, messages, options),
+    sonnerToast.promise(promise, { ...messages, ...options }),
 
   custom: (component: React.ReactNode, options?: ToastOptions) =>
     sonnerToast.custom(component, options),

@@ -65,7 +65,7 @@ export function Tabs({ tabs, value, onChange, className, variant = 'default' }: 
   );
 }
 
-interface TabPanelsProps {
+export interface TabPanelsProps {
   tabs: TabItem[];
   value: string;
   children: ReactNode;

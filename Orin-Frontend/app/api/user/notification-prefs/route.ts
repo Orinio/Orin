@@ -1,15 +1,17 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { supabase, Database } from '@/lib/supabase';
+﻿import { NextRequest, NextResponse } from 'next/server';
+import { getServerSupabase } from '@/lib/supabase-server';
+import type { Database } from '@/lib/supabase';
 import { resolvePublicUserId } from '@/lib/utils';
 
 type NotificationPrefsUpdate = Database['public']['Tables']['notification_preferences']['Update'];
 
 export async function GET(request: NextRequest) {
+  const supabase = await getServerSupabase();
+
   if (!supabase) {
     return NextResponse.json({ error: 'Supabase not configured' }, { status: 500 });
   }
-
-  const userId = await resolvePublicUserId(supabase);
+const userId = await resolvePublicUserId(supabase);
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -41,11 +43,12 @@ export async function GET(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
+  const supabase = await getServerSupabase();
+
   if (!supabase) {
     return NextResponse.json({ error: 'Supabase not configured' }, { status: 500 });
   }
-
-  const userId = await resolvePublicUserId(supabase);
+const userId = await resolvePublicUserId(supabase);
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }

@@ -10,10 +10,9 @@ import type {
   NotificationPreferences,
   Subscription,
 } from "./types";
+import { cn } from "./cn";
 
-export function cn(...classes: Array<string | false | null | undefined>) {
-  return classes.filter(Boolean).join(" ");
-}
+export { cn };
 
 export async function resolvePublicUserId(supabase: SupabaseClient): Promise<string | null> {
   const { data: { user } } = await supabase.auth.getUser();

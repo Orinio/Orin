@@ -1,14 +1,16 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { supabase, Database } from '@/lib/supabase';
+﻿import { NextRequest, NextResponse } from 'next/server';
+import { getServerSupabase } from '@/lib/supabase-server';
+import type { Database } from '@/lib/supabase';
 
 type ContactInsert = Database['public']['Tables']['contact_messages']['Insert'];
 
 export async function POST(request: NextRequest) {
+  const supabase = await getServerSupabase();
+
   if (!supabase) {
     return NextResponse.json({ error: 'Supabase not configured' }, { status: 500 });
   }
-
-  let body: { name?: string; email?: string; subject?: string; message?: string };
+let body: { name?: string; email?: string; subject?: string; message?: string };
   try {
     body = await request.json();
   } catch {

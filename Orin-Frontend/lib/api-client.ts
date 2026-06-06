@@ -1,15 +1,33 @@
+import { supabase } from './supabase';
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
-function getToken(): string | null {
+let cachedToken: string | null = null;
+let cachedTokenExp = 0;
+
+async function getToken(): Promise<string | null> {
   if (typeof window === 'undefined') return null;
-  return localStorage.getItem('token');
+  if (cachedToken && Date.now() < cachedTokenExp - 60_000) return cachedToken;
+  if (!supabase) {
+    try { return localStorage.getItem('token'); } catch { return null; }
+  }
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) {
+      cachedToken = session.access_token;
+      const exp = session.expires_at ? session.expires_at * 1000 : Date.now() + 50 * 60_000;
+      cachedTokenExp = exp;
+      return cachedToken;
+    }
+  } catch {}
+  try { return localStorage.getItem('token'); } catch { return null; }
 }
 
 async function request<T>(
   path: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const token = getToken();
+  const token = await getToken();
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),

@@ -1,12 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { supabase, Database } from '@/lib/supabase';
+﻿import { NextRequest, NextResponse } from 'next/server';
+import { getServerSupabase } from '@/lib/supabase-server';
+import type { Database } from '@/lib/supabase';
 
 export async function GET(request: NextRequest) {
+  const supabase = await getServerSupabase();
+
   if (!supabase) {
     return NextResponse.json({ error: 'Supabase not configured' }, { status: 500 });
   }
-
-  const { searchParams } = new URL(request.url);
+const { searchParams } = new URL(request.url);
   const company = searchParams.get('company');
   const type = searchParams.get('type');
   const search = searchParams.get('search');

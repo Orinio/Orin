@@ -1,14 +1,14 @@
 'use client';
 
-import { InputHTMLAttributes, forwardRef } from 'react';
+import { TextareaHTMLAttributes, forwardRef } from 'react';
 import { cn } from '@/lib/cn';
 
-export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+export interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string;
   error?: string;
 }
 
-export const Input = forwardRef<HTMLInputElement, InputProps>(
+export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
   ({ className, label, error, id, ...props }, ref) => {
     return (
       <div className="space-y-1.5">
@@ -21,11 +21,11 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             {label}
           </label>
         )}
-        <input
+        <textarea
           ref={ref}
           id={id}
           className={cn(
-            'w-full h-11 px-4 rounded-[var(--radius-md)] text-sm transition-all duration-200',
+            'w-full px-4 py-3 rounded-[var(--radius-md)] text-sm transition-all duration-200 resize-none',
             'bg-[var(--color-surface)] border',
             error
               ? 'border-[var(--color-pulse)] focus:ring-2 focus:ring-[var(--color-pulse)]/20'
@@ -47,4 +47,4 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
   }
 );
 
-Input.displayName = 'Input';
+Textarea.displayName = 'Textarea';

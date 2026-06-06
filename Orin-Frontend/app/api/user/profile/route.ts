@@ -1,14 +1,16 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { supabase, Database } from '@/lib/supabase';
+﻿import { NextRequest, NextResponse } from 'next/server';
+import { getServerSupabase } from '@/lib/supabase-server';
+import type { Database } from '@/lib/supabase';
 
 type UserUpdate = Database['public']['Tables']['users']['Update'];
 
 export async function GET(request: NextRequest) {
+  const supabase = await getServerSupabase();
+
   if (!supabase) {
     return NextResponse.json({ error: 'Supabase not configured' }, { status: 500 });
   }
-
-  const { data: { session } } = await supabase.auth.getSession();
+const { data: { session } } = await supabase.auth.getSession();
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -32,11 +34,12 @@ export async function GET(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
+  const supabase = await getServerSupabase();
+
   if (!supabase) {
     return NextResponse.json({ error: 'Supabase not configured' }, { status: 500 });
   }
-
-  const { data: { session } } = await supabase.auth.getSession();
+const { data: { session } } = await supabase.auth.getSession();
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }

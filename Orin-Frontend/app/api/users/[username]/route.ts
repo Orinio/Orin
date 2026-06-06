@@ -1,15 +1,16 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+﻿import { NextRequest, NextResponse } from 'next/server';
+import { getServerSupabase } from '@/lib/supabase-server';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ username: string }> },
 ) {
+  const supabase = await getServerSupabase();
+
   if (!supabase) {
     return NextResponse.json({ error: 'Supabase not configured' }, { status: 500 });
   }
-
-  const { username } = await params;
+const { username } = await params;
 
   if (!username) {
     return NextResponse.json({ error: 'username is required' }, { status: 400 });

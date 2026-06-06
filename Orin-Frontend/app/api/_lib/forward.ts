@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerSupabaseClient } from '@/lib/supabase-server';
+import { getServerSupabase } from '@/lib/supabase-server';
 
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3001';
 
@@ -8,7 +8,7 @@ async function resolveAuthToken(req: NextRequest): Promise<string | null> {
   if (headerToken) return headerToken;
 
   try {
-    const supabase = await createServerSupabaseClient();
+    const supabase = await getServerSupabase();
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.access_token) {
       return `Bearer ${session.access_token}`;

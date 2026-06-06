@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { Menu, X, ChevronDown } from 'lucide-react';
 
 const mainLinks = [
@@ -22,13 +21,8 @@ const resourceLinks = [
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const pathname = usePathname();
 
-  // Close mobile menu on route change.
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => {
-    setIsOpen(false);
-  }, [pathname]);
+  const closeMenu = () => setIsOpen(false);
 
   // Lock body scroll when mobile menu open
   useEffect(() => {
@@ -153,6 +147,7 @@ export default function Navbar() {
             <Link
               key={link.href}
               href={link.href}
+              onClick={closeMenu}
               className="px-4 py-3 rounded-xl text-base font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors duration-150"
             >
               {link.name}
@@ -168,6 +163,7 @@ export default function Navbar() {
             <Link
               key={link.href}
               href={link.href}
+              onClick={closeMenu}
               className="px-4 py-3 rounded-xl text-base font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors duration-150"
             >
               {link.name}
@@ -177,12 +173,14 @@ export default function Navbar() {
           <div className="pt-6 mt-3 flex flex-col gap-3 border-t border-slate-100">
             <Link
               href="/signin"
+              onClick={closeMenu}
               className="block w-full text-center px-4 py-3 text-sm font-bold rounded-xl text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors duration-200"
             >
               Log in
             </Link>
             <Link
               href="/signup"
+              onClick={closeMenu}
               className="block w-full text-center px-4 py-3 text-sm font-bold rounded-xl bg-slate-900 text-white hover:bg-slate-800 transition-colors duration-200"
             >
               Get Started

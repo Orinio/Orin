@@ -1,13 +1,15 @@
 import type { AgentDefinition } from '../core/types.js';
+import { MODELS } from '../core/models.js';
 
 export const opportunityMatcherAgent: AgentDefinition = {
   id: 'opportunity-matcher',
   name: 'Opportunity Matcher Agent',
   description: 'Matches developer skills to job/internship/scholarship opportunities',
-  model: 'meta/llama-3.1-8b-instruct',
+  model: MODELS.toolCalling.primary, // qwen/qwen3.5-397b-a17b - Best tool calling
   temperature: 0.3,
   maxTokens: 400,
   maxIterations: 2,
+  timeoutMs: 45000,
   tools: ['generate_embeddings', 'extract_skills'],
   systemPrompt: `You are Orin Opportunity Matcher. Match developer skills to job/internship/scholarship opportunities.
 

@@ -3,38 +3,70 @@ import { supabase } from '../lib/supabase.js';
 import { logger } from '../lib/logger.js';
 import { getAgent } from '../lib/ai/agents/index.js';
 import { runAgent, runAgentStream } from '../lib/ai/core/agent-runner.js';
-import { initTools } from '../lib/ai/tools/index.js';
 import { analyzeSkills, identifySkillGaps, getSkillRecommendations, extractSkillsFromProofs } from '../lib/skills.js';
 import { checkAIRateLimit, logAIUsage } from '../lib/rate-limit.js';
-import { validateRequest, verifyRequestSchema, chatMessageSchema } from '../lib/validations.js';
-import type { AgentContext } from '../lib/ai/core/types.js';
-
-// Initialize tools on module load
-initTools();
+import { validateRequest, verifyRequestSchema, chatMessageSchema, chatStreamSchema, matchRequestSchema, safetyCheckSchema } from '../lib/validations.js';
+import { buildAgentContext } from '../lib/context.js';
+import { isNvidiaConfigured } from '../lib/ai/core/nvidia.js';
 
 export const aiRouter = Router();
 
-async function buildAgentContext(userId: string): Promise<AgentContext> {
-  const { data: userProfile } = await supabase
-    .from('users')
-    .select('*')
-    .eq('auth_user_id', userId)
-    .single();
+// Simple in-memory cache for opportunities (shared across users, rarely changes)
+const opportunityCache = { data: null as any[] | null, expiresAt: 0 };
+const OPPORTUNITY_CACHE_TTL_MS = 300_000; // 5 minutes
 
-  const { data: proofs } = await supabase
-    .from('proof_cards')
+async function getCachedOpportunities(): Promise<any[]> {
+  const now = Date.now();
+  if (opportunityCache.data && opportunityCache.expiresAt > now) {
+    return opportunityCache.data;
+  }
+
+  const { data } = await supabase
+    .from('opportunities')
     .select('*')
-    .eq('user_id', userProfile?.id)
+    .eq('is_active', true)
     .is('deleted_at', null);
 
-  const skillAnalysis = analyzeSkills(proofs || []);
+  opportunityCache.data = data || [];
+  opportunityCache.expiresAt = now + OPPORTUNITY_CACHE_TTL_MS;
+  return opportunityCache.data;
+}
 
-  return {
-    userId: userProfile?.id || userId,
-    userProfile,
-    proofs: proofs || [],
-    skillAnalysis,
-  };
+/**
+ * Graceful degradation: return a helpful fallback when AI is unavailable.
+ * Uses deterministic logic based on user's existing data.
+ */
+function getFallbackResponse(operation: string, context: any): { answer: string; degraded: boolean } {
+  const skills = extractSkillsFromProofs(context.proofs);
+  const verifiedCount = context.proofs.filter((p: any) => p.verification_status === 'verified').length;
+
+  switch (operation) {
+    case 'chat':
+      return {
+        answer: `I'm currently experiencing high demand. Here's a quick summary of your profile:\n\n` +
+          `• ${context.proofs.length} proofs (${verifiedCount} verified)\n` +
+          `• Top skills: ${skills.slice(0, 5).join(', ') || 'None yet'}\n\n` +
+          `Please try again in a few minutes for AI-powered advice.`,
+        degraded: true,
+      };
+    case 'skills':
+      return {
+        answer: `Skill analysis is temporarily unavailable. Based on your ${context.proofs.length} proofs, ` +
+          `your top skills are: ${skills.slice(0, 10).join(', ') || 'None detected'}.`,
+        degraded: true,
+      };
+    case 'match':
+      return {
+        answer: `Opportunity matching is temporarily unavailable. You have ${context.proofs.length} proofs ` +
+          `covering ${skills.length} unique skills. Try again shortly for personalized matches.`,
+        degraded: true,
+      };
+    default:
+      return {
+        answer: 'AI service is temporarily unavailable. Please try again in a few minutes.',
+        degraded: true,
+      };
+  }
 }
 
 // POST /ai/verify — Verify a proof
@@ -163,6 +195,13 @@ aiRouter.post('/chat', async (req, res) => {
     const context = await buildAgentContext((req as any).user.id);
     context.conversationHistory = history?.slice(-6).map((m: any) => ({ role: m.role, content: m.content }));
 
+    // Graceful degradation: return fallback if AI is unavailable
+    if (!isNvidiaConfigured()) {
+      const fallback = getFallbackResponse('chat', context);
+      res.json({ success: true, response: { content: fallback.answer, thinking: '', degraded: fallback.degraded } });
+      return;
+    }
+
     const agent = getAgent('chat')!;
     const result = await runAgent(agent, message, context);
 
@@ -186,11 +225,13 @@ aiRouter.post('/chat-stream', async (req, res) => {
       return;
     }
 
-    const { message, history = [] } = req.body;
-    if (!message || typeof message !== 'string') {
-      res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'Message is required' } });
+    const streamValidation = validateRequest(chatStreamSchema, req.body);
+    if (!streamValidation.success) {
+      res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: streamValidation.error } });
       return;
     }
+
+    const { message, history } = streamValidation.data;
 
     const context = await buildAgentContext((req as any).user.id);
     context.conversationHistory = history.slice(-6).map((m: any) => ({ role: m.role, content: m.content }));
@@ -274,13 +315,11 @@ aiRouter.post('/match', async (req, res) => {
     }
 
     const context = await buildAgentContext((req as any).user.id);
-    const { limit = 10 } = req.body;
 
-    const { data: opportunities } = await supabase
-      .from('opportunities')
-      .select('*')
-      .eq('is_active', true)
-      .is('deleted_at', null);
+    const matchValidation = validateRequest(matchRequestSchema, req.body);
+    const { limit } = matchValidation.success ? matchValidation.data : { limit: 10 };
+
+    const opportunities = await getCachedOpportunities();
 
     const userSkillsSet = new Set(extractSkillsFromProofs(context.proofs).map(s => s.toLowerCase()));
 
@@ -328,6 +367,17 @@ aiRouter.post('/learning-path', async (req, res) => {
     const context = await buildAgentContext((req as any).user.id);
     const { targetRole, timeframe = '3months' } = req.body;
 
+    if (!targetRole || typeof targetRole !== 'string') {
+      res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'targetRole is required' } });
+      return;
+    }
+
+    const validTimeframes = ['1month', '3months', '6months', '1year'];
+    if (!validTimeframes.includes(timeframe)) {
+      res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: `timeframe must be one of: ${validTimeframes.join(', ')}` } });
+      return;
+    }
+
     const userSkills = extractSkillsFromProofs(context.proofs);
     const skillGaps = identifySkillGaps(userSkills, targetRole);
     const agent = getAgent('learning-path')!;
@@ -364,10 +414,27 @@ aiRouter.post('/score', async (req, res) => {
 // POST /ai/safety — Check safety
 aiRouter.post('/safety', async (req, res) => {
   try {
-    const { url, email } = req.body;
-    const context = await buildAgentContext((req as any).user?.id || '');
+    const userId = (req as any).user?.id;
+    if (!userId) {
+      res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } });
+      return;
+    }
+
+    const safetyValidation = validateRequest(safetyCheckSchema, req.body);
+    if (!safetyValidation.success) {
+      res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: safetyValidation.error } });
+      return;
+    }
+
+    const { url, email } = safetyValidation.data;
+    if (!url && !email) {
+      res.status(400).json({ error: { code: 'MISSING_FIELDS', message: 'Either url or email is required' } });
+      return;
+    }
+
+    const context = await buildAgentContext(userId);
     const agent = getAgent('safety-guard')!;
-    const query = url ? `Check safety of URL: ${url}` : email ? `Validate email: ${email}` : 'No input provided';
+    const query = url ? `Check safety of URL: ${url}` : `Validate email: ${email}`;
     const result = await runAgent(agent, query, context);
     res.json({ success: true, result: { thinking: result.thinking, answer: result.answer, safe: result.answer.toLowerCase().includes('safe'), toolCalls: result.toolCalls.map(tc => ({ tool: tc.tool, success: tc.result.success, data: tc.result.data })) } });
   } catch (err) {

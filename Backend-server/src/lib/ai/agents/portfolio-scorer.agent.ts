@@ -1,13 +1,15 @@
 import type { AgentDefinition } from '../core/types.js';
+import { MODELS } from '../core/models.js';
 
 export const portfolioScorerAgent: AgentDefinition = {
   id: 'portfolio-scorer',
   name: 'Portfolio Scorer Agent',
   description: 'Scores a developer portfolio from 0-100 based on multiple factors',
-  model: 'meta/llama-3.1-8b-instruct',
+  model: MODELS.fast.chat, // qwen/qwen3.5-397b-a17b - Fast structured output
   temperature: 0.3,
   maxTokens: 300,
   maxIterations: 1,
+  timeoutMs: 45000,
   tools: ['analyze_portfolio', 'generate_embeddings'],
   systemPrompt: `You are Orin Portfolio Scorer. Score a developer's portfolio from 0-100.
 

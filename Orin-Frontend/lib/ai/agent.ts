@@ -2,7 +2,47 @@ import { allTools, getToolByName, type Tool, type ToolResult, type ToolCall, typ
 
 const NVIDIA_API_KEY = process.env.NVIDIA_API_KEY;
 const NVIDIA_BASE_URL = 'https://integrate.api.nvidia.com/v1';
-const BEST_MODEL = 'meta/llama-3.1-8b-instruct';
+
+// ============================================================
+// Selected Models from Competition Testing
+// ============================================================
+const MODELS = {
+  // Primary Models (Best Overall)
+  primary: {
+    chat: 'qwen/qwen3.5-397b-a17b',           // Best speed + tool calling
+    coach: 'qwen/qwen3-coder-480b-a35b-instruct', // Best quality
+    learning: 'qwen/qwen3-coder-480b-a35b-instruct', // Detailed reasoning
+  },
+
+  // Fast Models (Speed Priority)
+  fast: {
+    chat: 'qwen/qwen3.5-397b-a17b',           // 3.8s, 69 tokens/sec
+    quick: 'meta/llama-3.2-3b-instruct',       // 4.1s, 95 tokens/sec
+    nano: 'nvidia/llama-3.1-nemotron-nano-8b-v1', // 5.9s, 92 tokens/sec
+  },
+
+  // Vision Models (Image Understanding)
+  vision: {
+    primary: 'meta/llama-3.2-90b-vision-instruct',    // Best vision
+    fast: 'meta/llama-3.2-11b-vision-instruct',       // Faster alternative
+  },
+
+  // Embedding Models (Vector Search)
+  embedding: {
+    primary: 'baai/bge-m3',                    // Fastest (882ms, 1024 dim)
+  },
+
+  // Safety Models (Content Moderation)
+  safety: {
+    content: 'nvidia/llama-3.1-nemoguard-8b-content-safety', // 1.0s
+    pii: 'nvidia/gliner-pii',                           // 0.5s
+  },
+
+  // Tool Calling Models (Function Invocation)
+  toolCalling: {
+    primary: 'qwen/qwen3.5-397b-a17b',         // Best tool calling
+  }
+};
 
 const MAX_INPUT_LENGTH = 2000;
 const MAX_AGENT_ITERATIONS = 5;
@@ -23,7 +63,7 @@ export interface AgentResult {
 }
 
 const DEFAULT_CONFIG: AgentConfig = {
-  model: BEST_MODEL,
+  model: MODELS.toolCalling.primary, // Best for tool calling
   maxIterations: 5,
   temperature: 0.3,
   maxTokens: 500
@@ -220,7 +260,7 @@ export async function verifyProof(proofUrl: string, sourceType: string): Promise
       query = `Verify this URL is safe and accessible: ${proofUrl}. Use check_url_safety and fetch_webpage tools.`;
   }
 
-  return runAgent(query, { model: BEST_MODEL, maxIterations: 3 });
+  return runAgent(query, { model: MODELS.fast.nano, maxIterations: 3 });
 }
 
 export async function analyzeProofQuality(proof: {
@@ -238,26 +278,168 @@ export async function analyzeProofQuality(proof: {
   if (proof.url) query += `URL: ${proof.url}\n`;
   query += `\nProvide constructive feedback on how to improve this proof card. Use extract_skills to analyze the description.`;
 
-  return runAgent(query, { model: BEST_MODEL, maxIterations: 2 });
+  return runAgent(query, { model: MODELS.fast.chat, maxIterations: 2 });
 }
 
 export async function extractSkillsFromText(text: string): Promise<AgentResult> {
   return runAgent(
     `Extract all technical skills from this text: "${text}". Use the extract_skills tool.`,
-    { model: BEST_MODEL, maxIterations: 1 }
+    { model: MODELS.fast.chat, maxIterations: 1 }
   );
 }
 
 export async function checkUrlSafety(url: string): Promise<AgentResult> {
   return runAgent(
     `Check if this URL is safe: ${url}. Use check_url_safety tool and provide a safety assessment.`,
-    { model: BEST_MODEL, maxIterations: 2 }
+    { model: MODELS.fast.nano, maxIterations: 2 }
   );
 }
 
 export async function analyzeGitHubProfile(username: string): Promise<AgentResult> {
   return runAgent(
     `Analyze this GitHub profile: ${username}. Use verify_github_user tool to get their profile information.`,
-    { model: BEST_MODEL, maxIterations: 2 }
+    { model: MODELS.fast.chat, maxIterations: 2 }
   );
+}
+
+// ============================================================
+// New AI Services (Embedding, Vision, Safety)
+// ============================================================
+
+/**
+ * Generate embeddings for text
+ */
+export async function generateEmbedding(text: string): Promise<{
+  embedding: number[];
+  dimensions: number;
+  tokensUsed: number;
+}> {
+  if (!NVIDIA_API_KEY) {
+    throw new Error('NVIDIA API key not configured');
+  }
+
+  const response = await fetch(`${NVIDIA_BASE_URL}/embeddings`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${NVIDIA_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: MODELS.embedding.primary,
+      input: text
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Embedding API error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const embedding = data.data?.[0]?.embedding || [];
+
+  return {
+    embedding,
+    dimensions: embedding.length,
+    tokensUsed: data.usage?.total_tokens || 0
+  };
+}
+
+/**
+ * Analyze image with vision model
+ */
+export async function analyzeImage(imageUrl: string, prompt?: string): Promise<{
+  content: string;
+  tokensUsed: number;
+}> {
+  if (!NVIDIA_API_KEY) {
+    throw new Error('NVIDIA API key not configured');
+  }
+
+  const response = await fetch(`${NVIDIA_BASE_URL}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${NVIDIA_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: MODELS.vision.primary,
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'text', text: prompt || 'Describe what you see in this image.' },
+          { type: 'image_url', image_url: { url: imageUrl } }
+        ]
+      }],
+      max_tokens: 500,
+      temperature: 0.3
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Vision API error: ${response.status}`);
+  }
+
+  const data = await response.json();
+
+  return {
+    content: data.choices?.[0]?.message?.content || '',
+    tokensUsed: data.usage?.total_tokens || 0
+  };
+}
+
+/**
+ * Check content safety
+ */
+export async function checkContentSafety(text: string): Promise<{
+  isSafe: boolean;
+  userSafety: string;
+  responseSafety: string;
+}> {
+  if (!NVIDIA_API_KEY) {
+    return { isSafe: true, userSafety: 'safe', responseSafety: 'safe' };
+  }
+
+  try {
+    const response = await fetch(`${NVIDIA_BASE_URL}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${NVIDIA_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: MODELS.safety.content,
+        messages: [{
+          role: 'user',
+          content: `Check if this content is safe. Return JSON: {"User Safety": "safe" or "unsafe", "Response Safety": "safe" or "unsafe"}\n\nContent: ${text}`
+        }],
+        max_tokens: 100,
+        temperature: 0.1
+      }),
+    });
+
+    if (!response.ok) {
+      return { isSafe: true, userSafety: 'safe', responseSafety: 'safe' };
+    }
+
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content || '';
+
+    try {
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        return {
+          isSafe: parsed['User Safety'] === 'safe' && parsed['Response Safety'] === 'safe',
+          userSafety: parsed['User Safety'] || 'safe',
+          responseSafety: parsed['Response Safety'] || 'safe'
+        };
+      }
+    } catch (e) {
+      // Default to safe
+    }
+
+    return { isSafe: true, userSafety: 'safe', responseSafety: 'safe' };
+  } catch (error) {
+    return { isSafe: true, userSafety: 'safe', responseSafety: 'safe' };
+  }
 }

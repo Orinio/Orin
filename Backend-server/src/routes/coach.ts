@@ -4,13 +4,9 @@ import { supabase } from '../lib/supabase.js';
 import { logger } from '../lib/logger.js';
 import { getAgent } from '../lib/ai/agents/index.js';
 import { runAgent } from '../lib/ai/core/agent-runner.js';
-import { initTools } from '../lib/ai/tools/index.js';
-import { analyzeSkills } from '../lib/skills.js';
 import { getPromptForNoteType, parseCoachResponse } from '../lib/prompts.js';
 import { checkRateLimit } from '../lib/rate-limit.js';
-import type { AgentContext } from '../lib/ai/core/types.js';
-
-initTools();
+import { buildAgentContext } from '../lib/context.js';
 
 export const coachRouter = Router();
 
@@ -19,30 +15,6 @@ const generateNoteSchema = z.object({
   milestone: z.string().optional(),
   userQuery: z.string().optional(),
 });
-
-async function buildCoachContext(userId: string): Promise<AgentContext> {
-  const { data: userProfile } = await supabase
-    .from('users')
-    .select('*')
-    .eq('auth_user_id', userId)
-    .single();
-
-  const { data: proofs } = await supabase
-    .from('proof_cards')
-    .select('*')
-    .eq('user_id', userProfile?.id)
-    .is('deleted_at', null)
-    .order('created_at', { ascending: false });
-
-  const skillAnalysis = analyzeSkills(proofs || []);
-
-  return {
-    userId: userProfile?.id || userId,
-    userProfile,
-    proofs: proofs || [],
-    skillAnalysis,
-  };
-}
 
 // POST /coach/generate — Generate a coach note
 coachRouter.post('/generate', async (req, res) => {
@@ -67,7 +39,7 @@ coachRouter.post('/generate', async (req, res) => {
       return;
     }
 
-    const context = await buildCoachContext((req as any).user.id);
+    const context = await buildAgentContext((req as any).user.id);
     const agent = getAgent('coach')!;
 
     // Build the prompt using the prompts library

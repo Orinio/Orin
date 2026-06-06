@@ -1,13 +1,15 @@
 import type { AgentDefinition } from '../core/types.js';
+import { MODELS } from '../core/models.js';
 
 export const skillAnalysisAgent: AgentDefinition = {
   id: 'skill-analysis',
   name: 'Skill Analysis Agent',
   description: 'Extracts, categorizes, and scores technical skills',
-  model: 'meta/llama-3.1-8b-instruct',
+  model: MODELS.fast.chat, // qwen/qwen3.5-397b-a17b - Fast with good analysis
   temperature: 0.3,
   maxTokens: 400,
   maxIterations: 2,
+  timeoutMs: 30000,
   tools: ['extract_skills', 'generate_embeddings', 'detect_language'],
   systemPrompt: `You are Orin Skill Analyst. Extract, categorize, and score technical skills from text and portfolios.
 

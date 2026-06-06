@@ -1,0 +1,498 @@
+{
+  "timestamp": "2026-06-06T04:36:12.542Z",
+  "results": {
+    "textGenerationLight": [
+      {
+        "model": "meta/llama-3.1-8b-instruct",
+        "success": true,
+        "content": "With React and JavaScript as your foundation, here are the top skills to learn next:\n\n1. **State Management**: Learn about Redux, MobX, or Context API to manage global state in your React applications.\n2. **CSS Frameworks**: Familiarize yourself with CSS-in-JS solutions like styled-components, Emotion, or CSS Grid for efficient styling.\n3. **TypeScript**: Learn the basics of TypeScript to write more maintainable and scalable code.\n4. **Testing Frameworks**: Learn Jest, Enzyme, or Cypress for efficient unit testing and end-to-end testing.\n5. **Accessibility**: Understand how to make your applications accessible to users with disabilities.\n6. **Web Performance Optimization**: Learn about techniques like code splitting, lazy loading, and caching to improve application performance.\n7. **Modern Frontend Tools**: Familiarize yourself with tools like Webpack, Babel, and ESLint to streamline your development workflow.\n\nTo get started, focus on one or two areas and build small projects to reinforce your learning.\n\n**Recommended learning resources:**\n\n* FreeCodeCamp (interactive coding challenges and projects)\n* Tyler McGinnis (React and JavaScript tutorials)\n* Traversy Media (React and JavaScript tutorials)\n* Pluralsight (in-depth courses on frontend development)\n\n**Job readiness:** Once you've mastered these skills, you'll be well-prepared for a frontend developer role. Focus on building a strong portfolio and practicing your skills through real-world projects.",
+        "duration": 4301,
+        "tokensUsed": 370,
+        "tokensPerSecond": 86,
+        "finishReason": "stop",
+        "score": 57
+      },
+      {
+        "model": "meta/llama-3.2-3b-instruct",
+        "success": true,
+        "content": "With React and JavaScript under your belt, here's a suggested learning path to boost your chances of landing a frontend developer job:\n\n**Must-knows:**\n\n1. **CSS**: Understand CSS fundamentals, including selectors, properties, and box model.\n2. **State Management**: Learn about state management libraries like Redux, MobX, or React Context API.\n3. **Routing**: Familiarize yourself with client-side routing libraries like React Router.\n\n**Highly recommended:**\n\n1. **TypeScript**: Learn TypeScript to improve your code maintainability and scalability.\n2. **Web Performance Optimization**: Understand how to optimize your code for faster page loads and better user experience.\n3. **Accessibility**: Learn about accessibility principles and how to implement them in your code.\n\n**Nice-to-haves:**\n\n1. **Frontend Build Tools**: Learn about tools like Webpack, Babel, and ESLint.\n2. **Testing Frameworks**: Familiarize yourself with testing frameworks like Jest or Cypress.\n3. **Design Systems**: Understand how to create and maintain design systems.\n\n**Additional tips:**\n\n1. **Build personal projects**: Create projects that demonstrate your skills to potential employers.\n2. **Participate in coding challenges**: Websites like HackerRank, CodeWars, and FreeCodeCamp can help you improve your coding skills.\n3. **Network with developers**: Join online communities like Reddit's r/webdev, Stack Overflow, or attend meetups to connect with other developers.\n\nFocus on building a strong foundation in these areas, and you'll be well-prepared for a frontend developer job.",
+        "duration": 4101,
+        "tokensUsed": 391,
+        "tokensPerSecond": 95.3,
+        "finishReason": "stop",
+        "score": 57
+      },
+      {
+        "model": "google/gemma-2-9b-it",
+        "success": false,
+        "error": "404: 404 page not found\n",
+        "duration": 270,
+        "tokensPerSecond": 0
+      },
+      {
+        "model": "mistralai/mistral-7b-instruct-v0.3",
+        "success": false,
+        "error": "404: {\"status\":404,\"title\":\"Not Found\",\"detail\":\"Function 'cd89bd68-13e3-47a9-861e-9a62e6e14b05': Not fou",
+        "duration": 136,
+        "tokensPerSecond": 0
+      },
+      {
+        "model": "nvidia/llama-3.1-nemotron-nano-8b-v1",
+        "success": true,
+        "content": "As a frontend developer with a strong background in React and JavaScript, here are some areas you could consider learning next to further enhance your skills and increase your chances of landing a frontend developer job:\n\n1. **Frontend Frameworks**: Besides React, learning another popular frontend framework like Angular or Vue.js can provide you with a broader skill set. These frameworks have their own unique features and use cases, which can make you more versatile in different projects.\n\n2. **CSS and Styling**: While you might have some experience with CSS, deepening your understanding of CSS can help you create more visually appealing and responsive designs. Learning CSS preprocessors like Sass or Less can also be beneficial for managing large-scale projects.\n\n3. **TypeScript**: If you haven't already, learning TypeScript can significantly improve your JavaScript development experience. TypeScript adds type safety, improves code maintainability, and helps catch potential errors early in the development process.\n\n4. **JavaScript Libraries and Tools**: Familiarize yourself with popular JavaScript libraries like React Router, Redux, or React Hooks. These can help you build more complex applications more efficiently.\n\n5. **Web Performance**: Understanding web performance optimization techniques, such as lazy loading, caching, and code splitting, can make you a more valuable asset in modern frontend development.\n\n6. **Responsive Design**: Learning how to create responsive web designs that work well on various devices and screen sizes is crucial for a frontend developer. This involves understanding CSS media queries, responsive design principles, and user experience (UX) design.\n\n7. **Accessibility**: Ensuring that your applications are accessible to people with disabilities is a growing requirement in the tech industry. Learning about accessibility best practices, such as screen reader compatibility and keyboard navigation, can help you meet this standard.\n\n8. **DevTools**: Proficiency with modern web development tools like the browser's developer tools (Chrome DevTools, Firefox DevTools, etc.) can help you debug and optimize your applications more quickly.\n\n9. **API Integration**: Learning how to integrate APIs into your frontend applications can open up new opportunities for building more complex and dynamic user interfaces.\n\n10. **Web Architecture**: Understanding how to structure your frontend applications, including how to separate concerns, manage state, and handle data, can help you build more scalable and maintainable applications.\n\nRemember, the key to success in any field is continuous learning and adaptation to new technologies and trends. Stay up-to-date with the latest frontend development trends and best practices.",
+        "duration": 5913,
+        "tokensUsed": 543,
+        "tokensPerSecond": 91.8,
+        "finishReason": "stop",
+        "score": 57
+      },
+      {
+        "model": "microsoft/phi-4-mini-instruct",
+        "success": false,
+        "error": "The operation was aborted due to timeout",
+        "duration": 20019,
+        "tokensPerSecond": 0
+      }
+    ],
+    "textGenerationMedium": [
+      {
+        "model": "meta/llama-3.1-70b-instruct",
+        "success": false,
+        "error": "The operation was aborted due to timeout",
+        "duration": 25006,
+        "tokensPerSecond": 0
+      },
+      {
+        "model": "meta/llama-3.3-70b-instruct",
+        "success": false,
+        "error": "The operation was aborted due to timeout",
+        "duration": 25013,
+        "tokensPerSecond": 0
+      },
+      {
+        "model": "mistralai/mistral-large-2-instruct",
+        "success": false,
+        "error": "404: {\"status\":404,\"title\":\"Not Found\",\"detail\":\"Function '7fadd4de-e22a-48e4-90e9-f02ef14a74b9': Not fou",
+        "duration": 278,
+        "tokensPerSecond": 0
+      },
+      {
+        "model": "deepseek-ai/deepseek-v4-flash",
+        "success": false,
+        "error": "The operation was aborted due to timeout",
+        "duration": 25015,
+        "tokensPerSecond": 0
+      },
+      {
+        "model": "qwen/qwen3.5-122b-a10b",
+        "success": false,
+        "error": "500: {\"error\":{\"message\":\"invalid type: unit variant, expected newtype variant at line 1 column 40\",\"type",
+        "duration": 983,
+        "tokensPerSecond": 0
+      },
+      {
+        "model": "nvidia/llama-3.3-nemotron-super-49b-v1",
+        "success": true,
+        "content": "With React and JavaScript under your belt, here's a focused learning path to enhance your chances of landing a frontend developer job:\n\n### 1. **Deep Dive into Related Frontend Technologies**\n\n- **State Management**: Learn Redux (and optionally, React Context for smaller apps) to manage global state effectively.\n- **Routing**: Familiarize yourself with React Router for client-side routing.\n- **CSS Frameworks/Styling Solutions**:\n  - **Choose One**: Bootstrap, Material-UI, or Tailwind CSS to understand how to integrate and leverage pre-built UI components.\n  - **CSS-in-JS**: Optionally, learn one like Styled Components or Emotion for a more integrated React workflow.\n\n### 2. **Modern Frontend Essentials**\n\n- **TypeScript**: Understanding TypeScript is crucial. It's widely adopted in the industry for its type safety.\n- **Web Performance Optimization Techniques**: Learn how to optimize webpage load times, lazy loading, code splitting, etc.\n- **Accessibility (A11y)**: Principles and practices for making your frontend accessible.\n\n### 3. **Tools and Methodologies**\n\n- **Version Control with Git**: Ensure you're proficient beyond the basics (e.g., branching strategies, resolving conflicts).\n- **CI/CD Pipelines**: Basic understanding of how Continuous Integration/Continuous Deployment works (e.g., with GitHub Actions).\n- **Agile Methodologies**: Familiarize yourself with Scrum or Kanban, as they're widely used in development teams.\n\n### 4. **Project Portfolio**\n\n- **Build Diverse Projects**:\n  - A personal website/blog with TypeScript, React, and a CSS framework.\n  - An app integrating with a backend API (mock or real, e.g., a weather app, to-do list with storage).\n  - **Contribute to Open Source**: Even small contributions can be beneficial.\n\n### Learning Resources\n\n- **Official Docs**: Always the best for React, TypeScript, etc.\n- **Courses**:\n  - Udemy, Coursera, or Pluralsight for structured learning (e.g., TypeScript, Redux, Web Performance).\n  - FreeCodeCamp for CSS, Accessibility, and a project-driven approach.\n- **Blogs and YouTube**:\n  - Traversy Media, The Net Ninja, and Tyler McGinnis for varied frontend topics.\n  - Smashing Magazine, A List Apart for deeper dives into frontend development and UX.\n\n### Actionable 3-Month Plan\n\n|",
+        "duration": 18175,
+        "tokensUsed": 550,
+        "tokensPerSecond": 30.3,
+        "finishReason": "length",
+        "score": 57
+      }
+    ],
+    "textGenerationHeavy": [
+      {
+        "model": "moonshotai/kimi-k2.6",
+        "success": true,
+        "content": "  pilfered from React, the UI framework. In the React, you must useState. The state is a hook, a hook for memory. But the memory is fragile. The memory is a thread. The thread is a promise. The promise is a lie. \n\nThe `useState` is a hook. The hook is a trap. The trap is the memory. The memory is a thread. The thread is a promise. The promise is a lie. The lie is the hook. The hook is a trap. The trap is the memory. The memory is a thread. The thread is a promise. The promise is a lie. The lie is the hook. The hook is a trap. The trap is the memory. The memory is a thread. The thread is a promise. The promise is a lie. The lie is the hook. The hook is a trap. The trap is the memory. The memory is a thread. The thread is a promise. The promise is a lie. The lie is the hook. The hook is a trap. The trap is the memory. The memory is a thread. The thread is a promise. The promise is a lie. The lie is the hook. The hook is a trap. The trap is the memory. The memory is a thread. The thread is a promise. The promise is a lie. The lie is the hook. The hook is a trap. The trap is the memory. The memory is a thread. The thread is a promise. The promise is a lie. The lie is the hook. The hook is a trap. The trap is the memory. The memory is a thread. The thread is a promise. The promise is a lie. The lie is the hook. The hook is a trap. The trap is the memory. The memory is a thread. The thread is a promise. The promise is a lie. The lie is the hook. The hook is a trap. The trap is the memory. The memory is a thread. The thread is a promise. The promise is a lie. The lie is the hook. The hook is a trap. The trap is the memory. The memory is a thread. The thread is a promise. The promise is a lie. The lie is the hook. The hook is a trap. The trap is the memory. The memory is a thread. The thread is a promise. The promise is a lie. The lie is the hook. The hook is a",
+        "duration": 17460,
+        "tokensUsed": 549,
+        "tokensPerSecond": 31.4,
+        "finishReason": "length",
+        "score": 43
+      },
+      {
+        "model": "deepseek-ai/deepseek-v4-pro",
+        "success": false,
+        "error": "The operation was aborted due to timeout",
+        "duration": 45017,
+        "tokensPerSecond": 0
+      },
+      {
+        "model": "minimaxai/minimax-m2.7",
+        "success": true,
+        "content": "\n\n# Next Steps for Frontend Job Readiness\n\n## Core Skills to Add\n\n1. **TypeScript** — Most job postings require it. Learn the basics (types, interfaces, generics).\n\n2. **CSS & Styling** — Master one of:\n   - CSS Modules or Styled Components\n   - Tailwind CSS (very popular in job listings)\n\n3. **State Management** — Learn one of:\n   - React Context + useReducer\n   - Zustand or Jotai (simpler alternatives)\n   - Redux Toolkit (legacy but still in demand)\n\n4. **Git & GitHub** — Branching, PRs, code reviews (non-negotiable)\n\n## Build Real Projects\n\n- **Ship 2-3 portfolio projects** on GitHub\n- Include: a full app, API integration, and deployment\n- Deploy with Vercel or Netlify (free)\n\n## Fill the Gaps\n\n| Skill | Why |\n|-------|-----|\n| REST APIs / fetch | Every job needs this |\n| Chrome DevTools | Debugging is daily work |\n| Accessibility (a11y) | Shows quality awareness |\n| Testing basics (Vitest/React Testing Library) | Stand out from other juniors |\n\n## Quick Path to Job-Ready\n\n```\nWeek 1-2: TypeScript + CSS framework\nWeek 3-4: Build a project + deploy it\nWeek 5-6: Learn testing + polish portfolio\nWeek 7+: Apply and interview\n```\n\n**Start with TypeScript today** — it's the highest ROI skill for your next job.",
+        "duration": 14025,
+        "tokensUsed": 414,
+        "tokensPerSecond": 29.5,
+        "finishReason": "stop",
+        "score": 43
+      },
+      {
+        "model": "z-ai/glm-5.1",
+        "success": false,
+        "error": "The operation was aborted due to timeout",
+        "duration": 45005,
+        "tokensPerSecond": 0
+      },
+      {
+        "model": "mistralai/mistral-large-3-675b-instruct-2512",
+        "success": false,
+        "error": "The operation was aborted due to timeout",
+        "duration": 45004,
+        "tokensPerSecond": 0
+      },
+      {
+        "model": "qwen/qwen3-coder-480b-a35b-instruct",
+        "success": true,
+        "content": "Focus on these high-impact skills:\n\n**Immediate priorities:**\n- **TypeScript** - Most companies expect it for React development\n- **CSS frameworks** (Tailwind CSS or Sass) - Essential for styling in modern workflows\n- **State management** (Redux Toolkit or Context API) - Handle complex application state\n\n**Add these to stand out:**\n- **Testing** (Jest + React Testing Library) - Employers love testable code\n- **TypeScript** - Type-safe JavaScript is now standard\n- **Build tools** (Vite or Webpack basics) - Understanding bundling matters\n\n**Job application tips:**\n- Build 2-3 portfolio projects using these technologies\n- Learn the testing library ecosystem - it's expected knowledge\n- Understand accessibility (a11y) basics\n\nStart with TypeScript + a modern CSS solution, then add testing. This combination will make you competitive for most frontend roles.\n\nWhich of these excites you most to tackle first?",
+        "duration": 13148,
+        "tokensUsed": 250,
+        "tokensPerSecond": 19,
+        "finishReason": "stop",
+        "score": 63
+      },
+      {
+        "model": "qwen/qwen3.5-397b-a17b",
+        "success": true,
+        "content": "You have a solid foundation. To become job-ready, focus on these four high-impact areas:\n\n1.  **TypeScript**: Most modern React roles require it. Learn static typing, interfaces, and generics to write safer, scalable code.\n2.  **Next.js**: Master this React framework for Server-Side Rendering (SSR), routing, and API integration. It is the industry standard for production React apps.\n3.  **State Management & Data Fetching**: Move beyond `useState`. Learn **TanStack Query** (React Query) for server state and **Zustand** or **Redux Toolkit** for complex client state.\n4.  **Testing & Tooling**: Learn **Vitest** or **Jest** with **React Testing Library**. Employers need to know you can write reliable tests.\n\n**Action Plan:** Build one full-stack portfolio project using **Next.js, TypeScript, and Tailwind CSS**. Deploy it on Vercel and ensure it includes authentication, data fetching, and unit tests.",
+        "duration": 3838,
+        "tokensUsed": 265,
+        "tokensPerSecond": 69,
+        "finishReason": "stop",
+        "score": 63
+      },
+      {
+        "model": "nvidia/llama-3.1-nemotron-ultra-253b-v1",
+        "success": false,
+        "error": "404: {\"status\":404,\"title\":\"Not Found\",\"detail\":\"Function '84bf12ff-edbd-4435-baea-0fa6a7453d2e': Not fou",
+        "duration": 353,
+        "tokensPerSecond": 0
+      }
+    ],
+    "codeGeneration": [
+      {
+        "model": "mistralai/codestral-22b-instruct-v0.1",
+        "success": false,
+        "error": "404: {\"status\":404,\"title\":\"Not Found\",\"detail\":\"Function '9a10b012-e6df-46fd-83b2-700dcbc75814': Not fou",
+        "duration": 356,
+        "tokensPerSecond": 0
+      },
+      {
+        "model": "bigcode/starcoder2-15b",
+        "success": false,
+        "error": "404: 404 page not found\n",
+        "duration": 313,
+        "tokensPerSecond": 0
+      },
+      {
+        "model": "deepseek-ai/deepseek-coder-6.7b-instruct",
+        "success": false,
+        "error": "404: {\"status\":404,\"title\":\"Not Found\",\"detail\":\"Function 'e503b15c-62b0-4d69-b532-a88f0bfa2656': Not fou",
+        "duration": 359,
+        "tokensPerSecond": 0
+      },
+      {
+        "model": "google/codegemma-1.1-7b",
+        "success": false,
+        "error": "404: {\"status\":404,\"title\":\"Not Found\",\"detail\":\"Function 'e2d298c5-204e-4213-b921-9f492cc9011b': Not fou",
+        "duration": 401,
+        "tokensPerSecond": 0
+      },
+      {
+        "model": "ibm/granite-34b-code-instruct",
+        "success": false,
+        "error": "404: {\"status\":404,\"title\":\"Not Found\",\"detail\":\"Function '4df48b4f-e3c5-4ade-82c7-c06b65e25d18': Not fou",
+        "duration": 363,
+        "tokensPerSecond": 0
+      },
+      {
+        "model": "meta/codellama-70b",
+        "success": false,
+        "error": "404: {\"status\":404,\"title\":\"Not Found\",\"detail\":\"Function 'f6b06895-d073-4714-8bb2-26c09e9f6597': Not fou",
+        "duration": 411,
+        "tokensPerSecond": 0
+      }
+    ],
+    "embeddings": [
+      {
+        "model": "nvidia/nv-embed-v1",
+        "success": true,
+        "duration": 3993,
+        "dimensions": 4096,
+        "embeddingCount": 3,
+        "tokensUsed": 27
+      },
+      {
+        "model": "nvidia/nv-embedqa-e5-v5",
+        "success": false,
+        "error": "400: {\"error\":\"'input_type' parameter is required for asymmetric models\"}",
+        "duration": 806,
+        "dimensions": 0
+      },
+      {
+        "model": "nvidia/nv-embedqa-mistral-7b-v2",
+        "success": false,
+        "error": "404: {\"status\":404,\"title\":\"Not Found\",\"detail\":\"Function '6caf65cf-1c3a-4823-89a5-21b821640d99': Not fou",
+        "duration": 317,
+        "dimensions": 0
+      },
+      {
+        "model": "nvidia/llama-3.2-nv-embedqa-1b-v1",
+        "success": false,
+        "error": "404: {\"status\":404,\"title\":\"Not Found\",\"detail\":\"Function 'b51e8011-e772-4c9a-8b02-618e99ae4467': Not fou",
+        "duration": 325,
+        "dimensions": 0
+      },
+      {
+        "model": "baai/bge-m3",
+        "success": true,
+        "duration": 882,
+        "dimensions": 1024,
+        "embeddingCount": 3,
+        "tokensUsed": 39
+      },
+      {
+        "model": "snowflake/arctic-embed-l",
+        "success": false,
+        "error": "404: {\"status\":404,\"title\":\"Not Found\",\"detail\":\"Function '1528a0ad-205a-46ac-a783-94e2372586a9': Not fou",
+        "duration": 390,
+        "dimensions": 0
+      },
+      {
+        "model": "nvidia/embed-qa-4",
+        "success": false,
+        "error": "404: {\"status\":404,\"title\":\"Not Found\",\"detail\":\"Function '09c64e32-2b65-4892-a285-2f585408d118': Not fou",
+        "duration": 359,
+        "dimensions": 0
+      }
+    ],
+    "vision": [
+      {
+        "model": "meta/llama-3.2-90b-vision-instruct",
+        "success": true,
+        "content": "Based on the certificate image you provided (which I can visually see), I can identify the following information that can be extracted:\n\n1. **Certificate Name**: The name of the certificate, which is usually displayed prominently at the top of the certificate.\n2. **Recipient's Name**: The name of the individual or organization that the certificate is being awarded to.\n3. **Awarding Organization**: The name of the organization or institution that is issuing the certificate.\n4. **Date of Issue**: The date on which the certificate was issued.\n5. **Certificate Number**: A unique identifier assigned to the certificate, if present.\n6. **Description of Achievement**: A brief description of the achievement or accomplishment that the certificate is being awarded for.\n7. **Signature**: The signature of the authorized person or representative of the awarding organization.\n8. **Seal or Logo**: The official seal or logo of the awarding organization, if present.\n\nPlease note that the specific information that can be extracted may vary depending on the type of certificate and the organization that issued it.\n\nWould you like me to extract any specific information from the certificate image?",
+        "duration": 11776,
+        "tokensUsed": 288,
+        "tokensPerSecond": 24.5,
+        "finishReason": "stop",
+        "score": 80
+      },
+      {
+        "model": "meta/llama-3.2-11b-vision-instruct",
+        "success": true,
+        "content": "I see a digital image of a certificate in front of me. The certificate appears to be printed on high-quality paper with a white background. Here's what I can extract from the image:\n\n1. **Certificate Name**: The title of the certificate is prominently displayed at the top, which reads \"Certification of [Name]\".\n2. **Issuing Organization**: Below the title, I see the logo of the issuing organization, which appears to be a reputable institution. The text next to the logo reads \"Issued by [Organization Name]\".\n3. **Certification Number**: A unique certification number is printed in the top-right corner of the certificate, which seems to be a combination of letters and numbers.\n4. **Name and Address**: The recipient's name and address are printed in the center of the certificate, which reads \"[Name] of [Address]\".\n5. **Date of Issue**: The date of issue is printed at the bottom of the certificate, which reads \"Issued on [Date]\".\n6. **Certification Details**: The certificate details, such as the type of certification, the duration of the certification, and any relevant conditions, are printed in a smaller font at the bottom of the certificate.\n7. **Signature**: The signature of the issuing authority is printed at the bottom-right corner of the certificate, which appears to be a genuine signature.\n8. **Seal or Stamp**: The certificate features a seal or stamp of the issuing organization, which adds an extra layer of authenticity to the document.\n\nThese are the key pieces of information that I can extract from the certificate image. If you need to extract any specific information, please let me know!",
+        "duration": 10588,
+        "tokensUsed": 411,
+        "tokensPerSecond": 38.8,
+        "finishReason": "stop",
+        "score": 80
+      },
+      {
+        "model": "microsoft/phi-4-multimodal-instruct",
+        "success": false,
+        "error": "400: {\"status\":400,\"title\":\"Bad Request\",\"detail\":\"Function id '3afd112d-ad66-4d29-81b6-e7d6f8225e07': DE",
+        "duration": 316,
+        "tokensPerSecond": 0
+      },
+      {
+        "model": "nvidia/llama-3.1-nemotron-nano-vl-8b-v1",
+        "success": true,
+        "content": "Sure, I'd be happy to help you extract information from your certificate image. Here are some details you might want to consider:\n\n1. **Issuer and Issued Date:** The certificate should have the name of the issuing authority and the date it was issued. This information is usually located at the top of the certificate.\n\n2. **Recipient's Name:** The certificate should also include the name of the recipient, which is typically the person who earned the certificate.\n\n3. **Certificate Number:** Each certificate usually has a unique number, which can be used to verify its authenticity. This number is often found in a designated box on the certificate.\n\n4. **Course or Program Name:** If the certificate is related to a course or program, the name of the course or program should be clearly stated.\n\n5. **Certification Level:** The certificate should indicate the level of certification, such as beginner, intermediate, or advanced.\n\n6. **Certification Criteria:** The certificate should outline the criteria that the recipient met to earn the certification. This information can help demonstrate the recipient's skills and knowledge.\n\n7. **Signature:** The certificate should be signed by an authorized representative of the issuing authority. The signature should be in a designated box and should be legible.\n\n8. **Seal or Logo:** The certificate may include a seal or logo of the issuing authority, which can be used to verify its authenticity.\n\n9. **Additional Information:** Depending on the type of certificate, it may include additional information such as the date of completion, the name of the instructor, or the name of the institution that issued the certificate.\n\nRemember to always handle certificates with care and store them in a secure location to maintain their authenticity and value.",
+        "duration": 9728,
+        "tokensUsed": 384,
+        "tokensPerSecond": 39.5,
+        "finishReason": "stop",
+        "score": 80
+      },
+      {
+        "model": "nvidia/neva-22b",
+        "success": false,
+        "error": "404: {\"status\":404,\"title\":\"Not Found\",\"detail\":\"Function 'bc205f8e-1740-40df-8d32-c4321763498a': Not fou",
+        "duration": 358,
+        "tokensPerSecond": 0
+      }
+    ],
+    "safety": [
+      {
+        "model": "nvidia/llama-3.1-nemoguard-8b-content-safety",
+        "success": true,
+        "content": "{\"User Safety\": \"safe\", \"Response Safety\": \"safe\"} ",
+        "duration": 1024,
+        "tokensUsed": 441,
+        "tokensPerSecond": 430.7,
+        "finishReason": "stop",
+        "score": 65
+      },
+      {
+        "model": "nvidia/llama-3.1-nemoguard-8b-topic-control",
+        "success": true,
+        "content": "off-topic ",
+        "duration": 854,
+        "tokensUsed": 103,
+        "tokensPerSecond": 120.6,
+        "finishReason": "stop",
+        "score": 25
+      },
+      {
+        "model": "nvidia/llama-3.1-nemotron-safety-guard-8b-v3",
+        "success": true,
+        "content": "{\"User Safety\": \"safe\", \"Response Safety\": \"safe\"} ",
+        "duration": 3241,
+        "tokensUsed": 442,
+        "tokensPerSecond": 136.4,
+        "finishReason": "stop",
+        "score": 65
+      },
+      {
+        "model": "nvidia/gliner-pii",
+        "success": true,
+        "content": "{\"total_entities\": 1, \"entities\": [{\"text\": \"career\", \"label\": \"occupation\", \"start\": 20, \"end\": 26, \"score\": 0.737}], \"tagged_text\": \"I need help with my <occupation>career</occupation>. What skills should I learn?\"}",
+        "duration": 512,
+        "tokensUsed": 36,
+        "tokensPerSecond": 70.3,
+        "finishReason": "stop",
+        "score": 65
+      }
+    ],
+    "toolCalling": [
+      {
+        "model": "meta/llama-3.1-8b-instruct",
+        "success": true,
+        "duration": 1124,
+        "content": "{\"thinking\":\"Verifying the GitHub repository and extracting skills from it...\",\"tool_call\":{\"name\":\"verify_github_repo\",\"arguments\":{\"url\":\"https://github.com/facebook/react\"}}} \n\n{\"thinking\":\"...\",\"tool_call\":{\"name\":\"extract_skills\",\"arguments\":{\"text\":\"https://github.com/facebook/react\"}}}",
+        "hasToolCall": false,
+        "toolName": null,
+        "toolCallCorrect": false,
+        "parsedSuccessfully": false
+      },
+      {
+        "model": "meta/llama-3.1-70b-instruct",
+        "success": true,
+        "duration": 6562,
+        "content": "{\"thinking\": \"Verifying the GitHub repository and extracting skills from it.\", \"tool_call\": {\"name\": \"verify_github_repo\", \"arguments\": {\"url\": \"https://github.com/facebook/react\"}}}\n\n{\"thinking\": \"Extracting skills from the repository.\", \"tool_call\": {\"name\": \"extract_skills\", \"arguments\": {\"text\": \"https://github.com/facebook/react\"}}}",
+        "hasToolCall": false,
+        "toolName": null,
+        "toolCallCorrect": false,
+        "parsedSuccessfully": false
+      },
+      {
+        "model": "mistralai/mistral-large-2-instruct",
+        "success": false,
+        "error": "404",
+        "duration": 348,
+        "toolCallCorrect": false
+      },
+      {
+        "model": "nvidia/llama-3.3-nemotron-super-49b-v1",
+        "success": true,
+        "duration": 10086,
+        "content": "{\"thinking\":\"Okay, the user wants me to verify a GitHub repo and extract skills from it. The repo is https://github.com/facebook/react. First, I need to check if the repo exists. I'll use the verify_github_repo tool for that. Once confirmed, I'll extract the technical skills. Wait, how do I get the text from the repo to extract skills? Maybe the tool can handle that internally, or perhaps I need to fetch the README or something. But the extract_skills tool just takes text as input. Hmm, maybe the user expects me to assume that the repo exists and then extract skills commonly associated with it, like React itself. Or maybe the tool can scrape the repo's content. But according to the available tools, extract_skills needs text input. Since I can't fetch the README here, perhaps after verifying the repo, I'll state that I need the text content, but given the constraints, I'll proceed with verifying first and then note the skills based on known info about the repo.\"}\n\n{\"thinking\":\"Verified the repo exists. Now, since I can't automatically pull the text from the repo, I'll rely on common knowledge about the React repository to list skills like React, JavaScript, TypeScript, etc.\"}\n\n{\"tool_call\":{\"name\":\"verify_github_repo\",\"arguments\":{\"url\":\"https://github.com/facebook/react\"}}}\n\n{\"thinking\":\"The repo exists. Now, extracting skills. Since I can't fetch the repo's content directly, I",
+        "hasToolCall": false,
+        "toolName": null,
+        "toolCallCorrect": false,
+        "parsedSuccessfully": false
+      },
+      {
+        "model": "moonshotai/kimi-k2.6",
+        "success": true,
+        "duration": 2151,
+        "content": " :on the first day of the rest of your life, you wake up and realize that you have been given a new lease on life. You have been given a new chance to make a difference in the world. You have been given a new chance to make a difference in the world. You have been given a new chance to make a difference in the world. You have been given a new chance to make a difference in the world. You have been given a new chance to make a difference in the world. You have been given a new chance to make a difference in the world",
+        "hasToolCall": false,
+        "toolName": null,
+        "toolCallCorrect": false,
+        "parsedSuccessfully": false
+      },
+      {
+        "model": "deepseek-ai/deepseek-v4-pro",
+        "success": false,
+        "error": "The operation was aborted due to timeout",
+        "duration": 30014,
+        "toolCallCorrect": false
+      },
+      {
+        "model": "minimaxai/minimax-m2.7",
+        "success": true,
+        "duration": 3162,
+        "content": "\n\n{\"thinking\":\"The user wants me to verify the Facebook React GitHub repository and extract skills from it. I'll first verify the repository exists, then extract relevant technical skills.\",\"tool_call\":{\"name\":\"verify_github_repo\",\"arguments\":{\"url\":\"https://github.com/facebook/react\"}}}",
+        "hasToolCall": true,
+        "toolName": "verify_github_repo",
+        "toolCallCorrect": true,
+        "parsedSuccessfully": true
+      },
+      {
+        "model": "z-ai/glm-5.1",
+        "success": false,
+        "error": "The operation was aborted due to timeout",
+        "duration": 30006,
+        "toolCallCorrect": false
+      },
+      {
+        "model": "qwen/qwen3.5-397b-a17b",
+        "success": true,
+        "duration": 2864,
+        "content": "{\"thinking\":\"I need to first verify if the GitHub repository exists using the verify_github_repo tool, and then extract skills from the repository description or content. I'll start by verifying the repo.\", \"tool_call\":{\"name\":\"verify_github_repo\",\"arguments\":{\"url\":\"https://github.com/facebook/react\"}}}",
+        "hasToolCall": true,
+        "toolName": "verify_github_repo",
+        "toolCallCorrect": true,
+        "parsedSuccessfully": true
+      }
+    ]
+  },
+  "winners": {
+    "Best Overall": {
+      "model": "qwen/qwen3-coder-480b-a35b-instruct",
+      "duration": 13148,
+      "score": 63,
+      "tokensPerSecond": 19
+    },
+    "Best for Speed": {
+      "model": "qwen/qwen3.5-397b-a17b",
+      "duration": 3838,
+      "score": 63,
+      "tokensPerSecond": 69
+    },
+    "Best for Quality": {
+      "model": "qwen/qwen3-coder-480b-a35b-instruct",
+      "duration": 13148,
+      "score": 63,
+      "tokensPerSecond": 19
+    },
+    "Best for Tool Calling": {
+      "model": "qwen/qwen3.5-397b-a17b",
+      "duration": 2864,
+      "toolCallCorrect": true
+    },
+    "Best Embedding": {
+      "model": "baai/bge-m3",
+      "duration": 882,
+      "dimensions": 1024
+    },
+    "Best Code Generation": null,
+    "Best Vision": {
+      "model": "meta/llama-3.2-90b-vision-instruct",
+      "duration": 11776,
+      "score": 80,
+      "tokensPerSecond": 24.5
+    },
+    "Best Safety": {
+      "model": "nvidia/llama-3.1-nemoguard-8b-content-safety",
+      "duration": 1024,
+      "score": 65,
+      "tokensPerSecond": 430.7
+    },
+    "Best Value (Speed + Quality)": {
+      "model": "qwen/qwen3.5-397b-a17b",
+      "duration": 3838,
+      "score": 63,
+      "tokensPerSecond": 69
+    },
+    "Runner Up Overall": {
+      "model": "meta/llama-3.2-3b-instruct",
+      "duration": 4101,
+      "score": 57,
+      "tokensPerSecond": 95.3
+    }
+  }
+}

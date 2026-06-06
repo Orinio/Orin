@@ -1,0 +1,2623 @@
+{
+  "metadata": {
+    "source": "NVIDIA NIM API",
+    "baseUrl": "https://integrate.api.nvidia.com/v1",
+    "fetchedAt": "2026-06-06T04:19:37.214Z",
+    "totalModels": 147,
+    "apiModelsCount": 120,
+    "additionalModelsCount": 27,
+    "categories": [
+      {
+        "name": "Text Generation",
+        "count": 101
+      },
+      {
+        "name": "Code Generation",
+        "count": 10
+      },
+      {
+        "name": "Text-to-Embedding",
+        "count": 11
+      },
+      {
+        "name": "Vision / Image-to-Text",
+        "count": 11
+      },
+      {
+        "name": "Safety & Moderation",
+        "count": 8
+      },
+      {
+        "name": "Text Translation",
+        "count": 2
+      },
+      {
+        "name": "Speech-to-Text",
+        "count": 11
+      },
+      {
+        "name": "Text-to-Speech",
+        "count": 4
+      },
+      {
+        "name": "RAG (Retrieval Augmented Generation)",
+        "count": 3
+      },
+      {
+        "name": "Image Generation",
+        "count": 3
+      },
+      {
+        "name": "Object Detection",
+        "count": 1
+      },
+      {
+        "name": "Optical Character Recognition",
+        "count": 1
+      },
+      {
+        "name": "Digital Twin",
+        "count": 1
+      },
+      {
+        "name": "Medical Imaging",
+        "count": 1
+      },
+      {
+        "name": "Drug Discovery",
+        "count": 2
+      },
+      {
+        "name": "Synthetic Data Generation",
+        "count": 1
+      },
+      {
+        "name": "Route Optimization",
+        "count": 1
+      },
+      {
+        "name": "Weather Simulation",
+        "count": 1
+      },
+      {
+        "name": "Video Understanding",
+        "count": 2
+      },
+      {
+        "name": "Reasoning",
+        "count": 3
+      }
+    ]
+  },
+  "models": {
+    "Text Generation": [
+      {
+        "id": "01-ai/yi-large",
+        "name": "yi-large",
+        "provider": "01-ai",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "abacusai/dracarys-llama-3.1-70b-instruct",
+        "name": "dracarys-llama-3.1-70b-instruct",
+        "provider": "abacusai",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "ai21labs/jamba-1.5-large-instruct",
+        "name": "jamba-1.5-large-instruct",
+        "provider": "ai21labs",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "aisingapore/sea-lion-7b-instruct",
+        "name": "sea-lion-7b-instruct",
+        "provider": "aisingapore",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "bytedance/seed-oss-36b-instruct",
+        "name": "seed-oss-36b-instruct",
+        "provider": "bytedance",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "databricks/dbrx-instruct",
+        "name": "dbrx-instruct",
+        "provider": "databricks",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "deepseek-ai/deepseek-coder-6.7b-instruct",
+        "name": "deepseek-coder-6.7b-instruct",
+        "provider": "deepseek-ai",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation",
+          "Code Generation"
+        ]
+      },
+      {
+        "id": "deepseek-ai/deepseek-v4-flash",
+        "name": "deepseek-v4-flash",
+        "provider": "deepseek-ai",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "deepseek-ai/deepseek-v4-pro",
+        "name": "deepseek-v4-pro",
+        "provider": "deepseek-ai",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "google/codegemma-1.1-7b",
+        "name": "codegemma-1.1-7b",
+        "provider": "google",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation",
+          "Code Generation"
+        ]
+      },
+      {
+        "id": "google/codegemma-7b",
+        "name": "codegemma-7b",
+        "provider": "google",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation",
+          "Code Generation"
+        ]
+      },
+      {
+        "id": "google/deplot",
+        "name": "deplot",
+        "provider": "google",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "google/gemma-2-2b-it",
+        "name": "gemma-2-2b-it",
+        "provider": "google",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "google/gemma-2b",
+        "name": "gemma-2b",
+        "provider": "google",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "google/gemma-3-12b-it",
+        "name": "gemma-3-12b-it",
+        "provider": "google",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "google/gemma-3-4b-it",
+        "name": "gemma-3-4b-it",
+        "provider": "google",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "google/gemma-3n-e2b-it",
+        "name": "gemma-3n-e2b-it",
+        "provider": "google",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "google/gemma-3n-e4b-it",
+        "name": "gemma-3n-e4b-it",
+        "provider": "google",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "google/gemma-4-31b-it",
+        "name": "gemma-4-31b-it",
+        "provider": "google",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "google/recurrentgemma-2b",
+        "name": "recurrentgemma-2b",
+        "provider": "google",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "ibm/granite-3.0-3b-a800m-instruct",
+        "name": "granite-3.0-3b-a800m-instruct",
+        "provider": "ibm",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "ibm/granite-3.0-8b-instruct",
+        "name": "granite-3.0-8b-instruct",
+        "provider": "ibm",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "ibm/granite-34b-code-instruct",
+        "name": "granite-34b-code-instruct",
+        "provider": "ibm",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation",
+          "Code Generation"
+        ]
+      },
+      {
+        "id": "ibm/granite-8b-code-instruct",
+        "name": "granite-8b-code-instruct",
+        "provider": "ibm",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation",
+          "Code Generation"
+        ]
+      },
+      {
+        "id": "meta/codellama-70b",
+        "name": "codellama-70b",
+        "provider": "meta",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation",
+          "Code Generation"
+        ]
+      },
+      {
+        "id": "meta/llama-3.1-70b-instruct",
+        "name": "llama-3.1-70b-instruct",
+        "provider": "meta",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "meta/llama-3.1-8b-instruct",
+        "name": "llama-3.1-8b-instruct",
+        "provider": "meta",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "meta/llama-3.2-11b-vision-instruct",
+        "name": "llama-3.2-11b-vision-instruct",
+        "provider": "meta",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation",
+          "Vision / Image-to-Text"
+        ]
+      },
+      {
+        "id": "meta/llama-3.2-1b-instruct",
+        "name": "llama-3.2-1b-instruct",
+        "provider": "meta",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "meta/llama-3.2-3b-instruct",
+        "name": "llama-3.2-3b-instruct",
+        "provider": "meta",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "meta/llama-3.2-90b-vision-instruct",
+        "name": "llama-3.2-90b-vision-instruct",
+        "provider": "meta",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation",
+          "Vision / Image-to-Text"
+        ]
+      },
+      {
+        "id": "meta/llama-3.3-70b-instruct",
+        "name": "llama-3.3-70b-instruct",
+        "provider": "meta",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "meta/llama-4-maverick-17b-128e-instruct",
+        "name": "llama-4-maverick-17b-128e-instruct",
+        "provider": "meta",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "meta/llama-guard-4-12b",
+        "name": "llama-guard-4-12b",
+        "provider": "meta",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation",
+          "Safety & Moderation"
+        ]
+      },
+      {
+        "id": "meta/llama2-70b",
+        "name": "llama2-70b",
+        "provider": "meta",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "microsoft/phi-3-vision-128k-instruct",
+        "name": "phi-3-vision-128k-instruct",
+        "provider": "microsoft",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation",
+          "Vision / Image-to-Text"
+        ]
+      },
+      {
+        "id": "microsoft/phi-3.5-moe-instruct",
+        "name": "phi-3.5-moe-instruct",
+        "provider": "microsoft",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "microsoft/phi-4-mini-instruct",
+        "name": "phi-4-mini-instruct",
+        "provider": "microsoft",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "microsoft/phi-4-multimodal-instruct",
+        "name": "phi-4-multimodal-instruct",
+        "provider": "microsoft",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "minimaxai/minimax-m2.7",
+        "name": "minimax-m2.7",
+        "provider": "minimaxai",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "mistralai/codestral-22b-instruct-v0.1",
+        "name": "codestral-22b-instruct-v0.1",
+        "provider": "mistralai",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation",
+          "Code Generation"
+        ]
+      },
+      {
+        "id": "mistralai/ministral-14b-instruct-2512",
+        "name": "ministral-14b-instruct-2512",
+        "provider": "mistralai",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "mistralai/mistral-7b-instruct-v0.3",
+        "name": "mistral-7b-instruct-v0.3",
+        "provider": "mistralai",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "mistralai/mistral-large",
+        "name": "mistral-large",
+        "provider": "mistralai",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "mistralai/mistral-large-2-instruct",
+        "name": "mistral-large-2-instruct",
+        "provider": "mistralai",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "mistralai/mistral-large-3-675b-instruct-2512",
+        "name": "mistral-large-3-675b-instruct-2512",
+        "provider": "mistralai",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "mistralai/mistral-medium-3.5-128b",
+        "name": "mistral-medium-3.5-128b",
+        "provider": "mistralai",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "mistralai/mistral-nemotron",
+        "name": "mistral-nemotron",
+        "provider": "mistralai",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "mistralai/mistral-small-4-119b-2603",
+        "name": "mistral-small-4-119b-2603",
+        "provider": "mistralai",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "mistralai/mixtral-8x22b-v0.1",
+        "name": "mixtral-8x22b-v0.1",
+        "provider": "mistralai",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "mistralai/mixtral-8x7b-instruct-v0.1",
+        "name": "mixtral-8x7b-instruct-v0.1",
+        "provider": "mistralai",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "moonshotai/kimi-k2.6",
+        "name": "kimi-k2.6",
+        "provider": "moonshotai",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "nv-mistralai/mistral-nemo-12b-instruct",
+        "name": "mistral-nemo-12b-instruct",
+        "provider": "nv-mistralai",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "nvidia/ising-calibration-1-35b-a3b",
+        "name": "ising-calibration-1-35b-a3b",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "nvidia/llama-3.1-nemoguard-8b-content-safety",
+        "name": "llama-3.1-nemoguard-8b-content-safety",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation",
+          "Safety & Moderation"
+        ]
+      },
+      {
+        "id": "nvidia/llama-3.1-nemoguard-8b-topic-control",
+        "name": "llama-3.1-nemoguard-8b-topic-control",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation",
+          "Safety & Moderation"
+        ]
+      },
+      {
+        "id": "nvidia/llama-3.1-nemotron-51b-instruct",
+        "name": "llama-3.1-nemotron-51b-instruct",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "nvidia/llama-3.1-nemotron-70b-instruct",
+        "name": "llama-3.1-nemotron-70b-instruct",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "nvidia/llama-3.1-nemotron-nano-8b-v1",
+        "name": "llama-3.1-nemotron-nano-8b-v1",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "nvidia/llama-3.1-nemotron-nano-vl-8b-v1",
+        "name": "llama-3.1-nemotron-nano-vl-8b-v1",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation",
+          "Vision / Image-to-Text"
+        ]
+      },
+      {
+        "id": "nvidia/llama-3.1-nemotron-safety-guard-8b-v3",
+        "name": "llama-3.1-nemotron-safety-guard-8b-v3",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation",
+          "Safety & Moderation"
+        ]
+      },
+      {
+        "id": "nvidia/llama-3.1-nemotron-ultra-253b-v1",
+        "name": "llama-3.1-nemotron-ultra-253b-v1",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "nvidia/llama-3.2-nemoretriever-1b-vlm-embed-v1",
+        "name": "llama-3.2-nemoretriever-1b-vlm-embed-v1",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/embeddings",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation",
+          "Text-to-Embedding",
+          "Vision / Image-to-Text",
+          "RAG (Retrieval Augmented Generation)"
+        ]
+      },
+      {
+        "id": "nvidia/llama-3.2-nv-embedqa-1b-v1",
+        "name": "llama-3.2-nv-embedqa-1b-v1",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/embeddings",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation",
+          "Text-to-Embedding"
+        ]
+      },
+      {
+        "id": "nvidia/llama-3.3-nemotron-super-49b-v1",
+        "name": "llama-3.3-nemotron-super-49b-v1",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "nvidia/llama-3.3-nemotron-super-49b-v1.5",
+        "name": "llama-3.3-nemotron-super-49b-v1.5",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "nvidia/llama-nemotron-embed-1b-v2",
+        "name": "llama-nemotron-embed-1b-v2",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/embeddings",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation",
+          "Text-to-Embedding"
+        ]
+      },
+      {
+        "id": "nvidia/llama-nemotron-embed-vl-1b-v2",
+        "name": "llama-nemotron-embed-vl-1b-v2",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/embeddings",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation",
+          "Text-to-Embedding",
+          "Vision / Image-to-Text"
+        ]
+      },
+      {
+        "id": "nvidia/llama3-chatqa-1.5-70b",
+        "name": "llama3-chatqa-1.5-70b",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation",
+          "RAG (Retrieval Augmented Generation)"
+        ]
+      },
+      {
+        "id": "nvidia/mistral-nemo-minitron-8b-8k-instruct",
+        "name": "mistral-nemo-minitron-8b-8k-instruct",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "nvidia/nemotron-3-nano-30b-a3b",
+        "name": "nemotron-3-nano-30b-a3b",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "nvidia/nemotron-3-super-120b-a12b",
+        "name": "nemotron-3-super-120b-a12b",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "nvidia/nemotron-3-ultra-550b-a55b",
+        "name": "nemotron-3-ultra-550b-a55b",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "nvidia/nemotron-4-340b-instruct",
+        "name": "nemotron-4-340b-instruct",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "nvidia/nemotron-4-340b-reward",
+        "name": "nemotron-4-340b-reward",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "nvidia/nemotron-mini-4b-instruct",
+        "name": "nemotron-mini-4b-instruct",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "nvidia/nemotron-nano-3-30b-a3b",
+        "name": "nemotron-nano-3-30b-a3b",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "nvidia/nemotron-parse",
+        "name": "nemotron-parse",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "nvidia/nv-embedqa-mistral-7b-v2",
+        "name": "nv-embedqa-mistral-7b-v2",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/embeddings",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation",
+          "Text-to-Embedding"
+        ]
+      },
+      {
+        "id": "nvidia/nvclip",
+        "name": "nvclip",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "nvidia/nvidia-nemotron-nano-9b-v2",
+        "name": "nvidia-nemotron-nano-9b-v2",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "nvidia/riva-translate-4b-instruct",
+        "name": "riva-translate-4b-instruct",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation",
+          "Text Translation"
+        ]
+      },
+      {
+        "id": "nvidia/riva-translate-4b-instruct-v1.1",
+        "name": "riva-translate-4b-instruct-v1.1",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation",
+          "Text Translation"
+        ]
+      },
+      {
+        "id": "nvidia/vila",
+        "name": "vila",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "openai/gpt-oss-120b",
+        "name": "gpt-oss-120b",
+        "provider": "openai",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "openai/gpt-oss-20b",
+        "name": "gpt-oss-20b",
+        "provider": "openai",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "qwen/qwen3-coder-480b-a35b-instruct",
+        "name": "qwen3-coder-480b-a35b-instruct",
+        "provider": "qwen",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation",
+          "Code Generation"
+        ]
+      },
+      {
+        "id": "qwen/qwen3-next-80b-a3b-instruct",
+        "name": "qwen3-next-80b-a3b-instruct",
+        "provider": "qwen",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "qwen/qwen3.5-122b-a10b",
+        "name": "qwen3.5-122b-a10b",
+        "provider": "qwen",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "qwen/qwen3.5-397b-a17b",
+        "name": "qwen3.5-397b-a17b",
+        "provider": "qwen",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "sarvamai/sarvam-m",
+        "name": "sarvam-m",
+        "provider": "sarvamai",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "stepfun-ai/step-3.5-flash",
+        "name": "step-3.5-flash",
+        "provider": "stepfun-ai",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "stepfun-ai/step-3.7-flash",
+        "name": "step-3.7-flash",
+        "provider": "stepfun-ai",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "stockmark/stockmark-2-100b-instruct",
+        "name": "stockmark-2-100b-instruct",
+        "provider": "stockmark",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "upstage/solar-10.7b-instruct",
+        "name": "solar-10.7b-instruct",
+        "provider": "upstage",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "writer/palmyra-creative-122b",
+        "name": "palmyra-creative-122b",
+        "provider": "writer",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "writer/palmyra-fin-70b-32k",
+        "name": "palmyra-fin-70b-32k",
+        "provider": "writer",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "writer/palmyra-med-70b",
+        "name": "palmyra-med-70b",
+        "provider": "writer",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "writer/palmyra-med-70b-32k",
+        "name": "palmyra-med-70b-32k",
+        "provider": "writer",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "z-ai/glm-5.1",
+        "name": "glm-5.1",
+        "provider": "z-ai",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      },
+      {
+        "id": "zyphra/zamba2-7b-instruct",
+        "name": "zamba2-7b-instruct",
+        "provider": "zyphra",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation"
+        ]
+      }
+    ],
+    "Code Generation": [
+      {
+        "id": "bigcode/starcoder2-15b",
+        "name": "starcoder2-15b",
+        "provider": "bigcode",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Code Generation"
+        ]
+      },
+      {
+        "id": "deepseek-ai/deepseek-coder-6.7b-instruct",
+        "name": "deepseek-coder-6.7b-instruct",
+        "provider": "deepseek-ai",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation",
+          "Code Generation"
+        ]
+      },
+      {
+        "id": "google/codegemma-1.1-7b",
+        "name": "codegemma-1.1-7b",
+        "provider": "google",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation",
+          "Code Generation"
+        ]
+      },
+      {
+        "id": "google/codegemma-7b",
+        "name": "codegemma-7b",
+        "provider": "google",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation",
+          "Code Generation"
+        ]
+      },
+      {
+        "id": "ibm/granite-34b-code-instruct",
+        "name": "granite-34b-code-instruct",
+        "provider": "ibm",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation",
+          "Code Generation"
+        ]
+      },
+      {
+        "id": "ibm/granite-8b-code-instruct",
+        "name": "granite-8b-code-instruct",
+        "provider": "ibm",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation",
+          "Code Generation"
+        ]
+      },
+      {
+        "id": "meta/codellama-70b",
+        "name": "codellama-70b",
+        "provider": "meta",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation",
+          "Code Generation"
+        ]
+      },
+      {
+        "id": "mistralai/codestral-22b-instruct-v0.1",
+        "name": "codestral-22b-instruct-v0.1",
+        "provider": "mistralai",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation",
+          "Code Generation"
+        ]
+      },
+      {
+        "id": "nvidia/nv-embedcode-7b-v1",
+        "name": "nv-embedcode-7b-v1",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/embeddings",
+        "baseCompatible": true,
+        "categories": [
+          "Code Generation",
+          "Text-to-Embedding"
+        ]
+      },
+      {
+        "id": "qwen/qwen3-coder-480b-a35b-instruct",
+        "name": "qwen3-coder-480b-a35b-instruct",
+        "provider": "qwen",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation",
+          "Code Generation"
+        ]
+      }
+    ],
+    "Text-to-Embedding": [
+      {
+        "id": "baai/bge-m3",
+        "name": "bge-m3",
+        "provider": "baai",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/embeddings",
+        "baseCompatible": true,
+        "categories": [
+          "Text-to-Embedding"
+        ]
+      },
+      {
+        "id": "nvidia/embed-qa-4",
+        "name": "embed-qa-4",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/embeddings",
+        "baseCompatible": true,
+        "categories": [
+          "Text-to-Embedding"
+        ]
+      },
+      {
+        "id": "nvidia/llama-3.2-nemoretriever-1b-vlm-embed-v1",
+        "name": "llama-3.2-nemoretriever-1b-vlm-embed-v1",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/embeddings",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation",
+          "Text-to-Embedding",
+          "Vision / Image-to-Text",
+          "RAG (Retrieval Augmented Generation)"
+        ]
+      },
+      {
+        "id": "nvidia/llama-3.2-nv-embedqa-1b-v1",
+        "name": "llama-3.2-nv-embedqa-1b-v1",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/embeddings",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation",
+          "Text-to-Embedding"
+        ]
+      },
+      {
+        "id": "nvidia/llama-nemotron-embed-1b-v2",
+        "name": "llama-nemotron-embed-1b-v2",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/embeddings",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation",
+          "Text-to-Embedding"
+        ]
+      },
+      {
+        "id": "nvidia/llama-nemotron-embed-vl-1b-v2",
+        "name": "llama-nemotron-embed-vl-1b-v2",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/embeddings",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation",
+          "Text-to-Embedding",
+          "Vision / Image-to-Text"
+        ]
+      },
+      {
+        "id": "nvidia/nv-embed-v1",
+        "name": "nv-embed-v1",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/embeddings",
+        "baseCompatible": true,
+        "categories": [
+          "Text-to-Embedding"
+        ]
+      },
+      {
+        "id": "nvidia/nv-embedcode-7b-v1",
+        "name": "nv-embedcode-7b-v1",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/embeddings",
+        "baseCompatible": true,
+        "categories": [
+          "Code Generation",
+          "Text-to-Embedding"
+        ]
+      },
+      {
+        "id": "nvidia/nv-embedqa-e5-v5",
+        "name": "nv-embedqa-e5-v5",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/embeddings",
+        "baseCompatible": true,
+        "categories": [
+          "Text-to-Embedding"
+        ]
+      },
+      {
+        "id": "nvidia/nv-embedqa-mistral-7b-v2",
+        "name": "nv-embedqa-mistral-7b-v2",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/embeddings",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation",
+          "Text-to-Embedding"
+        ]
+      },
+      {
+        "id": "snowflake/arctic-embed-l",
+        "name": "arctic-embed-l",
+        "provider": "snowflake",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/embeddings",
+        "baseCompatible": true,
+        "categories": [
+          "Text-to-Embedding"
+        ]
+      }
+    ],
+    "Vision / Image-to-Text": [
+      {
+        "id": "adept/fuyu-8b",
+        "name": "fuyu-8b",
+        "provider": "adept",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Vision / Image-to-Text"
+        ]
+      },
+      {
+        "id": "meta/llama-3.2-11b-vision-instruct",
+        "name": "llama-3.2-11b-vision-instruct",
+        "provider": "meta",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation",
+          "Vision / Image-to-Text"
+        ]
+      },
+      {
+        "id": "meta/llama-3.2-90b-vision-instruct",
+        "name": "llama-3.2-90b-vision-instruct",
+        "provider": "meta",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation",
+          "Vision / Image-to-Text"
+        ]
+      },
+      {
+        "id": "microsoft/kosmos-2",
+        "name": "kosmos-2",
+        "provider": "microsoft",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Vision / Image-to-Text"
+        ]
+      },
+      {
+        "id": "microsoft/phi-3-vision-128k-instruct",
+        "name": "phi-3-vision-128k-instruct",
+        "provider": "microsoft",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation",
+          "Vision / Image-to-Text"
+        ]
+      },
+      {
+        "id": "nvidia/llama-3.1-nemotron-nano-vl-8b-v1",
+        "name": "llama-3.1-nemotron-nano-vl-8b-v1",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation",
+          "Vision / Image-to-Text"
+        ]
+      },
+      {
+        "id": "nvidia/llama-3.2-nemoretriever-1b-vlm-embed-v1",
+        "name": "llama-3.2-nemoretriever-1b-vlm-embed-v1",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/embeddings",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation",
+          "Text-to-Embedding",
+          "Vision / Image-to-Text",
+          "RAG (Retrieval Augmented Generation)"
+        ]
+      },
+      {
+        "id": "nvidia/llama-nemotron-embed-vl-1b-v2",
+        "name": "llama-nemotron-embed-vl-1b-v2",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/embeddings",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation",
+          "Text-to-Embedding",
+          "Vision / Image-to-Text"
+        ]
+      },
+      {
+        "id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+        "name": "nemotron-3-nano-omni-30b-a3b-reasoning",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Vision / Image-to-Text",
+          "Reasoning"
+        ]
+      },
+      {
+        "id": "nvidia/nemotron-nano-12b-v2-vl",
+        "name": "nemotron-nano-12b-v2-vl",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Vision / Image-to-Text"
+        ]
+      },
+      {
+        "id": "nvidia/neva-22b",
+        "name": "neva-22b",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Vision / Image-to-Text"
+        ]
+      }
+    ],
+    "Safety & Moderation": [
+      {
+        "id": "meta/llama-guard-4-12b",
+        "name": "llama-guard-4-12b",
+        "provider": "meta",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation",
+          "Safety & Moderation"
+        ]
+      },
+      {
+        "id": "nvidia/gliner-pii",
+        "name": "gliner-pii",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Safety & Moderation"
+        ]
+      },
+      {
+        "id": "nvidia/llama-3.1-nemoguard-8b-content-safety",
+        "name": "llama-3.1-nemoguard-8b-content-safety",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation",
+          "Safety & Moderation"
+        ]
+      },
+      {
+        "id": "nvidia/llama-3.1-nemoguard-8b-topic-control",
+        "name": "llama-3.1-nemoguard-8b-topic-control",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation",
+          "Safety & Moderation"
+        ]
+      },
+      {
+        "id": "nvidia/llama-3.1-nemotron-safety-guard-8b-v3",
+        "name": "llama-3.1-nemotron-safety-guard-8b-v3",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation",
+          "Safety & Moderation"
+        ]
+      },
+      {
+        "id": "nvidia/nemotron-3-content-safety",
+        "name": "nemotron-3-content-safety",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Safety & Moderation"
+        ]
+      },
+      {
+        "id": "nvidia/nemotron-3.5-content-safety",
+        "name": "nemotron-3.5-content-safety",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Safety & Moderation"
+        ]
+      },
+      {
+        "id": "nvidia/nemotron-content-safety-reasoning-4b",
+        "name": "nemotron-content-safety-reasoning-4b",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Safety & Moderation",
+          "Reasoning"
+        ]
+      }
+    ],
+    "Text Translation": [
+      {
+        "id": "nvidia/riva-translate-4b-instruct",
+        "name": "riva-translate-4b-instruct",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation",
+          "Text Translation"
+        ]
+      },
+      {
+        "id": "nvidia/riva-translate-4b-instruct-v1.1",
+        "name": "riva-translate-4b-instruct-v1.1",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation",
+          "Text Translation"
+        ]
+      }
+    ],
+    "Speech-to-Text": [
+      {
+        "id": "nvidia/nemotron-asr-streaming",
+        "name": "nemotron-asr-streaming",
+        "provider": "nvidia",
+        "description": "Real-time speech recognition for English",
+        "apiType": "direct",
+        "endpoint": "https://integrate.api.nvidia.com/v1/speech/asr",
+        "baseCompatible": true,
+        "categories": [
+          "Speech-to-Text"
+        ],
+        "tags": [
+          "ASR",
+          "Streaming",
+          "English"
+        ]
+      },
+      {
+        "id": "nvidia/parakeet-1.1b-rnnt-multilingual-asr",
+        "name": "parakeet-1.1b-rnnt-multilingual-asr",
+        "provider": "nvidia",
+        "description": "High accuracy and optimized performance for transcription in 25 languages",
+        "apiType": "direct",
+        "endpoint": "https://integrate.api.nvidia.com/v1/speech/asr",
+        "baseCompatible": true,
+        "categories": [
+          "Speech-to-Text"
+        ],
+        "tags": [
+          "ASR",
+          "Multilingual",
+          "25 Languages"
+        ]
+      },
+      {
+        "id": "nvidia/parakeet-ctc-0.6b-zh-tw",
+        "name": "parakeet-ctc-0.6b-zh-tw",
+        "provider": "nvidia",
+        "description": "Record-setting accuracy and performance for Mandarin Taiwanese English transcriptions",
+        "apiType": "direct",
+        "endpoint": "https://integrate.api.nvidia.com/v1/speech/asr",
+        "baseCompatible": true,
+        "categories": [
+          "Speech-to-Text"
+        ],
+        "tags": [
+          "ASR",
+          "Mandarin",
+          "Taiwanese",
+          "English"
+        ]
+      },
+      {
+        "id": "nvidia/parakeet-tdt-0.6b-v2",
+        "name": "parakeet-tdt-0.6b-v2",
+        "provider": "nvidia",
+        "description": "Accurate and optimized English transcriptions with punctuation and word timestamps",
+        "apiType": "direct",
+        "endpoint": "https://integrate.api.nvidia.com/v1/speech/asr",
+        "baseCompatible": true,
+        "categories": [
+          "Speech-to-Text"
+        ],
+        "tags": [
+          "ASR",
+          "English",
+          "Punctuation",
+          "Timestamps"
+        ]
+      },
+      {
+        "id": "nvidia/parakeet-ctc-1.1b-asr",
+        "name": "parakeet-ctc-1.1b-asr",
+        "provider": "nvidia",
+        "description": "Record-setting accuracy and performance for English transcription",
+        "apiType": "direct",
+        "endpoint": "https://integrate.api.nvidia.com/v1/speech/asr",
+        "baseCompatible": true,
+        "categories": [
+          "Speech-to-Text"
+        ],
+        "tags": [
+          "ASR",
+          "English"
+        ]
+      },
+      {
+        "id": "nvidia/parakeet-ctc-0.6b-asr",
+        "name": "parakeet-ctc-0.6b-asr",
+        "provider": "nvidia",
+        "description": "State-of-the-art accuracy and speed for English transcriptions",
+        "apiType": "direct",
+        "endpoint": "https://integrate.api.nvidia.com/v1/speech/asr",
+        "baseCompatible": true,
+        "categories": [
+          "Speech-to-Text"
+        ],
+        "tags": [
+          "ASR",
+          "English"
+        ]
+      },
+      {
+        "id": "nvidia/canary-1b-asr",
+        "name": "canary-1b-asr",
+        "provider": "nvidia",
+        "description": "Multi-lingual model supporting speech-to-text recognition and translation",
+        "apiType": "direct",
+        "endpoint": "https://integrate.api.nvidia.com/v1/speech/asr",
+        "baseCompatible": true,
+        "categories": [
+          "Speech-to-Text"
+        ],
+        "tags": [
+          "ASR",
+          "Multilingual",
+          "Translation"
+        ]
+      },
+      {
+        "id": "openai/whisper-large-v3",
+        "name": "whisper-large-v3",
+        "provider": "openai",
+        "description": "Robust Speech Recognition via Large-Scale Weak Supervision",
+        "apiType": "direct",
+        "endpoint": "https://integrate.api.nvidia.com/v1/speech/asr",
+        "baseCompatible": true,
+        "categories": [
+          "Speech-to-Text"
+        ],
+        "tags": [
+          "ASR",
+          "Multilingual",
+          "OpenAI"
+        ]
+      },
+      {
+        "id": "nvidia/parakeet-ctc-0.6b-vi",
+        "name": "parakeet-ctc-0.6b-vi",
+        "provider": "nvidia",
+        "description": "Accurate and optimized Vietnamese-English transcriptions with punctuation and word timestamps",
+        "apiType": "direct",
+        "endpoint": "https://integrate.api.nvidia.com/v1/speech/asr",
+        "baseCompatible": true,
+        "categories": [
+          "Speech-to-Text"
+        ],
+        "tags": [
+          "ASR",
+          "Vietnamese",
+          "English"
+        ]
+      },
+      {
+        "id": "nvidia/parakeet-ctc-0.6b-zh-cn",
+        "name": "parakeet-ctc-0.6b-zh-cn",
+        "provider": "nvidia",
+        "description": "Record-setting accuracy and performance for Mandarin English transcriptions",
+        "apiType": "direct",
+        "endpoint": "https://integrate.api.nvidia.com/v1/speech/asr",
+        "baseCompatible": true,
+        "categories": [
+          "Speech-to-Text"
+        ],
+        "tags": [
+          "ASR",
+          "Mandarin",
+          "English"
+        ]
+      },
+      {
+        "id": "nvidia/parakeet-ctc-0.6b-es",
+        "name": "parakeet-ctc-0.6b-es",
+        "provider": "nvidia",
+        "description": "Accurate and optimized Spanish English transcriptions with punctuation and word timestamps",
+        "apiType": "direct",
+        "endpoint": "https://integrate.api.nvidia.com/v1/speech/asr",
+        "baseCompatible": true,
+        "categories": [
+          "Speech-to-Text"
+        ],
+        "tags": [
+          "ASR",
+          "Spanish",
+          "English"
+        ]
+      }
+    ],
+    "Text-to-Speech": [
+      {
+        "id": "nvidia/nemotron-voicechat",
+        "name": "nemotron-voicechat",
+        "provider": "nvidia",
+        "description": "Nemotron 3 Voicechat - Ultra-low latency, end-to-end, full duplex models for real-time voice-to-voice interactions",
+        "apiType": "direct",
+        "endpoint": "https://integrate.api.nvidia.com/v1/speech/tts",
+        "baseCompatible": true,
+        "categories": [
+          "Text-to-Speech"
+        ],
+        "tags": [
+          "TTS",
+          "Voice Chat",
+          "Real-time",
+          "English"
+        ]
+      },
+      {
+        "id": "nvidia/magpie-tts-multilingual",
+        "name": "magpie-tts-multilingual",
+        "provider": "nvidia",
+        "description": "Natural and expressive voices in multiple languages. For voice agents and brand ambassadors",
+        "apiType": "direct",
+        "endpoint": "https://integrate.api.nvidia.com/v1/speech/tts",
+        "baseCompatible": true,
+        "categories": [
+          "Text-to-Speech"
+        ],
+        "tags": [
+          "TTS",
+          "Multilingual",
+          "Voice Cloning"
+        ]
+      },
+      {
+        "id": "nvidia/magpie-tts-zeroshot",
+        "name": "magpie-tts-zeroshot",
+        "provider": "nvidia",
+        "description": "Expressive and engaging text-to-speech, generated from a short audio sample",
+        "apiType": "direct",
+        "endpoint": "https://integrate.api.nvidia.com/v1/speech/tts",
+        "baseCompatible": true,
+        "categories": [
+          "Text-to-Speech"
+        ],
+        "tags": [
+          "TTS",
+          "Zero-shot",
+          "Voice Cloning"
+        ]
+      },
+      {
+        "id": "resemble.ai/chatterbox-multilingual-tts",
+        "name": "chatterbox-multilingual-tts",
+        "provider": "resemble.ai",
+        "description": "Natural and expressive voices in 23 languages. For voice agents and brand ambassadors",
+        "apiType": "direct",
+        "endpoint": "https://integrate.api.nvidia.com/v1/speech/tts",
+        "baseCompatible": true,
+        "categories": [
+          "Text-to-Speech"
+        ],
+        "tags": [
+          "TTS",
+          "Multilingual",
+          "23 Languages"
+        ]
+      }
+    ],
+    "RAG (Retrieval Augmented Generation)": [
+      {
+        "id": "nvidia/llama-3.2-nemoretriever-1b-vlm-embed-v1",
+        "name": "llama-3.2-nemoretriever-1b-vlm-embed-v1",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/embeddings",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation",
+          "Text-to-Embedding",
+          "Vision / Image-to-Text",
+          "RAG (Retrieval Augmented Generation)"
+        ]
+      },
+      {
+        "id": "nvidia/llama3-chatqa-1.5-70b",
+        "name": "llama3-chatqa-1.5-70b",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Text Generation",
+          "RAG (Retrieval Augmented Generation)"
+        ]
+      },
+      {
+        "id": "nvidia/nemoretriever-parse",
+        "name": "nemoretriever-parse",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "RAG (Retrieval Augmented Generation)"
+        ]
+      }
+    ],
+    "Image Generation": [
+      {
+        "id": "stabilityai/stable-diffusion-xl",
+        "name": "stable-diffusion-xl",
+        "provider": "stabilityai",
+        "description": "High-quality image generation from text prompts",
+        "apiType": "direct",
+        "endpoint": "https://integrate.api.nvidia.com/v1/genai/stable-diffusion",
+        "baseCompatible": true,
+        "categories": [
+          "Image Generation"
+        ],
+        "tags": [
+          "Text-to-Image",
+          "High Quality"
+        ]
+      },
+      {
+        "id": "black-forest-labs/flux.1-schnell",
+        "name": "flux.1-schnell",
+        "provider": "black-forest-labs",
+        "description": "Fast image generation model",
+        "apiType": "direct",
+        "endpoint": "https://integrate.api.nvidia.com/v1/genai/flux",
+        "baseCompatible": true,
+        "categories": [
+          "Image Generation"
+        ],
+        "tags": [
+          "Text-to-Image",
+          "Fast"
+        ]
+      },
+      {
+        "id": "black-forest-labs/flux.1-dev",
+        "name": "flux.1-dev",
+        "provider": "black-forest-labs",
+        "description": "High quality, realistic image generation",
+        "apiType": "direct",
+        "endpoint": "https://integrate.api.nvidia.com/v1/genai/flux",
+        "baseCompatible": true,
+        "categories": [
+          "Image Generation"
+        ],
+        "tags": [
+          "Text-to-Image",
+          "High Quality"
+        ]
+      }
+    ],
+    "Object Detection": [
+      {
+        "id": "nvidia/peoplenet",
+        "name": "peoplenet",
+        "provider": "nvidia",
+        "description": "People detection in video streams",
+        "apiType": "direct",
+        "endpoint": "https://integrate.api.nvidia.com/v1/vision/nvpeoplenet",
+        "baseCompatible": true,
+        "categories": [
+          "Object Detection"
+        ],
+        "tags": [
+          "Object Detection",
+          "People",
+          "Video"
+        ]
+      }
+    ],
+    "Optical Character Recognition": [
+      {
+        "id": "nvidia/nemotron-ocr-v1",
+        "name": "nemotron-ocr-v1",
+        "provider": "nvidia",
+        "description": "Powerful OCR model for fast, accurate real-world image text extraction, layout, and structure analysis",
+        "apiType": "direct",
+        "endpoint": "https://integrate.api.nvidia.com/v1/ocr/nemotron",
+        "baseCompatible": true,
+        "categories": [
+          "Optical Character Recognition"
+        ],
+        "tags": [
+          "OCR",
+          "Text Extraction",
+          "Layout Analysis"
+        ]
+      }
+    ],
+    "Digital Twin": [
+      {
+        "id": "nvidia/earth-2",
+        "name": "earth-2",
+        "provider": "nvidia",
+        "description": "Weather and climate simulation platform",
+        "apiType": "direct",
+        "endpoint": "https://integrate.api.nvidia.com/v1/e2/weather",
+        "baseCompatible": true,
+        "categories": [
+          "Digital Twin"
+        ],
+        "tags": [
+          "Weather",
+          "Climate",
+          "Simulation"
+        ]
+      }
+    ],
+    "Medical Imaging": [
+      {
+        "id": "nvidia/clara-medical-imaging",
+        "name": "clara-medical-imaging",
+        "provider": "nvidia",
+        "description": "Medical imaging AI models",
+        "apiType": "direct",
+        "endpoint": "https://integrate.api.nvidia.com/v1/medical-imaging",
+        "baseCompatible": true,
+        "categories": [
+          "Medical Imaging"
+        ],
+        "tags": [
+          "Medical",
+          "Imaging",
+          "Healthcare"
+        ]
+      }
+    ],
+    "Drug Discovery": [
+      {
+        "id": "nvidia/bionemo-evo2",
+        "name": "bionemo-evo2",
+        "provider": "nvidia",
+        "description": "Genomic foundation model for DNA/RNA sequence understanding",
+        "apiType": "direct",
+        "endpoint": "https://integrate.api.nvidia.com/v1/bio/nim",
+        "baseCompatible": true,
+        "categories": [
+          "Drug Discovery"
+        ],
+        "tags": [
+          "Biology",
+          "Genomics",
+          "Drug Discovery"
+        ]
+      },
+      {
+        "id": "nvidia/bionmol-chemical",
+        "name": "bionmol-chemical",
+        "provider": "nvidia",
+        "description": "Molecular generation and property prediction for drug discovery",
+        "apiType": "direct",
+        "endpoint": "https://integrate.api.nvidia.com/v1/bio/nim",
+        "baseCompatible": true,
+        "categories": [
+          "Drug Discovery"
+        ],
+        "tags": [
+          "Biology",
+          "Molecular",
+          "Drug Discovery"
+        ]
+      }
+    ],
+    "Synthetic Data Generation": [
+      {
+        "id": "nvidia/nemotron-synthetic-data",
+        "name": "nemotron-synthetic-data",
+        "provider": "nvidia",
+        "description": "Generate synthetic training data for fine-tuning",
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Synthetic Data Generation"
+        ],
+        "tags": [
+          "Synthetic Data",
+          "Training Data"
+        ]
+      }
+    ],
+    "Route Optimization": [
+      {
+        "id": "nvidia/cuopt",
+        "name": "cuopt",
+        "provider": "nvidia",
+        "description": "GPU-accelerated route optimization solver",
+        "apiType": "direct",
+        "endpoint": "https://integrate.api.nvidia.com/v1/cuopt",
+        "baseCompatible": true,
+        "categories": [
+          "Route Optimization"
+        ],
+        "tags": [
+          "Optimization",
+          "Routing",
+          "Logistics"
+        ]
+      }
+    ],
+    "Weather Simulation": [
+      {
+        "id": "nvidia/cosmos-world",
+        "name": "cosmos-world",
+        "provider": "nvidia",
+        "description": "World foundation model for physics simulation",
+        "apiType": "direct",
+        "endpoint": "https://integrate.api.nvidia.com/v1/cosmos",
+        "baseCompatible": true,
+        "categories": [
+          "Weather Simulation"
+        ],
+        "tags": [
+          "Physics",
+          "Simulation",
+          "World Model"
+        ]
+      }
+    ],
+    "Video Understanding": [
+      {
+        "id": "nvidia/ai-synthetic-video-detector",
+        "name": "ai-synthetic-video-detector",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Video Understanding"
+        ]
+      },
+      {
+        "id": "nvidia/cosmos-reason2-8b",
+        "name": "cosmos-reason2-8b",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Video Understanding",
+          "Reasoning"
+        ]
+      }
+    ],
+    "Reasoning": [
+      {
+        "id": "nvidia/cosmos-reason2-8b",
+        "name": "cosmos-reason2-8b",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Video Understanding",
+          "Reasoning"
+        ]
+      },
+      {
+        "id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+        "name": "nemotron-3-nano-omni-30b-a3b-reasoning",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Vision / Image-to-Text",
+          "Reasoning"
+        ]
+      },
+      {
+        "id": "nvidia/nemotron-content-safety-reasoning-4b",
+        "name": "nemotron-content-safety-reasoning-4b",
+        "provider": "nvidia",
+        "object": "model",
+        "created": 735790403,
+        "apiType": "openai-compatible",
+        "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "baseCompatible": true,
+        "categories": [
+          "Safety & Moderation",
+          "Reasoning"
+        ]
+      }
+    ]
+  }
+}

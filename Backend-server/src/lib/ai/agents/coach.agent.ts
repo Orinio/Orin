@@ -1,13 +1,15 @@
 import type { AgentDefinition } from '../core/types.js';
+import { MODELS } from '../core/models.js';
 
 export const coachAgent: AgentDefinition = {
   id: 'coach',
   name: 'Coach Agent',
   description: 'Provides personalized career coaching and advice',
-  model: 'meta/llama-3.3-70b-instruct',
+  model: MODELS.primary.coach, // qwen/qwen3-coder-480b-a35b-instruct - Best quality
   temperature: 0.7,
   maxTokens: 500,
   maxIterations: 1,
+  timeoutMs: 45000,
   tools: [],
   systemPrompt: `You are Orin AI Coach, a personalized career coach for students and early-career developers.
 

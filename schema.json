@@ -1,0 +1,4101 @@
+[
+    {
+        "table": "ai_usage_log",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "id",
+                "default": "gen_random_uuid()",
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "user_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "text",
+                "column": "endpoint",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "integer",
+                "column": "tokens_used",
+                "default": "0",
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "created_at",
+                "default": "now()",
+                "nullable": "NO"
+            }
+        ],
+        "indexes": [
+            {
+                "definition": "CREATE UNIQUE INDEX ai_usage_log_pkey ON public.ai_usage_log USING btree (id)",
+                "index_name": "ai_usage_log_pkey"
+            },
+            {
+                "definition": "CREATE INDEX idx_ai_usage_log_user_recent ON public.ai_usage_log USING btree (user_id, created_at DESC)",
+                "index_name": "idx_ai_usage_log_user_recent"
+            },
+            {
+                "definition": "CREATE INDEX idx_ai_usage_log_user_endpoint ON public.ai_usage_log USING btree (user_id, endpoint, created_at DESC)",
+                "index_name": "idx_ai_usage_log_user_endpoint"
+            }
+        ],
+        "foreign_keys": [
+            {
+                "column": "user_id",
+                "constraint_name": "ai_usage_log_user_id_fkey",
+                "references_table": "users",
+                "references_column": "id"
+            }
+        ],
+        "rls_policies": [
+            {
+                "qual": "(auth.uid() = ( SELECT users.auth_user_id\n   FROM users\n  WHERE (users.id = ai_usage_log.user_id)))",
+                "roles": [
+                    "public"
+                ],
+                "command": "SELECT",
+                "with_check": null,
+                "policy_name": "Users can view own AI usage"
+            },
+            {
+                "qual": null,
+                "roles": [
+                    "public"
+                ],
+                "command": "INSERT",
+                "with_check": "true",
+                "policy_name": "Service role can insert AI usage"
+            }
+        ]
+    },
+    {
+        "table": "audit_log",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "id",
+                "default": "gen_random_uuid()",
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "actor_id",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "USER-DEFINED",
+                "column": "actor_role",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "USER-DEFINED",
+                "column": "action",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "text",
+                "column": "entity_type",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "text",
+                "column": "entity_id",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "jsonb",
+                "column": "old_data",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "jsonb",
+                "column": "new_data",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "inet",
+                "column": "ip_address",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "user_agent",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "description",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "created_at",
+                "default": "now()",
+                "nullable": "NO"
+            }
+        ],
+        "indexes": [
+            {
+                "definition": "CREATE INDEX idx_audit_log_action ON public.audit_log USING btree (action)",
+                "index_name": "idx_audit_log_action"
+            },
+            {
+                "definition": "CREATE INDEX idx_audit_log_created_at ON public.audit_log USING btree (created_at DESC)",
+                "index_name": "idx_audit_log_created_at"
+            },
+            {
+                "definition": "CREATE INDEX idx_audit_log_entity ON public.audit_log USING btree (entity_type, entity_id)",
+                "index_name": "idx_audit_log_entity"
+            },
+            {
+                "definition": "CREATE INDEX idx_audit_log_actor ON public.audit_log USING btree (actor_id, created_at DESC)",
+                "index_name": "idx_audit_log_actor"
+            },
+            {
+                "definition": "CREATE INDEX idx_audit_log_brin ON public.audit_log USING brin (created_at) WITH (pages_per_range='32')",
+                "index_name": "idx_audit_log_brin"
+            },
+            {
+                "definition": "CREATE INDEX idx_audit_log_actor_role ON public.audit_log USING btree (actor_role, created_at DESC)",
+                "index_name": "idx_audit_log_actor_role"
+            },
+            {
+                "definition": "CREATE UNIQUE INDEX audit_log_pkey ON public.audit_log USING btree (id)",
+                "index_name": "audit_log_pkey"
+            }
+        ],
+        "foreign_keys": [
+            {
+                "column": "actor_id",
+                "constraint_name": "audit_log_actor_id_fkey",
+                "references_table": "users",
+                "references_column": "id"
+            }
+        ],
+        "rls_policies": [
+            {
+                "qual": "is_admin_or_mod()",
+                "roles": [
+                    "public"
+                ],
+                "command": "SELECT",
+                "with_check": null,
+                "policy_name": "audit_log_admin_select"
+            },
+            {
+                "qual": null,
+                "roles": [
+                    "public"
+                ],
+                "command": "INSERT",
+                "with_check": "is_admin_or_mod()",
+                "policy_name": "audit_log_admin_insert"
+            }
+        ]
+    },
+    {
+        "table": "coach_notes",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "id",
+                "default": "gen_random_uuid()",
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "user_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "USER-DEFINED",
+                "column": "type",
+                "default": "'ad_hoc'::coach_note_type",
+                "nullable": "NO"
+            },
+            {
+                "type": "text",
+                "column": "content",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "text",
+                "column": "action_label",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "action_url",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "smallint",
+                "column": "priority",
+                "default": "0",
+                "nullable": "NO"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "expires_at",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "created_at",
+                "default": "now()",
+                "nullable": "NO"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "updated_at",
+                "default": "now()",
+                "nullable": "NO"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "deleted_at",
+                "default": null,
+                "nullable": "YES"
+            }
+        ],
+        "indexes": [
+            {
+                "definition": "CREATE INDEX idx_coach_notes_user_id ON public.coach_notes USING btree (user_id)",
+                "index_name": "idx_coach_notes_user_id"
+            },
+            {
+                "definition": "CREATE INDEX idx_coach_notes_user_active ON public.coach_notes USING btree (user_id, created_at DESC) WHERE (deleted_at IS NULL)",
+                "index_name": "idx_coach_notes_user_active"
+            },
+            {
+                "definition": "CREATE INDEX idx_coach_notes_user_type ON public.coach_notes USING btree (user_id, type)",
+                "index_name": "idx_coach_notes_user_type"
+            },
+            {
+                "definition": "CREATE INDEX idx_coach_notes_priority ON public.coach_notes USING btree (user_id, priority DESC, created_at DESC) WHERE (deleted_at IS NULL)",
+                "index_name": "idx_coach_notes_priority"
+            },
+            {
+                "definition": "CREATE INDEX idx_coach_notes_expires_at ON public.coach_notes USING btree (expires_at) WHERE ((expires_at IS NOT NULL) AND (deleted_at IS NULL))",
+                "index_name": "idx_coach_notes_expires_at"
+            },
+            {
+                "definition": "CREATE UNIQUE INDEX coach_notes_pkey ON public.coach_notes USING btree (id)",
+                "index_name": "coach_notes_pkey"
+            }
+        ],
+        "foreign_keys": [
+            {
+                "column": "user_id",
+                "constraint_name": "coach_notes_user_id_fkey",
+                "references_table": "users",
+                "references_column": "id"
+            }
+        ],
+        "rls_policies": [
+            {
+                "qual": "((user_id = current_user_id()) AND (deleted_at IS NULL))",
+                "roles": [
+                    "public"
+                ],
+                "command": "UPDATE",
+                "with_check": "(user_id = current_user_id())",
+                "policy_name": "coach_notes_update_self"
+            },
+            {
+                "qual": "is_admin_or_mod()",
+                "roles": [
+                    "public"
+                ],
+                "command": "ALL",
+                "with_check": "is_admin_or_mod()",
+                "policy_name": "coach_notes_admin_all"
+            },
+            {
+                "qual": "((user_id = current_user_id()) AND (deleted_at IS NULL))",
+                "roles": [
+                    "public"
+                ],
+                "command": "SELECT",
+                "with_check": null,
+                "policy_name": "coach_notes_select_self"
+            },
+            {
+                "qual": null,
+                "roles": [
+                    "public"
+                ],
+                "command": "INSERT",
+                "with_check": "(user_id = current_user_id())",
+                "policy_name": "coach_notes_insert_self"
+            },
+            {
+                "qual": "(user_id = current_user_id())",
+                "roles": [
+                    "public"
+                ],
+                "command": "DELETE",
+                "with_check": null,
+                "policy_name": "coach_notes_delete_self"
+            }
+        ]
+    },
+    {
+        "table": "contact_messages",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "id",
+                "default": "gen_random_uuid()",
+                "nullable": "NO"
+            },
+            {
+                "type": "text",
+                "column": "name",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "USER-DEFINED",
+                "column": "email",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "text",
+                "column": "subject",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "message",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "USER-DEFINED",
+                "column": "status",
+                "default": "'new'::contact_status",
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "user_id",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "inet",
+                "column": "ip_address",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "user_agent",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "uuid",
+                "column": "assigned_to",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "resolved_at",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "created_at",
+                "default": "now()",
+                "nullable": "NO"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "updated_at",
+                "default": "now()",
+                "nullable": "NO"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "deleted_at",
+                "default": null,
+                "nullable": "YES"
+            }
+        ],
+        "indexes": [
+            {
+                "definition": "CREATE UNIQUE INDEX contact_messages_pkey ON public.contact_messages USING btree (id)",
+                "index_name": "contact_messages_pkey"
+            },
+            {
+                "definition": "CREATE INDEX idx_contact_messages_created ON public.contact_messages USING btree (created_at DESC)",
+                "index_name": "idx_contact_messages_created"
+            },
+            {
+                "definition": "CREATE INDEX idx_contact_messages_assigned ON public.contact_messages USING btree (assigned_to) WHERE (assigned_to IS NOT NULL)",
+                "index_name": "idx_contact_messages_assigned"
+            },
+            {
+                "definition": "CREATE INDEX idx_contact_messages_user_id ON public.contact_messages USING btree (user_id) WHERE (user_id IS NOT NULL)",
+                "index_name": "idx_contact_messages_user_id"
+            },
+            {
+                "definition": "CREATE INDEX idx_contact_messages_email ON public.contact_messages USING btree (email)",
+                "index_name": "idx_contact_messages_email"
+            },
+            {
+                "definition": "CREATE INDEX idx_contact_messages_status ON public.contact_messages USING btree (status)",
+                "index_name": "idx_contact_messages_status"
+            }
+        ],
+        "foreign_keys": [
+            {
+                "column": "assigned_to",
+                "constraint_name": "contact_messages_assigned_to_fkey",
+                "references_table": "users",
+                "references_column": "id"
+            },
+            {
+                "column": "user_id",
+                "constraint_name": "contact_messages_user_id_fkey",
+                "references_table": "users",
+                "references_column": "id"
+            }
+        ],
+        "rls_policies": [
+            {
+                "qual": "is_admin_or_mod()",
+                "roles": [
+                    "public"
+                ],
+                "command": "UPDATE",
+                "with_check": "is_admin_or_mod()",
+                "policy_name": "contact_messages_update_admin"
+            },
+            {
+                "qual": "is_admin_or_mod()",
+                "roles": [
+                    "public"
+                ],
+                "command": "SELECT",
+                "with_check": null,
+                "policy_name": "contact_messages_select_admin"
+            },
+            {
+                "qual": null,
+                "roles": [
+                    "public"
+                ],
+                "command": "INSERT",
+                "with_check": "true",
+                "policy_name": "contact_messages_insert_anon"
+            },
+            {
+                "qual": "is_admin_or_mod()",
+                "roles": [
+                    "public"
+                ],
+                "command": "DELETE",
+                "with_check": null,
+                "policy_name": "contact_messages_delete_admin"
+            }
+        ]
+    },
+    {
+        "table": "notification_preferences",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "user_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "boolean",
+                "column": "weekly_summary",
+                "default": "true",
+                "nullable": "NO"
+            },
+            {
+                "type": "boolean",
+                "column": "recruiter_views",
+                "default": "true",
+                "nullable": "NO"
+            },
+            {
+                "type": "boolean",
+                "column": "verification_changes",
+                "default": "false",
+                "nullable": "NO"
+            },
+            {
+                "type": "boolean",
+                "column": "opportunity_matches",
+                "default": "true",
+                "nullable": "NO"
+            },
+            {
+                "type": "boolean",
+                "column": "coach_tips",
+                "default": "false",
+                "nullable": "NO"
+            },
+            {
+                "type": "boolean",
+                "column": "product_updates",
+                "default": "true",
+                "nullable": "NO"
+            },
+            {
+                "type": "text",
+                "column": "digest_frequency",
+                "default": "'daily'::text",
+                "nullable": "NO"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "created_at",
+                "default": "now()",
+                "nullable": "NO"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "updated_at",
+                "default": "now()",
+                "nullable": "NO"
+            }
+        ],
+        "indexes": [
+            {
+                "definition": "CREATE UNIQUE INDEX notification_preferences_pkey ON public.notification_preferences USING btree (user_id)",
+                "index_name": "notification_preferences_pkey"
+            }
+        ],
+        "foreign_keys": [
+            {
+                "column": "user_id",
+                "constraint_name": "notification_preferences_user_id_fkey",
+                "references_table": "users",
+                "references_column": "id"
+            }
+        ],
+        "rls_policies": [
+            {
+                "qual": "(user_id = current_user_id())",
+                "roles": [
+                    "public"
+                ],
+                "command": "ALL",
+                "with_check": "(user_id = current_user_id())",
+                "policy_name": "notification_preferences_owner_all"
+            },
+            {
+                "qual": "is_admin_or_mod()",
+                "roles": [
+                    "public"
+                ],
+                "command": "ALL",
+                "with_check": "is_admin_or_mod()",
+                "policy_name": "notification_preferences_admin_all"
+            }
+        ]
+    },
+    {
+        "table": "notifications",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "id",
+                "default": "gen_random_uuid()",
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "user_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "USER-DEFINED",
+                "column": "type",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "text",
+                "column": "title",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "text",
+                "column": "body",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "link",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "jsonb",
+                "column": "payload",
+                "default": "'{}'::jsonb",
+                "nullable": "NO"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "read_at",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "created_at",
+                "default": "now()",
+                "nullable": "NO"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "updated_at",
+                "default": "now()",
+                "nullable": "NO"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "deleted_at",
+                "default": null,
+                "nullable": "YES"
+            }
+        ],
+        "indexes": [
+            {
+                "definition": "CREATE UNIQUE INDEX notifications_pkey ON public.notifications USING btree (id)",
+                "index_name": "notifications_pkey"
+            },
+            {
+                "definition": "CREATE INDEX idx_notifications_user_id ON public.notifications USING btree (user_id, created_at DESC)",
+                "index_name": "idx_notifications_user_id"
+            },
+            {
+                "definition": "CREATE INDEX idx_notifications_deleted_at ON public.notifications USING btree (deleted_at) WHERE (deleted_at IS NOT NULL)",
+                "index_name": "idx_notifications_deleted_at"
+            },
+            {
+                "definition": "CREATE INDEX idx_notifications_read_at ON public.notifications USING btree (user_id, read_at) WHERE (read_at IS NOT NULL)",
+                "index_name": "idx_notifications_read_at"
+            },
+            {
+                "definition": "CREATE INDEX idx_notifications_type ON public.notifications USING btree (type)",
+                "index_name": "idx_notifications_type"
+            },
+            {
+                "definition": "CREATE INDEX idx_notifications_user_unread ON public.notifications USING btree (user_id) WHERE ((read_at IS NULL) AND (deleted_at IS NULL))",
+                "index_name": "idx_notifications_user_unread"
+            }
+        ],
+        "foreign_keys": [
+            {
+                "column": "user_id",
+                "constraint_name": "notifications_user_id_fkey",
+                "references_table": "users",
+                "references_column": "id"
+            }
+        ],
+        "rls_policies": [
+            {
+                "qual": "is_admin_or_mod()",
+                "roles": [
+                    "public"
+                ],
+                "command": "ALL",
+                "with_check": "is_admin_or_mod()",
+                "policy_name": "notifications_admin_all"
+            },
+            {
+                "qual": "(user_id = current_user_id())",
+                "roles": [
+                    "public"
+                ],
+                "command": "ALL",
+                "with_check": "(user_id = current_user_id())",
+                "policy_name": "notifications_owner_all"
+            }
+        ]
+    },
+    {
+        "table": "opportunities",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "id",
+                "default": "gen_random_uuid()",
+                "nullable": "NO"
+            },
+            {
+                "type": "text",
+                "column": "title",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "text",
+                "column": "company",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "text",
+                "column": "company_logo_url",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "USER-DEFINED",
+                "column": "type",
+                "default": "'internship'::opportunity_type",
+                "nullable": "NO"
+            },
+            {
+                "type": "ARRAY",
+                "column": "required_skills",
+                "default": "'{}'::text[]",
+                "nullable": "NO"
+            },
+            {
+                "type": "ARRAY",
+                "column": "nice_to_have",
+                "default": "'{}'::text[]",
+                "nullable": "NO"
+            },
+            {
+                "type": "text",
+                "column": "description",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "location",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "boolean",
+                "column": "is_remote",
+                "default": "false",
+                "nullable": "NO"
+            },
+            {
+                "type": "text",
+                "column": "link",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "apply_deadline",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "numeric",
+                "column": "match_percentage",
+                "default": "0",
+                "nullable": "NO"
+            },
+            {
+                "type": "numeric",
+                "column": "salary_min",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "numeric",
+                "column": "salary_max",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "salary_currency",
+                "default": "'USD'::text",
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "source",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "source_external_id",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "boolean",
+                "column": "is_active",
+                "default": "true",
+                "nullable": "NO"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "posted_at",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "jsonb",
+                "column": "metadata",
+                "default": "'{}'::jsonb",
+                "nullable": "NO"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "created_at",
+                "default": "now()",
+                "nullable": "NO"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "updated_at",
+                "default": "now()",
+                "nullable": "NO"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "deleted_at",
+                "default": null,
+                "nullable": "YES"
+            }
+        ],
+        "indexes": [
+            {
+                "definition": "CREATE INDEX idx_opportunities_type ON public.opportunities USING btree (type)",
+                "index_name": "idx_opportunities_type"
+            },
+            {
+                "definition": "CREATE INDEX idx_opportunities_deleted_at ON public.opportunities USING btree (deleted_at) WHERE (deleted_at IS NOT NULL)",
+                "index_name": "idx_opportunities_deleted_at"
+            },
+            {
+                "definition": "CREATE INDEX idx_opportunities_salary_range ON public.opportunities USING btree (salary_min, salary_max) WHERE (salary_min IS NOT NULL)",
+                "index_name": "idx_opportunities_salary_range"
+            },
+            {
+                "definition": "CREATE INDEX idx_opportunities_remote ON public.opportunities USING btree (is_remote) WHERE (is_remote = true)",
+                "index_name": "idx_opportunities_remote"
+            },
+            {
+                "definition": "CREATE INDEX idx_opportunities_match ON public.opportunities USING btree (match_percentage DESC)",
+                "index_name": "idx_opportunities_match"
+            },
+            {
+                "definition": "CREATE INDEX idx_opportunities_created_at ON public.opportunities USING btree (created_at DESC)",
+                "index_name": "idx_opportunities_created_at"
+            },
+            {
+                "definition": "CREATE INDEX idx_opportunities_nice_to_have ON public.opportunities USING gin (nice_to_have)",
+                "index_name": "idx_opportunities_nice_to_have"
+            },
+            {
+                "definition": "CREATE INDEX idx_opportunities_active ON public.opportunities USING btree (is_active, apply_deadline)",
+                "index_name": "idx_opportunities_active"
+            },
+            {
+                "definition": "CREATE INDEX idx_opportunities_required_skills ON public.opportunities USING gin (required_skills)",
+                "index_name": "idx_opportunities_required_skills"
+            },
+            {
+                "definition": "CREATE UNIQUE INDEX opportunities_pkey ON public.opportunities USING btree (id)",
+                "index_name": "opportunities_pkey"
+            },
+            {
+                "definition": "CREATE UNIQUE INDEX opportunities_source_external_id_key ON public.opportunities USING btree (source_external_id)",
+                "index_name": "opportunities_source_external_id_key"
+            },
+            {
+                "definition": "CREATE INDEX idx_opportunities_company ON public.opportunities USING gin (company gin_trgm_ops)",
+                "index_name": "idx_opportunities_company"
+            },
+            {
+                "definition": "CREATE INDEX idx_opportunities_title ON public.opportunities USING gin (title gin_trgm_ops)",
+                "index_name": "idx_opportunities_title"
+            }
+        ],
+        "foreign_keys": [
+        ],
+        "rls_policies": [
+            {
+                "qual": "is_admin_or_mod()",
+                "roles": [
+                    "public"
+                ],
+                "command": "DELETE",
+                "with_check": null,
+                "policy_name": "opportunities_delete_admin"
+            },
+            {
+                "qual": "((is_active = true) AND (deleted_at IS NULL))",
+                "roles": [
+                    "public"
+                ],
+                "command": "SELECT",
+                "with_check": null,
+                "policy_name": "opportunities_select_active"
+            },
+            {
+                "qual": null,
+                "roles": [
+                    "public"
+                ],
+                "command": "INSERT",
+                "with_check": "is_admin_or_mod()",
+                "policy_name": "opportunities_insert_admin"
+            },
+            {
+                "qual": "is_admin_or_mod()",
+                "roles": [
+                    "public"
+                ],
+                "command": "UPDATE",
+                "with_check": "is_admin_or_mod()",
+                "policy_name": "opportunities_update_admin"
+            }
+        ]
+    },
+    {
+        "table": "opportunity_details",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "id",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "title",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "company",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "company_logo_url",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "USER-DEFINED",
+                "column": "type",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "ARRAY",
+                "column": "required_skills",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "ARRAY",
+                "column": "nice_to_have",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "description",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "location",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "boolean",
+                "column": "is_remote",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "link",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "apply_deadline",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "numeric",
+                "column": "match_percentage",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "numeric",
+                "column": "salary_min",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "numeric",
+                "column": "salary_max",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "salary_currency",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "source",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "source_external_id",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "boolean",
+                "column": "is_active",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "posted_at",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "jsonb",
+                "column": "metadata",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "created_at",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "updated_at",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "deleted_at",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "my_status",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "numeric",
+                "column": "my_match_score",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "my_applied_at",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "my_notes",
+                "default": null,
+                "nullable": "YES"
+            }
+        ],
+        "indexes": [
+        ],
+        "foreign_keys": [
+        ],
+        "rls_policies": [
+        ]
+    },
+    {
+        "table": "proof_cards",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "id",
+                "default": "gen_random_uuid()",
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "user_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "text",
+                "column": "title",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "text",
+                "column": "description",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "USER-DEFINED",
+                "column": "source_type",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "text",
+                "column": "source_url",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "thumbnail_url",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "ARRAY",
+                "column": "skills_extracted",
+                "default": "'{}'::text[]",
+                "nullable": "NO"
+            },
+            {
+                "type": "ARRAY",
+                "column": "skills_user_added",
+                "default": "'{}'::text[]",
+                "nullable": "NO"
+            },
+            {
+                "type": "ARRAY",
+                "column": "what_it_proves",
+                "default": "'{}'::text[]",
+                "nullable": "NO"
+            },
+            {
+                "type": "USER-DEFINED",
+                "column": "verification_status",
+                "default": "'pending'::verification_status",
+                "nullable": "NO"
+            },
+            {
+                "type": "USER-DEFINED",
+                "column": "visibility",
+                "default": "'private'::visibility_status",
+                "nullable": "NO"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "verified_at",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "integer",
+                "column": "view_count",
+                "default": "0",
+                "nullable": "NO"
+            },
+            {
+                "type": "boolean",
+                "column": "is_highlighted",
+                "default": "false",
+                "nullable": "NO"
+            },
+            {
+                "type": "integer",
+                "column": "sort_order",
+                "default": "0",
+                "nullable": "NO"
+            },
+            {
+                "type": "jsonb",
+                "column": "metadata",
+                "default": "'{}'::jsonb",
+                "nullable": "NO"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "created_at",
+                "default": "now()",
+                "nullable": "NO"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "updated_at",
+                "default": "now()",
+                "nullable": "NO"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "deleted_at",
+                "default": null,
+                "nullable": "YES"
+            }
+        ],
+        "indexes": [
+            {
+                "definition": "CREATE INDEX idx_proof_cards_skills_user_added ON public.proof_cards USING gin (skills_user_added)",
+                "index_name": "idx_proof_cards_skills_user_added"
+            },
+            {
+                "definition": "CREATE UNIQUE INDEX proof_cards_pkey ON public.proof_cards USING btree (id)",
+                "index_name": "proof_cards_pkey"
+            },
+            {
+                "definition": "CREATE INDEX idx_proof_cards_user_id ON public.proof_cards USING btree (user_id)",
+                "index_name": "idx_proof_cards_user_id"
+            },
+            {
+                "definition": "CREATE INDEX idx_proof_cards_verification ON public.proof_cards USING btree (verification_status)",
+                "index_name": "idx_proof_cards_verification"
+            },
+            {
+                "definition": "CREATE INDEX idx_proof_cards_visibility ON public.proof_cards USING btree (visibility)",
+                "index_name": "idx_proof_cards_visibility"
+            },
+            {
+                "definition": "CREATE INDEX idx_proof_cards_user_status ON public.proof_cards USING btree (user_id, verification_status)",
+                "index_name": "idx_proof_cards_user_status"
+            },
+            {
+                "definition": "CREATE INDEX idx_proof_cards_user_created ON public.proof_cards USING btree (user_id, created_at DESC)",
+                "index_name": "idx_proof_cards_user_created"
+            },
+            {
+                "definition": "CREATE INDEX idx_proof_cards_user_updated ON public.proof_cards USING btree (user_id, updated_at DESC)",
+                "index_name": "idx_proof_cards_user_updated"
+            },
+            {
+                "definition": "CREATE INDEX idx_proof_cards_sort ON public.proof_cards USING btree (user_id, sort_order, created_at DESC)",
+                "index_name": "idx_proof_cards_sort"
+            },
+            {
+                "definition": "CREATE INDEX idx_proof_cards_skills_extracted ON public.proof_cards USING gin (skills_extracted)",
+                "index_name": "idx_proof_cards_skills_extracted"
+            },
+            {
+                "definition": "CREATE INDEX idx_proof_cards_title_trgm ON public.proof_cards USING gin (title gin_trgm_ops)",
+                "index_name": "idx_proof_cards_title_trgm"
+            },
+            {
+                "definition": "CREATE INDEX idx_proof_cards_source_type ON public.proof_cards USING btree (source_type)",
+                "index_name": "idx_proof_cards_source_type"
+            },
+            {
+                "definition": "CREATE INDEX idx_proof_cards_active ON public.proof_cards USING btree (user_id) WHERE (deleted_at IS NULL)",
+                "index_name": "idx_proof_cards_active"
+            },
+            {
+                "definition": "CREATE INDEX idx_proof_cards_public_verified ON public.proof_cards USING btree (user_id) WHERE ((visibility = 'public'::visibility_status) AND (verification_status = 'verified'::verification_status) AND (deleted_at IS NULL))",
+                "index_name": "idx_proof_cards_public_verified"
+            },
+            {
+                "definition": "CREATE INDEX idx_proof_cards_deleted_at ON public.proof_cards USING btree (deleted_at) WHERE (deleted_at IS NOT NULL)",
+                "index_name": "idx_proof_cards_deleted_at"
+            }
+        ],
+        "foreign_keys": [
+            {
+                "column": "user_id",
+                "constraint_name": "proof_cards_user_id_fkey",
+                "references_table": "users",
+                "references_column": "id"
+            }
+        ],
+        "rls_policies": [
+            {
+                "qual": null,
+                "roles": [
+                    "public"
+                ],
+                "command": "INSERT",
+                "with_check": "(user_id = current_user_id())",
+                "policy_name": "proof_cards_insert_owner"
+            },
+            {
+                "qual": "((user_id = current_user_id()) AND (deleted_at IS NULL))",
+                "roles": [
+                    "public"
+                ],
+                "command": "SELECT",
+                "with_check": null,
+                "policy_name": "proof_cards_select_owner"
+            },
+            {
+                "qual": "((deleted_at IS NULL) AND (visibility = 'public'::visibility_status) AND (verification_status = 'verified'::verification_status) AND (EXISTS ( SELECT 1\n   FROM users u\n  WHERE ((u.id = proof_cards.user_id) AND (u.deleted_at IS NULL) AND (u.is_profile_public = true) AND (u.account_status = 'active'::account_status)))))",
+                "roles": [
+                    "public"
+                ],
+                "command": "SELECT",
+                "with_check": null,
+                "policy_name": "proof_cards_select_public"
+            },
+            {
+                "qual": "is_admin_or_mod()",
+                "roles": [
+                    "public"
+                ],
+                "command": "ALL",
+                "with_check": "is_admin_or_mod()",
+                "policy_name": "proof_cards_admin_all"
+            },
+            {
+                "qual": "(user_id = current_user_id())",
+                "roles": [
+                    "public"
+                ],
+                "command": "DELETE",
+                "with_check": null,
+                "policy_name": "proof_cards_delete_owner"
+            },
+            {
+                "qual": "((user_id = current_user_id()) AND (deleted_at IS NULL))",
+                "roles": [
+                    "public"
+                ],
+                "command": "UPDATE",
+                "with_check": "(user_id = current_user_id())",
+                "policy_name": "proof_cards_update_owner"
+            }
+        ]
+    },
+    {
+        "table": "proof_shares",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "id",
+                "default": "gen_random_uuid()",
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "proof_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "owner_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "USER-DEFINED",
+                "column": "recipient_email",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "text",
+                "column": "recipient_name",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "token",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "USER-DEFINED",
+                "column": "kind",
+                "default": "'recruiter_invite'::share_token_kind",
+                "nullable": "NO"
+            },
+            {
+                "type": "text",
+                "column": "message",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "expires_at",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "last_viewed_at",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "integer",
+                "column": "view_count",
+                "default": "0",
+                "nullable": "NO"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "created_at",
+                "default": "now()",
+                "nullable": "NO"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "updated_at",
+                "default": "now()",
+                "nullable": "NO"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "deleted_at",
+                "default": null,
+                "nullable": "YES"
+            }
+        ],
+        "indexes": [
+            {
+                "definition": "CREATE UNIQUE INDEX idx_proof_shares_active_proof_email ON public.proof_shares USING btree (proof_id, recipient_email) WHERE (deleted_at IS NULL)",
+                "index_name": "idx_proof_shares_active_proof_email"
+            },
+            {
+                "definition": "CREATE UNIQUE INDEX proof_shares_token_key ON public.proof_shares USING btree (token)",
+                "index_name": "proof_shares_token_key"
+            },
+            {
+                "definition": "CREATE UNIQUE INDEX proof_shares_pkey ON public.proof_shares USING btree (id)",
+                "index_name": "proof_shares_pkey"
+            },
+            {
+                "definition": "CREATE INDEX idx_proof_shares_token ON public.proof_shares USING btree (token) WHERE (token IS NOT NULL)",
+                "index_name": "idx_proof_shares_token"
+            },
+            {
+                "definition": "CREATE INDEX idx_proof_shares_expires ON public.proof_shares USING btree (expires_at) WHERE (expires_at IS NOT NULL)",
+                "index_name": "idx_proof_shares_expires"
+            },
+            {
+                "definition": "CREATE INDEX idx_proof_shares_email ON public.proof_shares USING btree (recipient_email)",
+                "index_name": "idx_proof_shares_email"
+            },
+            {
+                "definition": "CREATE INDEX idx_proof_shares_owner ON public.proof_shares USING btree (owner_id)",
+                "index_name": "idx_proof_shares_owner"
+            }
+        ],
+        "foreign_keys": [
+            {
+                "column": "owner_id",
+                "constraint_name": "proof_shares_owner_id_fkey",
+                "references_table": "users",
+                "references_column": "id"
+            },
+            {
+                "column": "proof_id",
+                "constraint_name": "proof_shares_proof_id_fkey",
+                "references_table": "proof_cards",
+                "references_column": "id"
+            }
+        ],
+        "rls_policies": [
+            {
+                "qual": "(owner_id = current_user_id())",
+                "roles": [
+                    "public"
+                ],
+                "command": "ALL",
+                "with_check": "(owner_id = current_user_id())",
+                "policy_name": "proof_shares_owner_all"
+            },
+            {
+                "qual": "is_admin_or_mod()",
+                "roles": [
+                    "public"
+                ],
+                "command": "ALL",
+                "with_check": "is_admin_or_mod()",
+                "policy_name": "proof_shares_admin_all"
+            }
+        ]
+    },
+    {
+        "table": "proof_sources",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "id",
+                "default": "gen_random_uuid()",
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "user_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "USER-DEFINED",
+                "column": "source_type",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "text",
+                "column": "source_url",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "source_name",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "boolean",
+                "column": "is_connected",
+                "default": "true",
+                "nullable": "NO"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "last_synced_at",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "jsonb",
+                "column": "metadata",
+                "default": "'{}'::jsonb",
+                "nullable": "NO"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "created_at",
+                "default": "now()",
+                "nullable": "NO"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "updated_at",
+                "default": "now()",
+                "nullable": "NO"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "deleted_at",
+                "default": null,
+                "nullable": "YES"
+            }
+        ],
+        "indexes": [
+            {
+                "definition": "CREATE INDEX idx_proof_sources_user_type ON public.proof_sources USING btree (user_id, source_type)",
+                "index_name": "idx_proof_sources_user_type"
+            },
+            {
+                "definition": "CREATE INDEX idx_proof_sources_active ON public.proof_sources USING btree (user_id) WHERE (deleted_at IS NULL)",
+                "index_name": "idx_proof_sources_active"
+            },
+            {
+                "definition": "CREATE UNIQUE INDEX proof_sources_pkey ON public.proof_sources USING btree (id)",
+                "index_name": "proof_sources_pkey"
+            },
+            {
+                "definition": "CREATE INDEX idx_proof_sources_connected ON public.proof_sources USING btree (user_id, is_connected) WHERE (deleted_at IS NULL)",
+                "index_name": "idx_proof_sources_connected"
+            },
+            {
+                "definition": "CREATE INDEX idx_proof_sources_user_id ON public.proof_sources USING btree (user_id)",
+                "index_name": "idx_proof_sources_user_id"
+            }
+        ],
+        "foreign_keys": [
+            {
+                "column": "user_id",
+                "constraint_name": "proof_sources_user_id_fkey",
+                "references_table": "users",
+                "references_column": "id"
+            }
+        ],
+        "rls_policies": [
+            {
+                "qual": null,
+                "roles": [
+                    "public"
+                ],
+                "command": "INSERT",
+                "with_check": "(user_id = current_user_id())",
+                "policy_name": "proof_sources_insert_owner"
+            },
+            {
+                "qual": "(user_id = current_user_id())",
+                "roles": [
+                    "public"
+                ],
+                "command": "DELETE",
+                "with_check": null,
+                "policy_name": "proof_sources_delete_owner"
+            },
+            {
+                "qual": "is_admin_or_mod()",
+                "roles": [
+                    "public"
+                ],
+                "command": "ALL",
+                "with_check": "is_admin_or_mod()",
+                "policy_name": "proof_sources_admin_all"
+            },
+            {
+                "qual": "((user_id = current_user_id()) AND (deleted_at IS NULL))",
+                "roles": [
+                    "public"
+                ],
+                "command": "UPDATE",
+                "with_check": "(user_id = current_user_id())",
+                "policy_name": "proof_sources_update_owner"
+            },
+            {
+                "qual": "((user_id = current_user_id()) AND (deleted_at IS NULL))",
+                "roles": [
+                    "public"
+                ],
+                "command": "SELECT",
+                "with_check": null,
+                "policy_name": "proof_sources_select_owner"
+            }
+        ]
+    },
+    {
+        "table": "proof_views",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "id",
+                "default": "gen_random_uuid()",
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "proof_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "owner_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "viewer_user_id",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "inet",
+                "column": "ip_address",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "user_agent",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "referer",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "viewed_at",
+                "default": "now()",
+                "nullable": "NO"
+            }
+        ],
+        "indexes": [
+            {
+                "definition": "CREATE INDEX idx_proof_views_owner ON ONLY public.proof_views USING btree (owner_id, viewed_at DESC)",
+                "index_name": "idx_proof_views_owner"
+            },
+            {
+                "definition": "CREATE INDEX idx_proof_views_proof_id ON ONLY public.proof_views USING btree (proof_id, viewed_at DESC)",
+                "index_name": "idx_proof_views_proof_id"
+            },
+            {
+                "definition": "CREATE UNIQUE INDEX proof_views_pkey ON ONLY public.proof_views USING btree (id, viewed_at)",
+                "index_name": "proof_views_pkey"
+            },
+            {
+                "definition": "CREATE INDEX idx_proof_views_viewer ON ONLY public.proof_views USING btree (viewer_user_id)",
+                "index_name": "idx_proof_views_viewer"
+            }
+        ],
+        "foreign_keys": [
+        ],
+        "rls_policies": [
+            {
+                "qual": "(owner_id = current_user_id())",
+                "roles": [
+                    "public"
+                ],
+                "command": "SELECT",
+                "with_check": null,
+                "policy_name": "proof_views_select_owner"
+            },
+            {
+                "qual": "is_admin_or_mod()",
+                "roles": [
+                    "public"
+                ],
+                "command": "ALL",
+                "with_check": "is_admin_or_mod()",
+                "policy_name": "proof_views_admin_all"
+            },
+            {
+                "qual": null,
+                "roles": [
+                    "public"
+                ],
+                "command": "INSERT",
+                "with_check": "true",
+                "policy_name": "proof_views_insert_any"
+            }
+        ]
+    },
+    {
+        "table": "proof_views_2025_06",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "id",
+                "default": "gen_random_uuid()",
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "proof_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "owner_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "viewer_user_id",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "inet",
+                "column": "ip_address",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "user_agent",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "referer",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "viewed_at",
+                "default": "now()",
+                "nullable": "NO"
+            }
+        ],
+        "indexes": [
+            {
+                "definition": "CREATE INDEX proof_views_2025_06_owner_id_viewed_at_idx ON public.proof_views_2025_06 USING btree (owner_id, viewed_at DESC)",
+                "index_name": "proof_views_2025_06_owner_id_viewed_at_idx"
+            },
+            {
+                "definition": "CREATE INDEX proof_views_2025_06_proof_id_viewed_at_idx ON public.proof_views_2025_06 USING btree (proof_id, viewed_at DESC)",
+                "index_name": "proof_views_2025_06_proof_id_viewed_at_idx"
+            },
+            {
+                "definition": "CREATE UNIQUE INDEX proof_views_2025_06_pkey ON public.proof_views_2025_06 USING btree (id, viewed_at)",
+                "index_name": "proof_views_2025_06_pkey"
+            },
+            {
+                "definition": "CREATE INDEX proof_views_2025_06_viewer_user_id_idx ON public.proof_views_2025_06 USING btree (viewer_user_id)",
+                "index_name": "proof_views_2025_06_viewer_user_id_idx"
+            }
+        ],
+        "foreign_keys": [
+        ],
+        "rls_policies": [
+        ]
+    },
+    {
+        "table": "proof_views_2025_07",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "id",
+                "default": "gen_random_uuid()",
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "proof_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "owner_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "viewer_user_id",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "inet",
+                "column": "ip_address",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "user_agent",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "referer",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "viewed_at",
+                "default": "now()",
+                "nullable": "NO"
+            }
+        ],
+        "indexes": [
+            {
+                "definition": "CREATE INDEX proof_views_2025_07_viewer_user_id_idx ON public.proof_views_2025_07 USING btree (viewer_user_id)",
+                "index_name": "proof_views_2025_07_viewer_user_id_idx"
+            },
+            {
+                "definition": "CREATE UNIQUE INDEX proof_views_2025_07_pkey ON public.proof_views_2025_07 USING btree (id, viewed_at)",
+                "index_name": "proof_views_2025_07_pkey"
+            },
+            {
+                "definition": "CREATE INDEX proof_views_2025_07_proof_id_viewed_at_idx ON public.proof_views_2025_07 USING btree (proof_id, viewed_at DESC)",
+                "index_name": "proof_views_2025_07_proof_id_viewed_at_idx"
+            },
+            {
+                "definition": "CREATE INDEX proof_views_2025_07_owner_id_viewed_at_idx ON public.proof_views_2025_07 USING btree (owner_id, viewed_at DESC)",
+                "index_name": "proof_views_2025_07_owner_id_viewed_at_idx"
+            }
+        ],
+        "foreign_keys": [
+        ],
+        "rls_policies": [
+        ]
+    },
+    {
+        "table": "proof_views_2025_08",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "id",
+                "default": "gen_random_uuid()",
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "proof_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "owner_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "viewer_user_id",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "inet",
+                "column": "ip_address",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "user_agent",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "referer",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "viewed_at",
+                "default": "now()",
+                "nullable": "NO"
+            }
+        ],
+        "indexes": [
+            {
+                "definition": "CREATE INDEX proof_views_2025_08_viewer_user_id_idx ON public.proof_views_2025_08 USING btree (viewer_user_id)",
+                "index_name": "proof_views_2025_08_viewer_user_id_idx"
+            },
+            {
+                "definition": "CREATE INDEX proof_views_2025_08_proof_id_viewed_at_idx ON public.proof_views_2025_08 USING btree (proof_id, viewed_at DESC)",
+                "index_name": "proof_views_2025_08_proof_id_viewed_at_idx"
+            },
+            {
+                "definition": "CREATE UNIQUE INDEX proof_views_2025_08_pkey ON public.proof_views_2025_08 USING btree (id, viewed_at)",
+                "index_name": "proof_views_2025_08_pkey"
+            },
+            {
+                "definition": "CREATE INDEX proof_views_2025_08_owner_id_viewed_at_idx ON public.proof_views_2025_08 USING btree (owner_id, viewed_at DESC)",
+                "index_name": "proof_views_2025_08_owner_id_viewed_at_idx"
+            }
+        ],
+        "foreign_keys": [
+        ],
+        "rls_policies": [
+        ]
+    },
+    {
+        "table": "proof_views_2025_09",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "id",
+                "default": "gen_random_uuid()",
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "proof_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "owner_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "viewer_user_id",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "inet",
+                "column": "ip_address",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "user_agent",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "referer",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "viewed_at",
+                "default": "now()",
+                "nullable": "NO"
+            }
+        ],
+        "indexes": [
+            {
+                "definition": "CREATE UNIQUE INDEX proof_views_2025_09_pkey ON public.proof_views_2025_09 USING btree (id, viewed_at)",
+                "index_name": "proof_views_2025_09_pkey"
+            },
+            {
+                "definition": "CREATE INDEX proof_views_2025_09_viewer_user_id_idx ON public.proof_views_2025_09 USING btree (viewer_user_id)",
+                "index_name": "proof_views_2025_09_viewer_user_id_idx"
+            },
+            {
+                "definition": "CREATE INDEX proof_views_2025_09_owner_id_viewed_at_idx ON public.proof_views_2025_09 USING btree (owner_id, viewed_at DESC)",
+                "index_name": "proof_views_2025_09_owner_id_viewed_at_idx"
+            },
+            {
+                "definition": "CREATE INDEX proof_views_2025_09_proof_id_viewed_at_idx ON public.proof_views_2025_09 USING btree (proof_id, viewed_at DESC)",
+                "index_name": "proof_views_2025_09_proof_id_viewed_at_idx"
+            }
+        ],
+        "foreign_keys": [
+        ],
+        "rls_policies": [
+        ]
+    },
+    {
+        "table": "proof_views_2025_10",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "id",
+                "default": "gen_random_uuid()",
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "proof_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "owner_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "viewer_user_id",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "inet",
+                "column": "ip_address",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "user_agent",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "referer",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "viewed_at",
+                "default": "now()",
+                "nullable": "NO"
+            }
+        ],
+        "indexes": [
+            {
+                "definition": "CREATE INDEX proof_views_2025_10_owner_id_viewed_at_idx ON public.proof_views_2025_10 USING btree (owner_id, viewed_at DESC)",
+                "index_name": "proof_views_2025_10_owner_id_viewed_at_idx"
+            },
+            {
+                "definition": "CREATE INDEX proof_views_2025_10_viewer_user_id_idx ON public.proof_views_2025_10 USING btree (viewer_user_id)",
+                "index_name": "proof_views_2025_10_viewer_user_id_idx"
+            },
+            {
+                "definition": "CREATE INDEX proof_views_2025_10_proof_id_viewed_at_idx ON public.proof_views_2025_10 USING btree (proof_id, viewed_at DESC)",
+                "index_name": "proof_views_2025_10_proof_id_viewed_at_idx"
+            },
+            {
+                "definition": "CREATE UNIQUE INDEX proof_views_2025_10_pkey ON public.proof_views_2025_10 USING btree (id, viewed_at)",
+                "index_name": "proof_views_2025_10_pkey"
+            }
+        ],
+        "foreign_keys": [
+        ],
+        "rls_policies": [
+        ]
+    },
+    {
+        "table": "proof_views_2025_11",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "id",
+                "default": "gen_random_uuid()",
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "proof_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "owner_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "viewer_user_id",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "inet",
+                "column": "ip_address",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "user_agent",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "referer",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "viewed_at",
+                "default": "now()",
+                "nullable": "NO"
+            }
+        ],
+        "indexes": [
+            {
+                "definition": "CREATE UNIQUE INDEX proof_views_2025_11_pkey ON public.proof_views_2025_11 USING btree (id, viewed_at)",
+                "index_name": "proof_views_2025_11_pkey"
+            },
+            {
+                "definition": "CREATE INDEX proof_views_2025_11_viewer_user_id_idx ON public.proof_views_2025_11 USING btree (viewer_user_id)",
+                "index_name": "proof_views_2025_11_viewer_user_id_idx"
+            },
+            {
+                "definition": "CREATE INDEX proof_views_2025_11_owner_id_viewed_at_idx ON public.proof_views_2025_11 USING btree (owner_id, viewed_at DESC)",
+                "index_name": "proof_views_2025_11_owner_id_viewed_at_idx"
+            },
+            {
+                "definition": "CREATE INDEX proof_views_2025_11_proof_id_viewed_at_idx ON public.proof_views_2025_11 USING btree (proof_id, viewed_at DESC)",
+                "index_name": "proof_views_2025_11_proof_id_viewed_at_idx"
+            }
+        ],
+        "foreign_keys": [
+        ],
+        "rls_policies": [
+        ]
+    },
+    {
+        "table": "proof_views_2025_12",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "id",
+                "default": "gen_random_uuid()",
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "proof_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "owner_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "viewer_user_id",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "inet",
+                "column": "ip_address",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "user_agent",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "referer",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "viewed_at",
+                "default": "now()",
+                "nullable": "NO"
+            }
+        ],
+        "indexes": [
+            {
+                "definition": "CREATE INDEX proof_views_2025_12_proof_id_viewed_at_idx ON public.proof_views_2025_12 USING btree (proof_id, viewed_at DESC)",
+                "index_name": "proof_views_2025_12_proof_id_viewed_at_idx"
+            },
+            {
+                "definition": "CREATE INDEX proof_views_2025_12_viewer_user_id_idx ON public.proof_views_2025_12 USING btree (viewer_user_id)",
+                "index_name": "proof_views_2025_12_viewer_user_id_idx"
+            },
+            {
+                "definition": "CREATE INDEX proof_views_2025_12_owner_id_viewed_at_idx ON public.proof_views_2025_12 USING btree (owner_id, viewed_at DESC)",
+                "index_name": "proof_views_2025_12_owner_id_viewed_at_idx"
+            },
+            {
+                "definition": "CREATE UNIQUE INDEX proof_views_2025_12_pkey ON public.proof_views_2025_12 USING btree (id, viewed_at)",
+                "index_name": "proof_views_2025_12_pkey"
+            }
+        ],
+        "foreign_keys": [
+        ],
+        "rls_policies": [
+        ]
+    },
+    {
+        "table": "proof_views_2026_01",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "id",
+                "default": "gen_random_uuid()",
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "proof_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "owner_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "viewer_user_id",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "inet",
+                "column": "ip_address",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "user_agent",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "referer",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "viewed_at",
+                "default": "now()",
+                "nullable": "NO"
+            }
+        ],
+        "indexes": [
+            {
+                "definition": "CREATE UNIQUE INDEX proof_views_2026_01_pkey ON public.proof_views_2026_01 USING btree (id, viewed_at)",
+                "index_name": "proof_views_2026_01_pkey"
+            },
+            {
+                "definition": "CREATE INDEX proof_views_2026_01_proof_id_viewed_at_idx ON public.proof_views_2026_01 USING btree (proof_id, viewed_at DESC)",
+                "index_name": "proof_views_2026_01_proof_id_viewed_at_idx"
+            },
+            {
+                "definition": "CREATE INDEX proof_views_2026_01_viewer_user_id_idx ON public.proof_views_2026_01 USING btree (viewer_user_id)",
+                "index_name": "proof_views_2026_01_viewer_user_id_idx"
+            },
+            {
+                "definition": "CREATE INDEX proof_views_2026_01_owner_id_viewed_at_idx ON public.proof_views_2026_01 USING btree (owner_id, viewed_at DESC)",
+                "index_name": "proof_views_2026_01_owner_id_viewed_at_idx"
+            }
+        ],
+        "foreign_keys": [
+        ],
+        "rls_policies": [
+        ]
+    },
+    {
+        "table": "proof_views_2026_02",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "id",
+                "default": "gen_random_uuid()",
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "proof_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "owner_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "viewer_user_id",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "inet",
+                "column": "ip_address",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "user_agent",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "referer",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "viewed_at",
+                "default": "now()",
+                "nullable": "NO"
+            }
+        ],
+        "indexes": [
+            {
+                "definition": "CREATE INDEX proof_views_2026_02_proof_id_viewed_at_idx ON public.proof_views_2026_02 USING btree (proof_id, viewed_at DESC)",
+                "index_name": "proof_views_2026_02_proof_id_viewed_at_idx"
+            },
+            {
+                "definition": "CREATE INDEX proof_views_2026_02_viewer_user_id_idx ON public.proof_views_2026_02 USING btree (viewer_user_id)",
+                "index_name": "proof_views_2026_02_viewer_user_id_idx"
+            },
+            {
+                "definition": "CREATE UNIQUE INDEX proof_views_2026_02_pkey ON public.proof_views_2026_02 USING btree (id, viewed_at)",
+                "index_name": "proof_views_2026_02_pkey"
+            },
+            {
+                "definition": "CREATE INDEX proof_views_2026_02_owner_id_viewed_at_idx ON public.proof_views_2026_02 USING btree (owner_id, viewed_at DESC)",
+                "index_name": "proof_views_2026_02_owner_id_viewed_at_idx"
+            }
+        ],
+        "foreign_keys": [
+        ],
+        "rls_policies": [
+        ]
+    },
+    {
+        "table": "proof_views_2026_03",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "id",
+                "default": "gen_random_uuid()",
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "proof_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "owner_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "viewer_user_id",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "inet",
+                "column": "ip_address",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "user_agent",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "referer",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "viewed_at",
+                "default": "now()",
+                "nullable": "NO"
+            }
+        ],
+        "indexes": [
+            {
+                "definition": "CREATE INDEX proof_views_2026_03_owner_id_viewed_at_idx ON public.proof_views_2026_03 USING btree (owner_id, viewed_at DESC)",
+                "index_name": "proof_views_2026_03_owner_id_viewed_at_idx"
+            },
+            {
+                "definition": "CREATE UNIQUE INDEX proof_views_2026_03_pkey ON public.proof_views_2026_03 USING btree (id, viewed_at)",
+                "index_name": "proof_views_2026_03_pkey"
+            },
+            {
+                "definition": "CREATE INDEX proof_views_2026_03_proof_id_viewed_at_idx ON public.proof_views_2026_03 USING btree (proof_id, viewed_at DESC)",
+                "index_name": "proof_views_2026_03_proof_id_viewed_at_idx"
+            },
+            {
+                "definition": "CREATE INDEX proof_views_2026_03_viewer_user_id_idx ON public.proof_views_2026_03 USING btree (viewer_user_id)",
+                "index_name": "proof_views_2026_03_viewer_user_id_idx"
+            }
+        ],
+        "foreign_keys": [
+        ],
+        "rls_policies": [
+        ]
+    },
+    {
+        "table": "proof_views_2026_04",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "id",
+                "default": "gen_random_uuid()",
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "proof_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "owner_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "viewer_user_id",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "inet",
+                "column": "ip_address",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "user_agent",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "referer",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "viewed_at",
+                "default": "now()",
+                "nullable": "NO"
+            }
+        ],
+        "indexes": [
+            {
+                "definition": "CREATE UNIQUE INDEX proof_views_2026_04_pkey ON public.proof_views_2026_04 USING btree (id, viewed_at)",
+                "index_name": "proof_views_2026_04_pkey"
+            },
+            {
+                "definition": "CREATE INDEX proof_views_2026_04_viewer_user_id_idx ON public.proof_views_2026_04 USING btree (viewer_user_id)",
+                "index_name": "proof_views_2026_04_viewer_user_id_idx"
+            },
+            {
+                "definition": "CREATE INDEX proof_views_2026_04_owner_id_viewed_at_idx ON public.proof_views_2026_04 USING btree (owner_id, viewed_at DESC)",
+                "index_name": "proof_views_2026_04_owner_id_viewed_at_idx"
+            },
+            {
+                "definition": "CREATE INDEX proof_views_2026_04_proof_id_viewed_at_idx ON public.proof_views_2026_04 USING btree (proof_id, viewed_at DESC)",
+                "index_name": "proof_views_2026_04_proof_id_viewed_at_idx"
+            }
+        ],
+        "foreign_keys": [
+        ],
+        "rls_policies": [
+        ]
+    },
+    {
+        "table": "proof_views_2026_05",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "id",
+                "default": "gen_random_uuid()",
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "proof_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "owner_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "viewer_user_id",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "inet",
+                "column": "ip_address",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "user_agent",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "referer",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "viewed_at",
+                "default": "now()",
+                "nullable": "NO"
+            }
+        ],
+        "indexes": [
+            {
+                "definition": "CREATE UNIQUE INDEX proof_views_2026_05_pkey ON public.proof_views_2026_05 USING btree (id, viewed_at)",
+                "index_name": "proof_views_2026_05_pkey"
+            },
+            {
+                "definition": "CREATE INDEX proof_views_2026_05_viewer_user_id_idx ON public.proof_views_2026_05 USING btree (viewer_user_id)",
+                "index_name": "proof_views_2026_05_viewer_user_id_idx"
+            },
+            {
+                "definition": "CREATE INDEX proof_views_2026_05_owner_id_viewed_at_idx ON public.proof_views_2026_05 USING btree (owner_id, viewed_at DESC)",
+                "index_name": "proof_views_2026_05_owner_id_viewed_at_idx"
+            },
+            {
+                "definition": "CREATE INDEX proof_views_2026_05_proof_id_viewed_at_idx ON public.proof_views_2026_05 USING btree (proof_id, viewed_at DESC)",
+                "index_name": "proof_views_2026_05_proof_id_viewed_at_idx"
+            }
+        ],
+        "foreign_keys": [
+        ],
+        "rls_policies": [
+        ]
+    },
+    {
+        "table": "proof_views_2026_06",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "id",
+                "default": "gen_random_uuid()",
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "proof_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "owner_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "viewer_user_id",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "inet",
+                "column": "ip_address",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "user_agent",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "referer",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "viewed_at",
+                "default": "now()",
+                "nullable": "NO"
+            }
+        ],
+        "indexes": [
+            {
+                "definition": "CREATE INDEX proof_views_2026_06_viewer_user_id_idx ON public.proof_views_2026_06 USING btree (viewer_user_id)",
+                "index_name": "proof_views_2026_06_viewer_user_id_idx"
+            },
+            {
+                "definition": "CREATE INDEX proof_views_2026_06_owner_id_viewed_at_idx ON public.proof_views_2026_06 USING btree (owner_id, viewed_at DESC)",
+                "index_name": "proof_views_2026_06_owner_id_viewed_at_idx"
+            },
+            {
+                "definition": "CREATE INDEX proof_views_2026_06_proof_id_viewed_at_idx ON public.proof_views_2026_06 USING btree (proof_id, viewed_at DESC)",
+                "index_name": "proof_views_2026_06_proof_id_viewed_at_idx"
+            },
+            {
+                "definition": "CREATE UNIQUE INDEX proof_views_2026_06_pkey ON public.proof_views_2026_06 USING btree (id, viewed_at)",
+                "index_name": "proof_views_2026_06_pkey"
+            }
+        ],
+        "foreign_keys": [
+        ],
+        "rls_policies": [
+        ]
+    },
+    {
+        "table": "proof_views_2026_07",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "id",
+                "default": "gen_random_uuid()",
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "proof_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "owner_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "viewer_user_id",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "inet",
+                "column": "ip_address",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "user_agent",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "referer",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "viewed_at",
+                "default": "now()",
+                "nullable": "NO"
+            }
+        ],
+        "indexes": [
+            {
+                "definition": "CREATE INDEX proof_views_2026_07_proof_id_viewed_at_idx ON public.proof_views_2026_07 USING btree (proof_id, viewed_at DESC)",
+                "index_name": "proof_views_2026_07_proof_id_viewed_at_idx"
+            },
+            {
+                "definition": "CREATE INDEX proof_views_2026_07_viewer_user_id_idx ON public.proof_views_2026_07 USING btree (viewer_user_id)",
+                "index_name": "proof_views_2026_07_viewer_user_id_idx"
+            },
+            {
+                "definition": "CREATE UNIQUE INDEX proof_views_2026_07_pkey ON public.proof_views_2026_07 USING btree (id, viewed_at)",
+                "index_name": "proof_views_2026_07_pkey"
+            },
+            {
+                "definition": "CREATE INDEX proof_views_2026_07_owner_id_viewed_at_idx ON public.proof_views_2026_07 USING btree (owner_id, viewed_at DESC)",
+                "index_name": "proof_views_2026_07_owner_id_viewed_at_idx"
+            }
+        ],
+        "foreign_keys": [
+        ],
+        "rls_policies": [
+        ]
+    },
+    {
+        "table": "proof_views_2026_08",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "id",
+                "default": "gen_random_uuid()",
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "proof_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "owner_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "viewer_user_id",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "inet",
+                "column": "ip_address",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "user_agent",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "referer",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "viewed_at",
+                "default": "now()",
+                "nullable": "NO"
+            }
+        ],
+        "indexes": [
+            {
+                "definition": "CREATE INDEX proof_views_2026_08_proof_id_viewed_at_idx ON public.proof_views_2026_08 USING btree (proof_id, viewed_at DESC)",
+                "index_name": "proof_views_2026_08_proof_id_viewed_at_idx"
+            },
+            {
+                "definition": "CREATE INDEX proof_views_2026_08_viewer_user_id_idx ON public.proof_views_2026_08 USING btree (viewer_user_id)",
+                "index_name": "proof_views_2026_08_viewer_user_id_idx"
+            },
+            {
+                "definition": "CREATE UNIQUE INDEX proof_views_2026_08_pkey ON public.proof_views_2026_08 USING btree (id, viewed_at)",
+                "index_name": "proof_views_2026_08_pkey"
+            },
+            {
+                "definition": "CREATE INDEX proof_views_2026_08_owner_id_viewed_at_idx ON public.proof_views_2026_08 USING btree (owner_id, viewed_at DESC)",
+                "index_name": "proof_views_2026_08_owner_id_viewed_at_idx"
+            }
+        ],
+        "foreign_keys": [
+        ],
+        "rls_policies": [
+        ]
+    },
+    {
+        "table": "proof_views_2026_09",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "id",
+                "default": "gen_random_uuid()",
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "proof_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "owner_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "viewer_user_id",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "inet",
+                "column": "ip_address",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "user_agent",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "referer",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "viewed_at",
+                "default": "now()",
+                "nullable": "NO"
+            }
+        ],
+        "indexes": [
+            {
+                "definition": "CREATE INDEX proof_views_2026_09_viewer_user_id_idx ON public.proof_views_2026_09 USING btree (viewer_user_id)",
+                "index_name": "proof_views_2026_09_viewer_user_id_idx"
+            },
+            {
+                "definition": "CREATE UNIQUE INDEX proof_views_2026_09_pkey ON public.proof_views_2026_09 USING btree (id, viewed_at)",
+                "index_name": "proof_views_2026_09_pkey"
+            },
+            {
+                "definition": "CREATE INDEX proof_views_2026_09_proof_id_viewed_at_idx ON public.proof_views_2026_09 USING btree (proof_id, viewed_at DESC)",
+                "index_name": "proof_views_2026_09_proof_id_viewed_at_idx"
+            },
+            {
+                "definition": "CREATE INDEX proof_views_2026_09_owner_id_viewed_at_idx ON public.proof_views_2026_09 USING btree (owner_id, viewed_at DESC)",
+                "index_name": "proof_views_2026_09_owner_id_viewed_at_idx"
+            }
+        ],
+        "foreign_keys": [
+        ],
+        "rls_policies": [
+        ]
+    },
+    {
+        "table": "proof_views_fk",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "proof_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "owner_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "viewer_user_id",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "viewed_at",
+                "default": "now()",
+                "nullable": "NO"
+            }
+        ],
+        "indexes": [
+            {
+                "definition": "CREATE UNIQUE INDEX proof_views_fk_pkey ON public.proof_views_fk USING btree (proof_id, viewed_at)",
+                "index_name": "proof_views_fk_pkey"
+            }
+        ],
+        "foreign_keys": [
+            {
+                "column": "owner_id",
+                "constraint_name": "proof_views_fk_owner_id_fkey",
+                "references_table": "users",
+                "references_column": "id"
+            },
+            {
+                "column": "proof_id",
+                "constraint_name": "proof_views_fk_proof_id_fkey",
+                "references_table": "proof_cards",
+                "references_column": "id"
+            },
+            {
+                "column": "viewer_user_id",
+                "constraint_name": "proof_views_fk_viewer_user_id_fkey",
+                "references_table": "users",
+                "references_column": "id"
+            }
+        ],
+        "rls_policies": [
+        ]
+    },
+    {
+        "table": "saved_searches",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "id",
+                "default": "gen_random_uuid()",
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "user_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "text",
+                "column": "name",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "jsonb",
+                "column": "filters",
+                "default": "'{}'::jsonb",
+                "nullable": "NO"
+            },
+            {
+                "type": "boolean",
+                "column": "notify_on_match",
+                "default": "false",
+                "nullable": "NO"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "created_at",
+                "default": "now()",
+                "nullable": "NO"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "updated_at",
+                "default": "now()",
+                "nullable": "NO"
+            }
+        ],
+        "indexes": [
+            {
+                "definition": "CREATE UNIQUE INDEX saved_searches_pkey ON public.saved_searches USING btree (id)",
+                "index_name": "saved_searches_pkey"
+            },
+            {
+                "definition": "CREATE INDEX idx_saved_searches_user ON public.saved_searches USING btree (user_id)",
+                "index_name": "idx_saved_searches_user"
+            }
+        ],
+        "foreign_keys": [
+            {
+                "column": "user_id",
+                "constraint_name": "saved_searches_user_id_fkey",
+                "references_table": "users",
+                "references_column": "id"
+            }
+        ],
+        "rls_policies": [
+            {
+                "qual": "is_admin_or_mod()",
+                "roles": [
+                    "public"
+                ],
+                "command": "ALL",
+                "with_check": "is_admin_or_mod()",
+                "policy_name": "saved_searches_admin_all"
+            },
+            {
+                "qual": "(user_id = current_user_id())",
+                "roles": [
+                    "public"
+                ],
+                "command": "ALL",
+                "with_check": "(user_id = current_user_id())",
+                "policy_name": "saved_searches_owner_all"
+            }
+        ]
+    },
+    {
+        "table": "subscriptions",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "id",
+                "default": "gen_random_uuid()",
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "user_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "USER-DEFINED",
+                "column": "plan",
+                "default": "'free'::subscription_plan",
+                "nullable": "NO"
+            },
+            {
+                "type": "USER-DEFINED",
+                "column": "status",
+                "default": "'active'::subscription_status",
+                "nullable": "NO"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "current_period_start",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "current_period_end",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "boolean",
+                "column": "cancel_at_period_end",
+                "default": "false",
+                "nullable": "NO"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "trial_ends_at",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "stripe_customer_id",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "stripe_subscription_id",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "jsonb",
+                "column": "metadata",
+                "default": "'{}'::jsonb",
+                "nullable": "NO"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "created_at",
+                "default": "now()",
+                "nullable": "NO"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "updated_at",
+                "default": "now()",
+                "nullable": "NO"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "deleted_at",
+                "default": null,
+                "nullable": "YES"
+            }
+        ],
+        "indexes": [
+            {
+                "definition": "CREATE INDEX idx_subscriptions_period_end ON public.subscriptions USING btree (current_period_end) WHERE (current_period_end IS NOT NULL)",
+                "index_name": "idx_subscriptions_period_end"
+            },
+            {
+                "definition": "CREATE UNIQUE INDEX subscriptions_pkey ON public.subscriptions USING btree (id)",
+                "index_name": "subscriptions_pkey"
+            },
+            {
+                "definition": "CREATE UNIQUE INDEX subscriptions_user_id_key ON public.subscriptions USING btree (user_id)",
+                "index_name": "subscriptions_user_id_key"
+            },
+            {
+                "definition": "CREATE UNIQUE INDEX subscriptions_stripe_customer_id_key ON public.subscriptions USING btree (stripe_customer_id)",
+                "index_name": "subscriptions_stripe_customer_id_key"
+            },
+            {
+                "definition": "CREATE UNIQUE INDEX subscriptions_stripe_subscription_id_key ON public.subscriptions USING btree (stripe_subscription_id)",
+                "index_name": "subscriptions_stripe_subscription_id_key"
+            },
+            {
+                "definition": "CREATE INDEX idx_subscriptions_plan ON public.subscriptions USING btree (plan)",
+                "index_name": "idx_subscriptions_plan"
+            },
+            {
+                "definition": "CREATE INDEX idx_subscriptions_status ON public.subscriptions USING btree (status)",
+                "index_name": "idx_subscriptions_status"
+            },
+            {
+                "definition": "CREATE INDEX idx_subscriptions_stripe_cust ON public.subscriptions USING btree (stripe_customer_id) WHERE (stripe_customer_id IS NOT NULL)",
+                "index_name": "idx_subscriptions_stripe_cust"
+            },
+            {
+                "definition": "CREATE INDEX idx_subscriptions_trial_end ON public.subscriptions USING btree (trial_ends_at) WHERE (trial_ends_at IS NOT NULL)",
+                "index_name": "idx_subscriptions_trial_end"
+            }
+        ],
+        "foreign_keys": [
+            {
+                "column": "user_id",
+                "constraint_name": "subscriptions_user_id_fkey",
+                "references_table": "users",
+                "references_column": "id"
+            }
+        ],
+        "rls_policies": [
+            {
+                "qual": "(user_id = current_user_id())",
+                "roles": [
+                    "public"
+                ],
+                "command": "SELECT",
+                "with_check": null,
+                "policy_name": "subscriptions_owner_select"
+            },
+            {
+                "qual": "(user_id = current_user_id())",
+                "roles": [
+                    "public"
+                ],
+                "command": "UPDATE",
+                "with_check": "(user_id = current_user_id())",
+                "policy_name": "subscriptions_owner_update"
+            },
+            {
+                "qual": null,
+                "roles": [
+                    "public"
+                ],
+                "command": "INSERT",
+                "with_check": "(user_id = current_user_id())",
+                "policy_name": "subscriptions_owner_insert"
+            },
+            {
+                "qual": "is_admin_or_mod()",
+                "roles": [
+                    "public"
+                ],
+                "command": "ALL",
+                "with_check": "is_admin_or_mod()",
+                "policy_name": "subscriptions_admin_all"
+            }
+        ]
+    },
+    {
+        "table": "user_dashboard",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "user_id",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "bigint",
+                "column": "total_proofs",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "bigint",
+                "column": "public_proofs",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "bigint",
+                "column": "verified_proofs",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "bigint",
+                "column": "total_sources",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "bigint",
+                "column": "connected_sources",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "integer",
+                "column": "total_profile_views",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "bigint",
+                "column": "saved_opportunities",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "bigint",
+                "column": "applied_opportunities",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "bigint",
+                "column": "unread_notifications",
+                "default": null,
+                "nullable": "YES"
+            }
+        ],
+        "indexes": [
+        ],
+        "foreign_keys": [
+        ],
+        "rls_policies": [
+        ]
+    },
+    {
+        "table": "user_integrations",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "id",
+                "default": "gen_random_uuid()",
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "user_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "USER-DEFINED",
+                "column": "provider",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "text",
+                "column": "external_user_id",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "external_username",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "access_token",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "refresh_token",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "token_expires_at",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "ARRAY",
+                "column": "scopes",
+                "default": "'{}'::text[]",
+                "nullable": "NO"
+            },
+            {
+                "type": "USER-DEFINED",
+                "column": "status",
+                "default": "'pending'::integration_status",
+                "nullable": "NO"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "last_synced_at",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "jsonb",
+                "column": "metadata",
+                "default": "'{}'::jsonb",
+                "nullable": "NO"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "created_at",
+                "default": "now()",
+                "nullable": "NO"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "updated_at",
+                "default": "now()",
+                "nullable": "NO"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "deleted_at",
+                "default": null,
+                "nullable": "YES"
+            }
+        ],
+        "indexes": [
+            {
+                "definition": "CREATE INDEX idx_user_integrations_status ON public.user_integrations USING btree (status)",
+                "index_name": "idx_user_integrations_status"
+            },
+            {
+                "definition": "CREATE INDEX idx_user_integrations_provider ON public.user_integrations USING btree (user_id, provider) WHERE (deleted_at IS NULL)",
+                "index_name": "idx_user_integrations_provider"
+            },
+            {
+                "definition": "CREATE INDEX idx_user_integrations_external ON public.user_integrations USING btree (provider, external_user_id) WHERE (external_user_id IS NOT NULL)",
+                "index_name": "idx_user_integrations_external"
+            },
+            {
+                "definition": "CREATE UNIQUE INDEX user_integrations_pkey ON public.user_integrations USING btree (id)",
+                "index_name": "user_integrations_pkey"
+            },
+            {
+                "definition": "CREATE UNIQUE INDEX user_integrations_uq_provider ON public.user_integrations USING btree (user_id, provider)",
+                "index_name": "user_integrations_uq_provider"
+            },
+            {
+                "definition": "CREATE INDEX idx_user_integrations_user ON public.user_integrations USING btree (user_id)",
+                "index_name": "idx_user_integrations_user"
+            }
+        ],
+        "foreign_keys": [
+            {
+                "column": "user_id",
+                "constraint_name": "user_integrations_user_id_fkey",
+                "references_table": "users",
+                "references_column": "id"
+            }
+        ],
+        "rls_policies": [
+            {
+                "qual": "is_admin_or_mod()",
+                "roles": [
+                    "public"
+                ],
+                "command": "ALL",
+                "with_check": "is_admin_or_mod()",
+                "policy_name": "user_integrations_admin_all"
+            },
+            {
+                "qual": "(user_id = current_user_id())",
+                "roles": [
+                    "public"
+                ],
+                "command": "ALL",
+                "with_check": "(user_id = current_user_id())",
+                "policy_name": "user_integrations_owner_all"
+            }
+        ]
+    },
+    {
+        "table": "user_opportunities",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "id",
+                "default": "gen_random_uuid()",
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "user_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "opportunity_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "USER-DEFINED",
+                "column": "status",
+                "default": "'saved'::opportunity_status",
+                "nullable": "NO"
+            },
+            {
+                "type": "numeric",
+                "column": "match_score",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "notes",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "applied_at",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "source",
+                "default": "'manual'::text",
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "created_at",
+                "default": "now()",
+                "nullable": "NO"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "updated_at",
+                "default": "now()",
+                "nullable": "NO"
+            }
+        ],
+        "indexes": [
+            {
+                "definition": "CREATE INDEX idx_user_opportunities_applied ON public.user_opportunities USING btree (applied_at) WHERE (applied_at IS NOT NULL)",
+                "index_name": "idx_user_opportunities_applied"
+            },
+            {
+                "definition": "CREATE INDEX idx_user_opportunities_user ON public.user_opportunities USING btree (user_id, status)",
+                "index_name": "idx_user_opportunities_user"
+            },
+            {
+                "definition": "CREATE UNIQUE INDEX user_opportunities_uq_pair ON public.user_opportunities USING btree (user_id, opportunity_id)",
+                "index_name": "user_opportunities_uq_pair"
+            },
+            {
+                "definition": "CREATE INDEX idx_user_opportunities_opp ON public.user_opportunities USING btree (opportunity_id)",
+                "index_name": "idx_user_opportunities_opp"
+            },
+            {
+                "definition": "CREATE UNIQUE INDEX user_opportunities_pkey ON public.user_opportunities USING btree (id)",
+                "index_name": "user_opportunities_pkey"
+            },
+            {
+                "definition": "CREATE INDEX idx_user_opportunities_status ON public.user_opportunities USING btree (status)",
+                "index_name": "idx_user_opportunities_status"
+            }
+        ],
+        "foreign_keys": [
+            {
+                "column": "user_id",
+                "constraint_name": "user_opportunities_user_id_fkey",
+                "references_table": "users",
+                "references_column": "id"
+            },
+            {
+                "column": "opportunity_id",
+                "constraint_name": "user_opportunities_opportunity_id_fkey",
+                "references_table": "opportunities",
+                "references_column": "id"
+            }
+        ],
+        "rls_policies": [
+            {
+                "qual": "is_admin_or_mod()",
+                "roles": [
+                    "public"
+                ],
+                "command": "ALL",
+                "with_check": "is_admin_or_mod()",
+                "policy_name": "user_opportunities_admin_all"
+            },
+            {
+                "qual": "(user_id = current_user_id())",
+                "roles": [
+                    "public"
+                ],
+                "command": "ALL",
+                "with_check": "(user_id = current_user_id())",
+                "policy_name": "user_opportunities_owner_all"
+            }
+        ]
+    },
+    {
+        "table": "user_profiles",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "id",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "USER-DEFINED",
+                "column": "username",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "full_name",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "avatar_url",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "headline",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "bio",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "location",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "college",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "USER-DEFINED",
+                "column": "year",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "website_url",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "github_url",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "linkedin_url",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "twitter_url",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "member_since",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "jsonb",
+                "column": "public_proofs",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "ARRAY",
+                "column": "public_skills",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "integer",
+                "column": "total_profile_views",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "bigint",
+                "column": "profile_rank",
+                "default": null,
+                "nullable": "YES"
+            }
+        ],
+        "indexes": [
+        ],
+        "foreign_keys": [
+        ],
+        "rls_policies": [
+        ]
+    },
+    {
+        "table": "users",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "id",
+                "default": "gen_random_uuid()",
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "auth_user_id",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "USER-DEFINED",
+                "column": "email",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "USER-DEFINED",
+                "column": "username",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "text",
+                "column": "full_name",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "avatar_url",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "college",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "USER-DEFINED",
+                "column": "year",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "bio",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "headline",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "location",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "website_url",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "github_url",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "linkedin_url",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "twitter_url",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "USER-DEFINED",
+                "column": "role",
+                "default": "'user'::user_role",
+                "nullable": "NO"
+            },
+            {
+                "type": "USER-DEFINED",
+                "column": "account_status",
+                "default": "'active'::account_status",
+                "nullable": "NO"
+            },
+            {
+                "type": "boolean",
+                "column": "is_profile_public",
+                "default": "true",
+                "nullable": "NO"
+            },
+            {
+                "type": "boolean",
+                "column": "hide_email",
+                "default": "false",
+                "nullable": "NO"
+            },
+            {
+                "type": "boolean",
+                "column": "email_verified",
+                "default": "false",
+                "nullable": "NO"
+            },
+            {
+                "type": "USER-DEFINED",
+                "column": "auth_provider",
+                "default": "'email'::auth_provider",
+                "nullable": "NO"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "last_login_at",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "inet",
+                "column": "registration_ip",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "registration_ua",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "boolean",
+                "column": "onboarded",
+                "default": "false",
+                "nullable": "NO"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "created_at",
+                "default": "now()",
+                "nullable": "NO"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "updated_at",
+                "default": "now()",
+                "nullable": "NO"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "deleted_at",
+                "default": null,
+                "nullable": "YES"
+            }
+        ],
+        "indexes": [
+            {
+                "definition": "CREATE INDEX idx_users_full_name_trgm ON public.users USING gin (full_name gin_trgm_ops)",
+                "index_name": "idx_users_full_name_trgm"
+            },
+            {
+                "definition": "CREATE INDEX idx_users_college_trgm ON public.users USING gin (college gin_trgm_ops)",
+                "index_name": "idx_users_college_trgm"
+            },
+            {
+                "definition": "CREATE INDEX idx_users_role ON public.users USING btree (role)",
+                "index_name": "idx_users_role"
+            },
+            {
+                "definition": "CREATE INDEX idx_users_status ON public.users USING btree (account_status)",
+                "index_name": "idx_users_status"
+            },
+            {
+                "definition": "CREATE INDEX idx_users_deleted_at ON public.users USING btree (deleted_at) WHERE (deleted_at IS NOT NULL)",
+                "index_name": "idx_users_deleted_at"
+            },
+            {
+                "definition": "CREATE INDEX idx_users_active_public ON public.users USING btree (username) WHERE ((is_profile_public = true) AND (account_status = 'active'::account_status) AND (deleted_at IS NULL))",
+                "index_name": "idx_users_active_public"
+            },
+            {
+                "definition": "CREATE INDEX idx_users_created_at ON public.users USING btree (created_at DESC)",
+                "index_name": "idx_users_created_at"
+            },
+            {
+                "definition": "CREATE UNIQUE INDEX users_pkey ON public.users USING btree (id)",
+                "index_name": "users_pkey"
+            },
+            {
+                "definition": "CREATE UNIQUE INDEX users_auth_user_id_key ON public.users USING btree (auth_user_id)",
+                "index_name": "users_auth_user_id_key"
+            },
+            {
+                "definition": "CREATE UNIQUE INDEX users_email_key ON public.users USING btree (email)",
+                "index_name": "users_email_key"
+            },
+            {
+                "definition": "CREATE UNIQUE INDEX users_username_key ON public.users USING btree (username)",
+                "index_name": "users_username_key"
+            },
+            {
+                "definition": "CREATE INDEX idx_users_auth_user_id ON public.users USING btree (auth_user_id)",
+                "index_name": "idx_users_auth_user_id"
+            },
+            {
+                "definition": "CREATE INDEX idx_users_username ON public.users USING btree (username)",
+                "index_name": "idx_users_username"
+            },
+            {
+                "definition": "CREATE INDEX idx_users_email ON public.users USING btree (email)",
+                "index_name": "idx_users_email"
+            }
+        ],
+        "foreign_keys": [
+        ],
+        "rls_policies": [
+            {
+                "qual": "((deleted_at IS NULL) AND (is_profile_public = true) AND (account_status = 'active'::account_status))",
+                "roles": [
+                    "public"
+                ],
+                "command": "SELECT",
+                "with_check": null,
+                "policy_name": "users_select_public"
+            },
+            {
+                "qual": "is_admin_or_mod()",
+                "roles": [
+                    "public"
+                ],
+                "command": "ALL",
+                "with_check": "is_admin_or_mod()",
+                "policy_name": "users_admin_all"
+            },
+            {
+                "qual": "(auth_user_id = auth.uid())",
+                "roles": [
+                    "public"
+                ],
+                "command": "DELETE",
+                "with_check": null,
+                "policy_name": "users_delete_self"
+            },
+            {
+                "qual": "(auth_user_id = auth.uid())",
+                "roles": [
+                    "public"
+                ],
+                "command": "UPDATE",
+                "with_check": "(auth_user_id = auth.uid())",
+                "policy_name": "users_update_self"
+            },
+            {
+                "qual": null,
+                "roles": [
+                    "public"
+                ],
+                "command": "INSERT",
+                "with_check": "(auth_user_id = auth.uid())",
+                "policy_name": "users_insert_self"
+            },
+            {
+                "qual": "(auth_user_id = auth.uid())",
+                "roles": [
+                    "public"
+                ],
+                "command": "SELECT",
+                "with_check": null,
+                "policy_name": "users_select_self"
+            }
+        ]
+    }
+]

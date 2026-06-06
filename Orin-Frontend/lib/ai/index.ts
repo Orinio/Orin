@@ -29,6 +29,9 @@ export {
   extractSkillsFromText,
   checkUrlSafety,
   analyzeGitHubProfile,
+  generateEmbedding,
+  analyzeImage,
+  checkContentSafety,
   type AgentConfig,
   type AgentResult
 } from './agent';

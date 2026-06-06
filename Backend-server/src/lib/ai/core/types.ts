@@ -36,6 +36,7 @@ export interface AgentDefinition {
   temperature: number;
   maxTokens: number;
   maxIterations: number;
+  timeoutMs: number;
   tools: string[];
   systemPrompt: string;
   outputFormat: 'json' | 'text' | 'streaming';

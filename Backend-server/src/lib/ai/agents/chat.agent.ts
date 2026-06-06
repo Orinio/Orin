@@ -1,13 +1,15 @@
 import type { AgentDefinition } from '../core/types.js';
+import { MODELS } from '../core/models.js';
 
 export const chatAgent: AgentDefinition = {
   id: 'chat',
   name: 'Chat Agent',
   description: 'Interactive career Q&A with tool access',
-  model: 'meta/llama-3.1-8b-instruct',
+  model: MODELS.fast.chat, // qwen/qwen3.5-397b-a17b - Best speed + tool calling
   temperature: 0.7,
   maxTokens: 600,
   maxIterations: 3,
+  timeoutMs: 30000,
   tools: ['verify_github_repo', 'verify_certificate', 'extract_skills', 'analyze_portfolio', 'check_url_safety', 'web_search'],
   systemPrompt: `You are Orin AI Assistant, a helpful career advisor for students and early-career developers.
 

@@ -5,6 +5,55 @@ import { logger } from '../lib/logger.js';
 
 export const webhooksRouter = Router();
 
+// Idempotency: track processed Stripe event IDs to prevent duplicate processing
+const processedStripeEvents = new Map<string, number>();
+const STRIPE_EVENT_TTL_MS = 3600_000; // 1 hour
+
+function isStripeEventProcessed(eventId: string): boolean {
+  const timestamp = processedStripeEvents.get(eventId);
+  if (!timestamp) return false;
+  if (Date.now() - timestamp > STRIPE_EVENT_TTL_MS) {
+    processedStripeEvents.delete(eventId);
+    return false;
+  }
+  return true;
+}
+
+function markStripeEventProcessed(eventId: string): void {
+  processedStripeEvents.set(eventId, Date.now());
+  // Cleanup old entries periodically
+  if (processedStripeEvents.size > 1000) {
+    const cutoff = Date.now() - STRIPE_EVENT_TTL_MS;
+    for (const [id, ts] of processedStripeEvents) {
+      if (ts < cutoff) processedStripeEvents.delete(id);
+    }
+  }
+}
+
+async function logWebhookEvent(
+  source: string,
+  event: string,
+  status: 'success' | 'error' | 'skipped',
+  details?: Record<string, unknown>
+): Promise<void> {
+  try {
+    await supabase.from('audit_log').insert({
+      action: `webhook.${source}.${event}`,
+      resource_type: 'webhook',
+      metadata: {
+        source,
+        event,
+        status,
+        ...details,
+        timestamp: new Date().toISOString(),
+      },
+    });
+  } catch (err) {
+    // Audit logging is best-effort — don't fail the webhook
+    logger.error({ err, source, event }, 'Failed to log webhook event to audit_log');
+  }
+}
+
 function verifyGitHubSignature(rawBody: string, signature: string | undefined, secret: string): boolean {
   if (!signature) return false;
   const expected = 'sha256=' + createHmac('sha256', secret).update(rawBody).digest('hex');
@@ -53,6 +102,7 @@ webhooksRouter.post('/github', async (req, res) => {
       const signature = req.headers['x-hub-signature-256'] as string;
       if (!verifyGitHubSignature(rawBody, signature, secret)) {
         logger.warn({ requestId: req.id }, 'GitHub webhook signature verification failed');
+        await logWebhookEvent('github', 'unknown', 'error', { reason: 'invalid_signature' });
         res.status(401).json({ error: { code: 'INVALID_SIGNATURE', message: 'Invalid webhook signature' } });
         return;
       }
@@ -89,12 +139,23 @@ webhooksRouter.post('/github', async (req, res) => {
             })
             .eq('id', proof.id);
         }
+
+        await logWebhookEvent('github', 'push', 'success', {
+          repo: repository.full_name,
+          proofsVerified: proofs.length,
+        });
+      } else {
+        await logWebhookEvent('github', 'push', 'skipped', {
+          repo: repository.full_name,
+          reason: 'no_pending_proofs',
+        });
       }
     }
 
     res.json({ received: true });
   } catch (err) {
     logger.error({ err }, 'Webhook processing error');
+    await logWebhookEvent('github', 'unknown', 'error', { error: (err as Error).message });
     res.status(500).json({ error: { code: 'WEBHOOK_ERROR', message: 'Webhook processing failed' } });
   }
 });
@@ -107,14 +168,24 @@ webhooksRouter.post('/stripe', async (req, res) => {
       const sigHeader = req.headers['stripe-signature'] as string;
       if (!verifyStripeSignature(rawBody, sigHeader, secret)) {
         logger.warn({ requestId: req.id }, 'Stripe webhook signature verification failed');
+        await logWebhookEvent('stripe', 'unknown', 'error', { reason: 'invalid_signature' });
         res.status(401).json({ error: { code: 'INVALID_SIGNATURE', message: 'Invalid webhook signature' } });
         return;
       }
     }
 
     const event = req.body;
-    logger.info({ type: event?.type, requestId: req.id }, 'Stripe webhook received');
+    logger.info({ type: event?.type, id: event?.id, requestId: req.id }, 'Stripe webhook received');
 
+    // Idempotency: skip already-processed events
+    if (event?.id && isStripeEventProcessed(event.id)) {
+      logger.info({ eventId: event.id }, 'Stripe event already processed, skipping');
+      await logWebhookEvent('stripe', event?.type || 'unknown', 'skipped', { reason: 'duplicate', eventId: event.id });
+      res.json({ received: true, status: 'duplicate' });
+      return;
+    }
+
+    let webhookResult: 'success' | 'error' = 'success';
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data?.object;
@@ -132,6 +203,7 @@ webhooksRouter.post('/stripe', async (req, res) => {
 
           if (error) {
             logger.error({ error }, 'Failed to update user subscription');
+            webhookResult = 'error';
           }
         }
         break;
@@ -181,9 +253,19 @@ webhooksRouter.post('/stripe', async (req, res) => {
         logger.debug({ type: event.type }, 'Unhandled Stripe event');
     }
 
+    // Mark event as processed after successful handling
+    if (event?.id) {
+      markStripeEventProcessed(event.id);
+    }
+
+    await logWebhookEvent('stripe', event?.type || 'unknown', webhookResult, {
+      eventId: event?.id,
+    });
+
     res.json({ received: true });
   } catch (err) {
     logger.error({ err }, 'Stripe webhook processing error');
+    await logWebhookEvent('stripe', 'unknown', 'error', { error: (err as Error).message });
     res.status(500).json({ error: { code: 'WEBHOOK_ERROR', message: 'Webhook processing failed' } });
   }
 });

@@ -1,5 +1,44 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { CoachNoteType } from './types.js';
+import { logger } from './logger.js';
+
+// ============================================================
+// Global AI Rate Limiter (sliding window, in-memory)
+// Protects the NVIDIA NIM API quota (40 RPM free tier)
+// ============================================================
+
+const GLOBAL_AI_RPM_LIMIT = parseInt(process.env.GLOBAL_AI_RPM_LIMIT || '35', 10);
+const WINDOW_SIZE_MS = 60_000; // 1 minute
+
+const globalAiTimestamps: number[] = [];
+
+export function checkGlobalAIRateLimit(): { allowed: boolean; retryAfterMs: number } {
+  const now = Date.now();
+  const windowStart = now - WINDOW_SIZE_MS;
+
+  // Remove timestamps outside the window
+  while (globalAiTimestamps.length > 0 && globalAiTimestamps[0] <= windowStart) {
+    globalAiTimestamps.shift();
+  }
+
+  if (globalAiTimestamps.length >= GLOBAL_AI_RPM_LIMIT) {
+    const oldestInWindow = globalAiTimestamps[0];
+    const retryAfterMs = oldestInWindow + WINDOW_SIZE_MS - now;
+    return { allowed: false, retryAfterMs: Math.max(retryAfterMs, 1000) };
+  }
+
+  globalAiTimestamps.push(now);
+  return { allowed: true, retryAfterMs: 0 };
+}
+
+export function getGlobalAIRateInfo(): { current: number; limit: number; windowMs: number } {
+  const now = Date.now();
+  const windowStart = now - WINDOW_SIZE_MS;
+  while (globalAiTimestamps.length > 0 && globalAiTimestamps[0] <= windowStart) {
+    globalAiTimestamps.shift();
+  }
+  return { current: globalAiTimestamps.length, limit: GLOBAL_AI_RPM_LIMIT, windowMs: WINDOW_SIZE_MS };
+}
 
 export type { CoachNoteType };
 
@@ -86,8 +125,8 @@ export async function checkRateLimit(
     .order('created_at', { ascending: false });
 
   if (error) {
-    console.error('Rate limit check failed:', error);
-    return { allowed: true };
+    logger.error({ error }, 'Rate limit check failed — denying request (fail-closed)');
+    return { allowed: false, reason: 'Rate limit check unavailable' };
   }
 
   const notesLast24h = (recentNotes || []).filter(
@@ -186,7 +225,7 @@ export async function logAIUsage(
     });
 
   if (error) {
-    console.error('Failed to log AI usage:', error);
+    logger.error({ error }, 'Failed to log AI usage');
   }
 }
 
@@ -216,9 +255,9 @@ export async function checkAIRateLimit(
     .order('created_at', { ascending: false });
 
   if (error) {
-    // Fallback: allow if we can't check rate limits
-    console.error('Rate limit check failed:', error);
-    return { allowed: true };
+    // Fail closed: deny if we can't check rate limits
+    logger.error({ error }, 'AI rate limit check failed — denying request (fail-closed)');
+    return { allowed: false, reason: 'Rate limit check unavailable' };
   }
 
   const usageLast24h = (recentUsage || []).filter(
@@ -263,4 +302,33 @@ export async function checkAIRateLimit(
   }
 
   return { allowed: true };
+}
+
+// ============================================================
+// Global AI Rate Limit Middleware
+// ============================================================
+
+import type { Request, Response, NextFunction } from 'express';
+
+export function globalAIRateLimitMiddleware(_req: Request, res: Response, next: NextFunction): void {
+  const result = checkGlobalAIRateLimit();
+  if (!result.allowed) {
+    const retryAfterSec = Math.ceil(result.retryAfterMs / 1000);
+    res.setHeader('Retry-After', retryAfterSec.toString());
+    res.setHeader('X-RateLimit-Limit', GLOBAL_AI_RPM_LIMIT.toString());
+    res.setHeader('X-RateLimit-Remaining', '0');
+    res.status(429).json({
+      error: {
+        code: 'GLOBAL_RATE_LIMITED',
+        message: `AI service rate limit exceeded. Try again in ${retryAfterSec} seconds.`,
+        retryAfterMs: result.retryAfterMs,
+      },
+    });
+    return;
+  }
+
+  const info = getGlobalAIRateInfo();
+  res.setHeader('X-RateLimit-Limit', info.limit.toString());
+  res.setHeader('X-RateLimit-Remaining', Math.max(0, info.limit - info.current).toString());
+  next();
 }

@@ -191,6 +191,41 @@ export const learningPathSchema = z.object({
 });
 
 // ============================================================
+// Chat Stream schemas
+// ============================================================
+
+export const chatStreamSchema = z.object({
+  message: z.string().min(1, 'Message is required').max(2000, 'Message must be at most 2000 characters'),
+  history: z
+    .array(
+      z.object({
+        role: z.enum(['user', 'assistant']),
+        content: z.string().max(2000),
+      })
+    )
+    .max(10)
+    .optional()
+    .default([]),
+});
+
+// ============================================================
+// Match schemas
+// ============================================================
+
+export const matchRequestSchema = z.object({
+  limit: z.number().int().positive().max(50).optional().default(10),
+});
+
+// ============================================================
+// Safety Check schemas
+// ============================================================
+
+export const safetyCheckSchema = z.object({
+  url: z.string().url('Invalid URL format').max(2048).optional(),
+  email: z.string().email('Invalid email format').max(255).optional(),
+});
+
+// ============================================================
 // Validation helper
 // ============================================================
 

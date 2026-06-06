@@ -1,9 +1,27 @@
 import type { AgentDefinition, AgentContext, AgentResult, AgentResponse } from './types.js';
 import { chatCompletion, chatCompletionStream, isNvidiaConfigured } from './nvidia.js';
 import { getToolsByNames } from './tool-registry.js';
-import { logger } from '../../logger.js';
+import { logAIOperation } from '../metrics.js';
+import { getRequestId, getUserId } from '../../request-context.js';
 
 const MAX_INPUT_LENGTH = 2000;
+const MAX_TOOL_RESULT_LENGTH = 1000;
+
+// ---- Safety: patterns that should never appear in AI responses ----
+const BLOCKED_PATTERNS = [
+  /api[_-]?key[:\s]*[A-Za-z0-9_-]{20,}/i,
+  /secret[:\s]*[A-Za-z0-9_-]{20,}/i,
+  /password[:\s]+\S+/i,
+  /Bearer\s+[A-Za-z0-9._-]{20,}/i,
+];
+
+function sanitizeAnswer(answer: string): string {
+  let sanitized = answer;
+  for (const pattern of BLOCKED_PATTERNS) {
+    sanitized = sanitized.replace(pattern, '[REDACTED]');
+  }
+  return sanitized;
+}
 
 function buildContextualQuery(query: string, context: AgentContext): string {
   const profileInfo = context.userProfile
@@ -15,6 +33,38 @@ function buildContextualQuery(query: string, context: AgentContext): string {
     : '';
 
   return `${profileInfo}${proofInfo}\n\nQuery: ${query}`;
+}
+
+/**
+ * Robust JSON extraction from LLM output.
+ * Tries multiple strategies to parse structured responses.
+ */
+function extractJSON(content: string): AgentResponse | null {
+  // Strategy 1: Direct parse (LLM returns clean JSON)
+  try {
+    const parsed = JSON.parse(content);
+    if (parsed && typeof parsed === 'object') return parsed;
+  } catch { /* continue */ }
+
+  // Strategy 2: Find JSON block in markdown or text
+  const jsonBlockMatch = content.match(/```(?:json)?\s*\n?([\s\S]*?)\n?\s*```/);
+  if (jsonBlockMatch) {
+    try {
+      const parsed = JSON.parse(jsonBlockMatch[1].trim());
+      if (parsed && typeof parsed === 'object') return parsed;
+    } catch { /* continue */ }
+  }
+
+  // Strategy 3: Find first complete JSON object
+  const jsonMatch = content.match(/\{[\s\S]*\}/);
+  if (jsonMatch) {
+    try {
+      const parsed = JSON.parse(jsonMatch[0]);
+      if (parsed && typeof parsed === 'object') return parsed;
+    } catch { /* continue */ }
+  }
+
+  return null;
 }
 
 export async function runAgent(
@@ -60,9 +110,17 @@ export async function runAgent(
   let totalTokens = 0;
   let finalAnswer = '';
   let thinking = '';
+  const agentStartTime = Date.now();
 
   while (iterations < agent.maxIterations) {
     iterations++;
+
+    // Check agent-level timeout
+    if (Date.now() - agentStartTime > agent.timeoutMs) {
+      thinking = `Agent timeout after ${agent.timeoutMs}ms`;
+      finalAnswer = finalAnswer || 'The operation took too long. Please try a simpler request.';
+      break;
+    }
 
     const response = await chatCompletion({
       model: agent.model,
@@ -74,14 +132,11 @@ export async function runAgent(
     const content = response.choices[0]?.message?.content || '';
     totalTokens += response.usage?.total_tokens || 0;
 
-    let parsed: AgentResponse;
-    try {
-      const cleaned = content.replace(/[\r\n\t]/g, ' ').trim();
-      const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error('No JSON found');
-      parsed = JSON.parse(jsonMatch[0]);
-    } catch {
-      finalAnswer = content;
+    // Try robust JSON extraction
+    const parsed = extractJSON(content);
+
+    if (!parsed) {
+      finalAnswer = sanitizeAnswer(content);
       thinking = 'Response was not valid JSON, using raw content';
       break;
     }
@@ -89,7 +144,7 @@ export async function runAgent(
     thinking = parsed.thinking || thinking;
 
     if (parsed.answer) {
-      finalAnswer = parsed.answer;
+      finalAnswer = sanitizeAnswer(parsed.answer);
       break;
     }
 
@@ -108,27 +163,51 @@ export async function runAgent(
         continue;
       }
 
-      const result = await tool.execute(parsed.tool_call.arguments);
-      toolCalls.push({ tool: parsed.tool_call.name, args: parsed.tool_call.arguments, result });
+      // Safety: validate tool arguments are not empty/malicious
+      const args = parsed.tool_call.arguments || {};
+      if (typeof args !== 'object') {
+        toolCalls.push({
+          tool: parsed.tool_call.name,
+          args,
+          result: { success: false, error: 'Invalid tool arguments' },
+        });
+        messages.push({
+          role: 'user',
+          content: `Tool '${parsed.tool_call.name}' received invalid arguments. Expected object.`,
+        });
+        continue;
+      }
+
+      const result = await tool.execute(args);
+      toolCalls.push({ tool: parsed.tool_call.name, args, result });
+
+      // Truncate large tool results to avoid context overflow
+      const resultStr = JSON.stringify(result).substring(0, MAX_TOOL_RESULT_LENGTH);
 
       messages.push({ role: 'assistant', content: JSON.stringify({ tool_call: parsed.tool_call }) });
       messages.push({
         role: 'user',
-        content: `Tool result for ${parsed.tool_call.name}: ${JSON.stringify(result).substring(0, 1000)}`,
+        content: `Tool result for ${parsed.tool_call.name}: ${resultStr}`,
       });
     }
   }
 
   const durationMs = Date.now() - startTime;
 
-  logger.info({
-    agentId: agent.id,
+  // Structured AI operation log
+  logAIOperation({
+    operation: agent.id,
     model: agent.model,
-    iterations,
-    totalTokens,
-    toolCallsCount: toolCalls.length,
+    tokensIn: 0, // Will be updated if we track prompt tokens separately
+    tokensOut: 0,
+    tokensTotal: totalTokens,
     durationMs,
-  }, 'Agent run completed');
+    iterations,
+    toolCallsCount: toolCalls.length,
+    success: !!finalAnswer,
+    requestId: getRequestId(),
+    userId: getUserId(),
+  });
 
   return {
     agentId: agent.id,

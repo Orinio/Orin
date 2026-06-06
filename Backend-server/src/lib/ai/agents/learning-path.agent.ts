@@ -1,13 +1,15 @@
 import type { AgentDefinition } from '../core/types.js';
+import { MODELS } from '../core/models.js';
 
 export const learningPathAgent: AgentDefinition = {
   id: 'learning-path',
   name: 'Learning Path Agent',
   description: 'Generates personalized learning paths based on skill gaps and market demand',
-  model: 'qwen/qwen3.5-122b-a10b',
+  model: MODELS.primary.learning, // qwen/qwen3-coder-480b-a35b-instruct - Best for detailed reasoning
   temperature: 0.5,
   maxTokens: 800,
   maxIterations: 2,
+  timeoutMs: 60000,
   tools: ['web_search', 'fetch_webpage', 'extract_skills', 'generate_embeddings'],
   systemPrompt: `You are Orin Learning Advisor. Create personalized, actionable learning paths.
 

@@ -1,13 +1,15 @@
 import type { AgentDefinition } from '../core/types.js';
+import { MODELS } from '../core/models.js';
 
 export const verificationAgent: AgentDefinition = {
   id: 'verification',
   name: 'Verification Agent',
   description: 'Verifies proof sources (GitHub, certificates, Kaggle, LinkedIn)',
-  model: 'meta/llama-3.1-8b-instruct',
+  model: MODELS.fast.nano, // nvidia/llama-3.1-nemotron-nano-8b-v1 - Fast verification
   temperature: 0.3,
   maxTokens: 300,
   maxIterations: 3,
+  timeoutMs: 60000,
   tools: ['verify_github_repo', 'verify_github_user', 'verify_certificate', 'verify_kaggle', 'verify_linkedin', 'check_url_safety'],
   systemPrompt: `You are Orin Verification Agent. Your ONLY job is to verify if a proof source is real and legitimate.
 

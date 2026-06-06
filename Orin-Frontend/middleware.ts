@@ -29,17 +29,34 @@ export async function middleware(request: NextRequest) {
     }
   );
 
+  // IMPORTANT: Use getUser() which validates the JWT against Supabase
+  // getSession() only reads local cookies without validation
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  // Auth routes - let them through, handle redirects client-side
+  const authPaths = ['/signin', '/signup', '/reset-password', '/update-password', '/auth/callback'];
+  const isAuthPath = authPaths.some((path) =>
+    request.nextUrl.pathname.startsWith(path)
+  );
+
+  // If user is on auth page and is logged in, redirect to dashboard
+  if (isAuthPath && user) {
+    // Don't redirect if already going to dashboard (prevent loop)
+    if (!request.nextUrl.pathname.startsWith('/dashboard')) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/dashboard';
+      return NextResponse.redirect(url);
+    }
+  }
 
   // Protected routes that require authentication
   const protectedPaths = [
     '/dashboard',
     '/opportunities',
-    '/api/ai/',
-    '/api/coach-notes/',
-    '/api/proofs/',
+    '/settings',
+    '/notifications',
   ];
 
   const isProtectedPath = protectedPaths.some((path) =>
@@ -47,15 +64,36 @@ export async function middleware(request: NextRequest) {
   );
 
   if (isProtectedPath && !user) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/signin';
-    url.searchParams.set('redirect', request.nextUrl.pathname);
-    return NextResponse.redirect(url);
+    // Don't redirect if already going to signin (prevent loop)
+    if (request.nextUrl.pathname !== '/signin') {
+      const url = request.nextUrl.clone();
+      url.pathname = '/signin';
+      url.searchParams.set('redirect', request.nextUrl.pathname);
+      return NextResponse.redirect(url);
+    }
+  }
+
+  // API routes that require authentication
+  const protectedApiPaths = [
+    '/api/ai/',
+    '/api/coach-notes/',
+    '/api/proofs/',
+    '/api/user/',
+  ];
+
+  const isProtectedApiPath = protectedApiPaths.some((path) =>
+    request.nextUrl.pathname.startsWith(path)
+  );
+
+  if (isProtectedApiPath && !user) {
+    return NextResponse.json(
+      { error: { code: 'UNAUTHORIZED', message: 'Authentication required' } },
+      { status: 401 }
+    );
   }
 
   // Admin-only routes
-  const adminPaths = ['/api/admin/', '/admin'];
-
+  const adminPaths = ['/admin', '/api/admin/'];
   const isAdminPath = adminPaths.some((path) =>
     request.nextUrl.pathname.startsWith(path)
   );
@@ -74,12 +112,14 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/dashboard/:path*',
-    '/opportunities/:path*',
-    '/api/ai/:path*',
-    '/api/coach-notes/:path*',
-    '/api/proofs/:path*',
-    '/admin/:path*',
-    '/api/admin/:path*',
+    /*
+     * Match all request paths except for:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public files (images, etc.)
+     * - api routes that don't need auth
+     */
+    '/((?!_next/static|_next/image|favicon.ico|api/health|api/webhooks|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };

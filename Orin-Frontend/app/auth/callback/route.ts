@@ -10,15 +10,14 @@ export async function GET(request: NextRequest) {
 
   // Handle OAuth errors
   if (error) {
-    const errorParams = new URLSearchParams({
-      error,
-      ...(errorDescription ? { error_description: errorDescription } : {}),
-    });
-    return NextResponse.redirect(`${origin}/signin?${errorParams.toString()}`);
+    return NextResponse.redirect(
+      `${origin}/signin?error=${encodeURIComponent(error)}${errorDescription ? `&error_description=${encodeURIComponent(errorDescription)}` : ''}`
+    );
   }
 
   if (code) {
-    const supabaseResponse = NextResponse.next({ request });
+    // Create response first
+    const response = NextResponse.redirect(new URL(next, origin));
 
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -29,16 +28,14 @@ export async function GET(request: NextRequest) {
             return request.cookies.getAll();
           },
           setAll(cookiesToSet) {
+            // Set cookies on request for the exchange to read
             cookiesToSet.forEach(({ name, value }) =>
               request.cookies.set(name, value)
             );
-            supabaseResponse.cookies.set(
-              cookiesToSet.map((c) => `${c.name}=${c.value}`).join('; ')
+            // Set cookies on response to send to browser
+            cookiesToSet.forEach(({ name, value, options }) =>
+              response.cookies.set(name, value, options)
             );
-            // For Next.js 14+, we need to set cookies on the response
-            cookiesToSet.forEach(({ name, value, options }) => {
-              supabaseResponse.cookies.set(name, value, options);
-            });
           },
         },
       }
@@ -47,19 +44,16 @@ export async function GET(request: NextRequest) {
     const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!exchangeError) {
-      // Successfully exchanged code for session
-      // Redirect to the intended destination or dashboard
-      const redirectUrl = new URL(next, origin);
-      return NextResponse.redirect(redirectUrl);
+      return response;
     }
 
-    // Exchange failed - redirect with error
     console.error('Auth callback exchange error:', exchangeError.message);
     return NextResponse.redirect(
       `${origin}/signin?error=exchange_failed&error_description=${encodeURIComponent(exchangeError.message)}`
     );
   }
 
-  // No code provided - redirect to sign in
+  // No code - check if there's already a session (user might be clicking callback link again)
+  // Just redirect to dashboard or signin
   return NextResponse.redirect(`${origin}/signin?error=no_code`);
 }

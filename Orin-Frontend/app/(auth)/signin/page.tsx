@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Suspense, useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
@@ -18,8 +18,11 @@ export default function SignInPage() {
 
 function SignInForm() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const redirectTo = searchParams.get('redirect') || '/dashboard';
   const confirmed = searchParams.get('confirmed');
+  const authError = searchParams.get('error');
+  const errorDescription = searchParams.get('error_description');
 
   const { signIn, signInWithOAuth, user, initialized } = useAuth();
 
@@ -33,35 +36,18 @@ function SignInForm() {
 
   useEffect(() => {
     if (!initialized) return;
-    if (user) window.location.href = redirectTo;
-  }, [user, initialized, redirectTo]);
-
-  const validate = (): boolean => {
-    const errors: { email?: string; password?: string } = {};
-    const emailErr = validateEmail(email);
-    const passErr = validatePassword(password);
-    if (emailErr) errors.email = emailErr;
-    if (passErr) errors.password = passErr;
-    setFieldErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  const handleSignIn = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validate()) return;
-    setLoading(true);
-    setError(null);
-
-    const { error } = await signIn(email, password);
-
-    if (error) {
-      setError(getFriendlyErrorMessage(error));
-      setLoading(false);
-      return;
+    if (user) {
+      // Use router.push for client-side navigation (no full page reload)
+      router.push(redirectTo);
     }
+  }, [user, initialized, redirectTo, router]);
 
-    window.location.href = redirectTo;
-  };
+  useEffect(() => {
+    // Show OAuth errors from callback
+    if (authError) {
+      setError(errorDescription || 'Authentication failed. Please try again.');
+    }
+  }, [authError, errorDescription]);
 
   const handleSocialLogin = async (provider: 'github' | 'google') => {
     setSocialLoading(provider);

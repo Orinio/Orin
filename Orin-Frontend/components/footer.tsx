@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Logo from '@/components/Logo';
 
 const footerLinks = {
   Product: [
@@ -65,12 +66,10 @@ export default function Footer() {
         <div className="mb-16 grid grid-cols-2 gap-8 md:grid-cols-4 lg:grid-cols-6 md:gap-12 lg:gap-8">
           {/* Brand Column */}
           <div className="col-span-2 flex flex-col items-start md:col-span-4 lg:col-span-3">
-            <Link href="/" className="mb-6 flex items-center gap-3 group" aria-label="ORIN home">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full transition-transform duration-200 group-hover:scale-105" style={{ backgroundColor: 'var(--color-paper)' }}>
-                <span className="text-lg font-black tracking-wider" style={{ color: 'var(--color-ink)' }}>O</span>
-              </div>
+            <div className="mb-6 flex items-center gap-3">
+              <Logo variant="mark" size="lg" href={undefined} />
               <span className="text-2xl font-bold tracking-tight" style={{ color: 'var(--color-paper)' }}>ORIN</span>
-            </Link>
+            </div>
 
             <p className="mb-8 max-w-sm text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.4)' }}>
               Turn scattered work into verified career proof. Built for the next generation of builders, creators, and students.

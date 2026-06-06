@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Logo from '@/components/Logo';
 
 export default function AuthLayout({
   children,
@@ -8,14 +9,7 @@ export default function AuthLayout({
       {/* Header */}
       <nav className="sticky top-0 z-30 border-b border-[var(--color-border)] bg-glass">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 sm:px-8">
-          <Link href="/" className="group flex items-center gap-2.5">
-            <div className="relative flex h-9 w-9 items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-ink)] transition-transform group-hover:scale-105">
-              <span className="text-base font-bold" style={{ color: 'var(--color-spark)' }}>O</span>
-            </div>
-            <span className="text-xl font-bold tracking-tight" style={{ color: 'var(--color-ink)' }}>
-              ORIN
-            </span>
-          </Link>
+          <Logo variant="full" size="lg" />
           <div className="hidden items-center gap-2 text-sm sm:flex" style={{ color: 'var(--color-text-secondary)' }}>
             <svg className="h-4 w-4" style={{ color: 'var(--color-bloom)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />

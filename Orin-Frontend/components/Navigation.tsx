@@ -24,6 +24,7 @@ import { useAuth } from '@/lib/auth-context';
 import type { Notification } from '@/lib/types';
 import { formatRelativeTime, getInitials } from '@/lib/utils';
 import { cn } from '@/lib/utils';
+import Logo from '@/components/Logo';
 
 export default function Navigation() {
   const router = useRouter();
@@ -162,14 +163,7 @@ export default function Navigation() {
     <header className="sticky top-0 z-50 w-full bg-glass border-b border-[var(--color-border)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
-          <Link href="/dashboard" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-[var(--radius-md)] flex items-center justify-center bg-[var(--color-ink)]">
-              <span className="text-sm font-bold" style={{ color: 'var(--color-spark)' }}>O</span>
-            </div>
-            <span className="text-lg font-bold tracking-tight" style={{ color: 'var(--color-ink)' }}>
-              ORIN
-            </span>
-          </Link>
+          <Logo variant="full" size="md" href="/dashboard" />
 
           <nav className="hidden md:flex items-center gap-1">
             {navLinks.map((link) => {

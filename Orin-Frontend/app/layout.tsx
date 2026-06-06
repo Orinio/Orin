@@ -21,6 +21,14 @@ export const metadata: Metadata = {
   title: "ORIN - Turn Work Into Career Proof",
   description:
     "Transform your scattered work into verified career proof. AI coach, proof cards, and real opportunities.",
+  icons: {
+    icon: '/favicon.png',
+  },
+  openGraph: {
+    title: "ORIN - Turn Work Into Career Proof",
+    description: "Transform your scattered work into verified career proof. AI coach, proof cards, and real opportunities.",
+    images: ['/logo.png'],
+  },
 };
 
 export default function RootLayout({

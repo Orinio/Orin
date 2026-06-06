@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Menu, X, ChevronDown } from 'lucide-react';
+import Logo from '@/components/Logo';
 
 const mainLinks = [
   { name: 'Features', href: '/#features' },
@@ -53,17 +54,7 @@ export default function Navbar() {
     >
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
         {/* BRAND / LOGO */}
-        <Link href="/" className="flex items-center gap-2.5 group" aria-label="ORIN home">
-          <div
-            className="w-9 h-9 rounded-xl flex items-center justify-center transition-transform duration-300 ease-out group-hover:scale-105 shadow-sm"
-            style={{ backgroundColor: 'var(--color-ink)' }}
-          >
-            <span className="text-sm font-black tracking-wider" style={{ color: 'var(--color-spark)' }}>
-              O
-            </span>
-          </div>
-          <span className="text-xl font-bold tracking-tight text-slate-900">ORIN</span>
-        </Link>
+        <Logo variant="full" size="lg" priority />
 
         {/* DESKTOP NAVIGATION */}
         <nav className="hidden md:flex items-center gap-1 text-sm font-semibold">

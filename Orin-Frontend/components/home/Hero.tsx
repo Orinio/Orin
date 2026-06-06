@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function Hero() {
   return (
@@ -369,13 +370,9 @@ function AppHeader() {
     <div className="flex items-center justify-between mb-3 animate-slideInUp">
       <div className="flex items-center gap-2">
         <div
-          className="w-7 h-7 rounded-lg flex items-center justify-center shadow-sm"
-          style={{
-            background:
-              'linear-gradient(135deg, var(--color-bloom) 0%, #059669 100%)',
-          }}
+          className="w-7 h-7 rounded-lg flex items-center justify-center shadow-sm overflow-hidden"
         >
-          <span className="text-[11px] font-bold text-white">O</span>
+          <Image src="/logo.svg" alt="ORIN" width={28} height={28} className="object-contain" />
         </div>
         <div>
           <p

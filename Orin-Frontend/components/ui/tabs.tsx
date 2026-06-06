@@ -3,7 +3,7 @@
 import { useState, ReactNode } from 'react';
 import { cn } from '@/lib/cn';
 
-interface TabItem {
+export interface TabItem {
   value: string;
   label: string;
   icon?: ReactNode;

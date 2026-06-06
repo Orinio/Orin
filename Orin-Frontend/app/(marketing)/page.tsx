@@ -4,29 +4,31 @@ import dynamic from 'next/dynamic';
 import { useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 
-// Fixed: The stray }); that was right here is now gone!
+const SectionSkeleton = ({ height = 'py-24', bg = 'var(--color-paper)' }: { height?: string; bg?: string }) => (
+  <div className={`${height} px-6`} style={{ backgroundColor: bg }} aria-hidden="true" />
+);
+
 const Hero = dynamic(() => import('@/components/home/Hero'), {
-  loading: () => <div className="min-h-[600px] flex items-center justify-center" style={{ backgroundColor: 'var(--color-paper)' }} />
+  loading: () => <SectionSkeleton height="min-h-[600px]" />,
 });
 const Problem = dynamic(() => import('@/components/home/Problem'), {
-  loading: () => <div className="py-24 px-6" style={{ backgroundColor: 'var(--color-surface)' }} />
+  loading: () => <SectionSkeleton bg="var(--color-surface)" />,
 });
 const Features = dynamic(() => import('@/components/home/Features'), {
-  loading: () => <div className="py-24 px-6" style={{ backgroundColor: 'var(--color-paper)' }} />
+  loading: () => <SectionSkeleton />,
 });
 const HowItWorks = dynamic(() => import('@/components/home/HowItWorks'), {
-  loading: () => <div className="py-24 px-6" style={{ backgroundColor: 'var(--color-surface)' }} />
+  loading: () => <SectionSkeleton bg="var(--color-surface)" />,
 });
 const Stats = dynamic(() => import('@/components/home/Stats'), {
-  loading: () => <div className="py-20 px-6" style={{ backgroundColor: 'var(--color-paper)' }} />
+  loading: () => <SectionSkeleton height="py-20" bg="var(--color-ink)" />,
 });
 const Testimonials = dynamic(() => import('@/components/home/Testimonials'), {
-  loading: () => <div className="py-24 px-6" style={{ backgroundColor: 'var(--color-surface)' }} />
+  loading: () => <SectionSkeleton bg="var(--color-surface)" />,
 });
 const Pricing = dynamic(() => import('@/components/home/Pricing'), {
-  loading: () => <div className="py-24 px-6" style={{ backgroundColor: 'var(--color-paper)' }} />
+  loading: () => <SectionSkeleton />,
 });
-
 
 export default function Home() {
   useEffect(() => {
@@ -41,8 +43,7 @@ export default function Home() {
   }, []);
 
   return (
-    <main id="main-content">
-      {/* Fixed: Removed <Navbar /> from here */}
+    <>
       <Hero />
       <Problem />
       <Features />
@@ -50,7 +51,6 @@ export default function Home() {
       <Stats />
       <Testimonials />
       <Pricing />
-      
-    </main>
+    </>
   );
 }

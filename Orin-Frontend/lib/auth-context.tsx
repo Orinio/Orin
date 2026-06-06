@@ -41,6 +41,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [initialized, setInitialized] = useState(false);
   const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  function syncToken(s: Session | null) {
+    if (s?.access_token) {
+      localStorage.setItem('token', s.access_token);
+    } else {
+      localStorage.removeItem('token');
+    }
+  }
+
   const clearRefreshTimer = useCallback(() => {
     if (refreshTimer.current) {
       clearTimeout(refreshTimer.current);
@@ -55,6 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!error && data.session) {
         setSession(data.session);
         setUser(data.session.user);
+        syncToken(data.session);
         // Schedule next refresh for the new session
         startSessionRefresh(data.session);
       }
@@ -94,6 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(session?.user ?? null);
       setLoading(false);
       setInitialized(true);
+      syncToken(session);
       if (session) {
         startSessionRefresh(session);
       }
@@ -106,6 +116,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(session?.user ?? null);
         setLoading(false);
         setInitialized(true);
+        syncToken(session);
         if (session) {
           startSessionRefresh(session);
         } else {
@@ -163,6 +174,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     setUser(null);
     setSession(null);
+    localStorage.removeItem('token');
   }, [clearRefreshTimer]);
 
   const resetPassword = useCallback(async (email: string) => {

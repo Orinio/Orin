@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { api } from '@/lib/api-client';
 
 interface WorkflowStep {
   agentId: string;
@@ -148,37 +149,22 @@ export function CareerAnalysisWorkflow({ onComplete }: CareerAnalysisWorkflowPro
     setSteps(prev => prev.map((s, i) => i === 0 ? { ...s, status: 'running' } : s));
 
     try {
-      const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const response = await fetch(`${API_BASE}/ai/workflows/career-analysis`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({ query })
-      });
+      const { results } = await api.workflows.careerAnalysis(query);
 
-      const data = await response.json();
-      
-      if (data.success) {
-        const results = data.data.results;
-        
-        // Update steps with results
-        setSteps(prev => prev.map((step, i) => {
-          const agentResult = results[step.agentId];
-          if (agentResult) {
-            return {
-              ...step,
-              status: 'completed',
-              result: agentResult,
-              durationMs: agentResult.durationMs
-            };
-          }
-          return step;
-        }));
+      setSteps(prev => prev.map((step) => {
+        const agentResult = results[step.agentId];
+        if (agentResult) {
+          return {
+            ...step,
+            status: 'completed',
+            result: agentResult,
+            durationMs: agentResult.durationMs
+          };
+        }
+        return step;
+      }));
 
-        onComplete?.(results);
-      }
+      onComplete?.(results);
     } catch (error) {
       setSteps(prev => prev.map(s => 
         s.status === 'running' ? { ...s, status: 'failed' } : s

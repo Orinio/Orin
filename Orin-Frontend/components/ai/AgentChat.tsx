@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { api, type AgentResult } from '@/lib/api-client';
 
 interface Message {
   id: string;
@@ -16,8 +17,6 @@ interface AgentChatProps {
   initialAgent?: string;
   onMessageSent?: (message: string) => void;
 }
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export function AgentChat({ initialAgent = 'chat', onMessageSent }: AgentChatProps) {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -39,7 +38,6 @@ export function AgentChat({ initialAgent = 'chat', onMessageSent }: AgentChatPro
     setIsLoading(true);
     onMessageSent?.(userMessage);
 
-    // Add user message
     const userMsg: Message = {
       id: Date.now().toString(),
       role: 'user',
@@ -48,45 +46,23 @@ export function AgentChat({ initialAgent = 'chat', onMessageSent }: AgentChatPro
     };
     setMessages(prev => [...prev, userMsg]);
 
-    // Update conversation history
     const newHistory = [...conversationHistory, { role: 'user', content: userMessage }];
     setConversationHistory(newHistory);
 
     try {
-      const response = await fetch(`${API_BASE}/ai/agents/${selectedAgent}/run`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          query: userMessage,
-          conversationHistory: newHistory.slice(-10)
-        })
-      });
+      const result = await api.agents.run(selectedAgent, userMessage, newHistory.slice(-10));
 
-      const data = await response.json();
-      
-      if (data.success) {
-        const result = data.data;
-        
-        // Add assistant message
-        const assistantMsg: Message = {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant',
-          content: result.answer || 'I could not generate a response.',
-          timestamp: new Date(),
-          agentId: result.agentId,
-          toolCalls: result.toolCalls,
-          durationMs: result.durationMs
-        };
-        setMessages(prev => [...prev, assistantMsg]);
-
-        // Update conversation history
-        setConversationHistory(prev => [...prev, { role: 'assistant', content: result.answer }]);
-      } else {
-        throw new Error(data.error?.message || 'Failed to get response');
-      }
+      const assistantMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: result.answer || 'I could not generate a response.',
+        timestamp: new Date(),
+        agentId: result.agentId,
+        toolCalls: result.toolCalls,
+        durationMs: result.durationMs
+      };
+      setMessages(prev => [...prev, assistantMsg]);
+      setConversationHistory(prev => [...prev, { role: 'assistant', content: result.answer }]);
     } catch (error) {
       const errorMsg: Message = {
         id: (Date.now() + 1).toString(),

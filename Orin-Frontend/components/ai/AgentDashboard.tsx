@@ -2,82 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useChat } from '@/hooks/use-ai';
-
-// ============================================================
-// Types
-// ============================================================
-interface Agent {
-  id: string;
-  name: string;
-  role: string;
-  model: string;
-  tools: string[];
-  description: string;
-}
-
-interface Tool {
-  name: string;
-  description: string;
-  category: string;
-  parameters: any;
-}
-
-interface AgentResult {
-  agentId: string;
-  answer: string;
-  thinking: string;
-  toolCalls: Array<{ tool: string; args: any; result: any }>;
-  iterations: number;
-  tokensUsed: number;
-  durationMs: number;
-}
-
-// ============================================================
-// API Functions
-// ============================================================
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
-async function fetchAgents(): Promise<Agent[]> {
-  const response = await fetch(`${API_BASE}/ai/agents`, {
-    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-  });
-  const data = await response.json();
-  return data.data?.agents || [];
-}
-
-async function fetchTools(): Promise<Tool[]> {
-  const response = await fetch(`${API_BASE}/ai/tools`, {
-    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-  });
-  const data = await response.json();
-  return data.data?.tools || [];
-}
-
-async function runAgent(agentId: string, query: string): Promise<AgentResult> {
-  const response = await fetch(`${API_BASE}/ai/agents/${agentId}/run`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${localStorage.getItem('token')}`
-    },
-    body: JSON.stringify({ query })
-  });
-  const data = await response.json();
-  return data.data;
-}
-
-async function runCareerAnalysis(query: string): Promise<Record<string, AgentResult>> {
-  const response = await fetch(`${API_BASE}/ai/workflows/career-analysis`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${localStorage.getItem('token')}`
-    },
-    body: JSON.stringify({ query })
-  });
-  const data = await response.json();
-  return data.data?.results || {};
-}
+import { api, type Agent, type Tool, type AgentResult } from '@/lib/api-client';
 
 // ============================================================
 // Agent Dashboard Component
@@ -96,7 +21,7 @@ export function AgentDashboard() {
   }, []);
 
   async function loadAgentsAndTools() {
-    const [agentsData, toolsData] = await Promise.all([fetchAgents(), fetchTools()]);
+    const [agentsData, toolsData] = await Promise.all([api.agents.list(), api.tools.list()]);
     setAgents(agentsData);
     setTools(toolsData);
   }
@@ -106,7 +31,7 @@ export function AgentDashboard() {
 
     setIsLoading(true);
     try {
-      const result = await runAgent(selectedAgent.id, query);
+      const result = await api.agents.run(selectedAgent.id, query);
       setResult(result);
     } catch (error) {
       console.error('Failed to run agent:', error);
@@ -120,7 +45,7 @@ export function AgentDashboard() {
 
     setIsLoading(true);
     try {
-      const results = await runCareerAnalysis(query);
+      const { results } = await api.workflows.careerAnalysis(query);
       // Combine results from all agents
       const combinedResult: AgentResult = {
         agentId: 'career-analysis',

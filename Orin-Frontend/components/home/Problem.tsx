@@ -11,8 +11,8 @@ const painPoints = [
     ),
     title: 'Tab chaos',
     desc: 'Six repos, three PDFs, a Notion doc, and that Kaggle notebook you forgot about.',
-    color: 'var(--color-ember)',
     gradient: 'linear-gradient(135deg, var(--color-ember) 0%, #e53e3e 100%)',
+    accent: 'card-accent-ember',
   },
   {
     icon: (
@@ -24,8 +24,8 @@ const painPoints = [
     ),
     title: 'Proof feels scattered',
     desc: 'Hard to show employers what you can actually do when your work is everywhere.',
-    color: 'var(--color-pulse)',
     gradient: 'linear-gradient(135deg, var(--color-pulse) 0%, #d53f8c 100%)',
+    accent: 'card-accent-pulse',
   },
   {
     icon: (
@@ -37,65 +37,69 @@ const painPoints = [
     ),
     title: 'No guidance',
     desc: 'You built things but have no idea what to build next to stand out.',
-    color: 'var(--color-spark)',
     gradient: 'linear-gradient(135deg, var(--color-spark) 0%, #d69e2e 100%)',
+    accent: 'card-accent-spark',
   },
 ];
 
 export default function Problem() {
   return (
     <section className="py-20 px-6 relative overflow-hidden" style={{ backgroundColor: 'var(--color-surface)' }}>
-      {/* Enhanced background elements */}
+      {/* Soft background */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_center,rgba(246,146,38,0.03)_0%,transparent_70%)]" />
         <div className="absolute top-1/3 left-1/4 w-96 h-96 rounded-full blur-3xl opacity-[0.04]" style={{ backgroundColor: 'var(--color-pulse)' }} />
         <div className="absolute bottom-1/4 right-1/3 w-80 h-80 rounded-full blur-3xl opacity-[0.03]" style={{ backgroundColor: 'var(--color-ember)' }} />
       </div>
-      
+
       <div className="max-w-6xl mx-auto relative z-10">
         <div className="grid md:grid-cols-2 gap-12 items-start">
           {/* Left */}
-          <div className="animate-fadeInLeft">
-            <div className="inline-block badge-pulse mb-6 animate-pulse">
-              The Problem
-            </div>
-            <h2 className="text-4xl font-bold mb-6 leading-tight tracking-tight animate-fadeInUp" style={{ color: 'var(--color-ink)' }}>
+          <div>
+            <div className="badge-pulse mb-6 animate-fadeInUp">The Problem</div>
+            <h2
+              className="text-4xl font-bold mb-6 leading-tight tracking-tight animate-fadeInUp"
+              style={{ color: 'var(--color-ink)', animationDelay: '0.1s' }}
+            >
               You built a lot.<br />
               <span className="relative inline-block">
                 Showing it is impossible.
-                <span className="absolute bottom-1 left-0 w-full h-3 -z-10 rounded-sm animate-pulse" style={{ backgroundColor: 'var(--color-pulse)', opacity: 0.3 }} />
+                <span
+                  aria-hidden="true"
+                  className="absolute bottom-1 left-0 w-full h-3 -z-10 rounded-sm"
+                  style={{ backgroundColor: 'var(--color-pulse)', opacity: 0.3 }}
+                />
               </span>
             </h2>
-            <p className="text-lg leading-relaxed animate-fadeInUp" style={{ color: 'var(--color-text-secondary)', animationDelay: '0.2s' }}>
+            <p
+              className="text-lg leading-relaxed animate-fadeInUp"
+              style={{ color: 'var(--color-text-secondary)', animationDelay: '0.2s' }}
+            >
               Every student has proof of their skills — scattered across GitHub, Notion, Google Drive, and email.
               None of it connects. None of it tells a story.
             </p>
           </div>
 
           {/* Right: Pain points */}
-          <div className="space-y-5 animate-fadeIn">
+          <div className="space-y-5">
             {painPoints.map((point, i) => (
               <div
                 key={point.title}
-                className="card-base p-6 flex items-start gap-4 hover-lift animate-fadeInUp hover:scale-105 transition-transform"
-                style={{ 
-                  animationDelay: `${i * 0.1}s`,
-                  background: 'linear-gradient(135deg, var(--color-surface) 0%, #fafafa 100%)'
-                }}
+                className={`card-base ${point.accent} p-6 flex items-start gap-4 animate-fadeInUp`}
+                style={{ animationDelay: `${0.1 + i * 0.08}s` }}
               >
                 <div
-                  className="w-12 h-12 rounded-[var(--radius-lg)] flex items-center justify-center flex-shrink-0 shadow-lg hover-lift transition-transform hover:scale-110"
-                  style={{ 
-                    background: point.gradient,
-                    color: '#fff',
-                    boxShadow: `0 4px 12px rgba(238, 66, 102, 0.15)`
-                  }}
+                  className="w-12 h-12 rounded-[var(--radius-lg)] flex items-center justify-center flex-shrink-0 shadow-md"
+                  style={{ background: point.gradient, color: '#fff' }}
                 >
                   {point.icon}
                 </div>
                 <div>
-                  <h3 className="font-bold mb-1 hover-lift" style={{ color: 'var(--color-ink)' }}>{point.title}</h3>
-                  <p className="text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>{point.desc}</p>
+                  <h3 className="font-bold mb-1" style={{ color: 'var(--color-ink)' }}>
+                    {point.title}
+                  </h3>
+                  <p className="text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
+                    {point.desc}
+                  </p>
                 </div>
               </div>
             ))}

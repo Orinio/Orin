@@ -26,9 +26,7 @@ const Testimonials = dynamic(() => import('@/components/home/Testimonials'), {
 const Pricing = dynamic(() => import('@/components/home/Pricing'), {
   loading: () => <div className="py-24 px-6" style={{ backgroundColor: 'var(--color-paper)' }} />
 });
-const FinalCTA = dynamic(() => import('@/components/home/FinalCTA'), {
-  loading: () => <div className="py-24 px-6" style={{ backgroundColor: 'var(--color-paper)' }} />
-});
+
 
 export default function Home() {
   useEffect(() => {
@@ -52,8 +50,7 @@ export default function Home() {
       <Stats />
       <Testimonials />
       <Pricing />
-      <FinalCTA />
-      {/* Fixed: Removed <Footer /> from here */}
+      
     </main>
   );
 }

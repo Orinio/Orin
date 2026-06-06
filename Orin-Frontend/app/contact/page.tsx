@@ -2,8 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import Navbar from '@/components/home/Navbar';
-import Footer from '@/components/home/footer';
+
 import {
   User,
   Mail,
@@ -90,7 +89,7 @@ export default function ContactPage() {
 
   return (
     <>
-      <Navbar />
+      
 
       {/* ─── Hero Section ─── */}
       <section
@@ -379,7 +378,7 @@ export default function ContactPage() {
         }
       `}</style>
 
-      <Footer />
+      
     </>
   );
 }

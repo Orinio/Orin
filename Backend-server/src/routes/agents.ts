@@ -8,7 +8,7 @@ import { logger } from '../lib/logger.js';
 import { isNvidiaConfigured } from '../lib/ai/core/nvidia.js';
 import { createOrchestrator, AGENTS } from '../lib/ai/orchestrator/agent-orchestrator.js';
 import { createMemoryManager } from '../lib/ai/memory/memory-manager.js';
-import { getAllTools, getToolsByCategory } from '../lib/ai/tools/tool-registry.js';
+import { getAllTools, getToolsByCategory } from '../lib/ai/core/tool-registry.js';
 import { authMiddleware } from '../middleware/auth.js';
 
 export const agentRouter = Router();

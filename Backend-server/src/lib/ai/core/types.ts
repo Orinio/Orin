@@ -1,13 +1,13 @@
 export interface Tool {
   name: string;
   description: string;
-  category: 'verification' | 'search' | 'analysis' | 'safety' | 'data';
+  category: 'verification' | 'search' | 'analysis' | 'safety' | 'data' | 'learning' | 'career' | 'code' | 'web' | 'memory';
   parameters: {
     type: 'object';
-    properties: Record<string, { type: string; description: string }>;
+    properties: Record<string, { type: string; description: string; enum?: string[] }>;
     required: string[];
   };
-  execute: (args: Record<string, any>) => Promise<ToolResult>;
+  execute: (args: Record<string, any>, context?: ToolContext) => Promise<ToolResult>;
 }
 
 export interface ToolResult {
@@ -15,6 +15,12 @@ export interface ToolResult {
   data?: any;
   error?: string;
   metadata?: Record<string, any>;
+}
+
+export interface ToolContext {
+  userId?: string;
+  sessionId?: string;
+  conversationHistory?: Array<{ role: string; content: string }>;
 }
 
 export interface ToolCall {

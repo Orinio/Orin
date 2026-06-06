@@ -8,7 +8,8 @@ import { logger } from '../../logger.js';
 import { MODELS } from '../core/models.js';
 import { chatCompletion } from '../core/nvidia.js';
 import { createMemoryManager, type MemoryManager } from '../memory/memory-manager.js';
-import { getToolsByNames, type ToolResult } from '../tools/tool-registry.js';
+import { getToolsByNames } from '../core/tool-registry.js';
+import type { ToolResult } from '../core/types.js';
 
 // ============================================================
 // Types

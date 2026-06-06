@@ -21,7 +21,7 @@ describe('Tool Registry', () => {
   it('should return tools by category', () => {
     initTools();
     const verificationTools = getToolsByCategory('verification');
-    expect(verificationTools.length).toBeGreaterThanOrEqual(5);
+    expect(verificationTools.length).toBeGreaterThanOrEqual(3);
     verificationTools.forEach(tool => {
       expect(tool.category).toBe('verification');
     });

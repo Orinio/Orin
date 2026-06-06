@@ -61,7 +61,8 @@ function Toggle({ enabled, onToggle, id }: { enabled: boolean; onToggle: () => v
       role="switch"
       aria-checked={enabled}
       onClick={onToggle}
-      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-emerald)] focus-visible:ring-offset-2 ${enabled ? 'bg-[var(--color-primary-emerald)]' : 'bg-[var(--color-neutral-border-strong)]'}`}
+      className="relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-bloom)] focus-visible:ring-offset-2"
+      style={{ backgroundColor: enabled ? 'var(--color-bloom)' : 'var(--color-border-strong)' }}
     >
       <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm ring-0 transition-transform duration-200 ${enabled ? 'translate-x-6' : 'translate-x-1'}`} />
     </button>
@@ -76,7 +77,7 @@ const navItems: { id: Section; label: string; icon: React.ReactNode }[] = [
   { id: 'billing', label: 'Billing', icon: <CreditCard size={18} /> },
 ];
 
-const inputClass = "w-full rounded-lg border border-[var(--color-neutral-border)] bg-[var(--color-neutral-bg)] px-3.5 py-2.5 text-sm text-[var(--color-neutral-text)] placeholder:text-[var(--color-neutral-text-tertiary)] transition focus:border-[var(--color-primary-emerald)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-soft)]";
+const inputClass = "w-full rounded-xl border bg-white px-4 py-3 text-sm transition placeholder:text-[var(--color-text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-bloom)]/20";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -123,23 +124,10 @@ export default function SettingsPage() {
 
   useEffect(() => {
     const fetchAll = async () => {
-      if (!supabase) {
-        setLoading(false);
-        return;
-      }
-
+      if (!supabase) { setLoading(false); return; }
       const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) {
-        router.push('/signin');
-        return;
-      }
-
-      const { data: userData } = await supabase
-        .from('users')
-        .select('*')
-        .eq('auth_user_id', authUser.id)
-        .maybeSingle();
-
+      if (!authUser) { router.push('/signin'); return; }
+      const { data: userData } = await supabase.from('users').select('*').eq('auth_user_id', authUser.id).maybeSingle();
       if (userData) {
         setFullName(userData.full_name || '');
         setHeadline(userData.headline || '');
@@ -153,13 +141,7 @@ export default function SettingsPage() {
         setProfilePublic(userData.is_profile_public);
         setHideEmail(userData.hide_email);
       }
-
-      const { data: notifData } = await supabase
-        .from('notification_preferences')
-        .select('*')
-        .eq('user_id', userData?.id || '')
-        .maybeSingle();
-
+      const { data: notifData } = await supabase.from('notification_preferences').select('*').eq('user_id', userData?.id || '').maybeSingle();
       if (notifData) {
         setNotifs({
           weeklySummary: notifData.weekly_summary,
@@ -170,17 +152,8 @@ export default function SettingsPage() {
           productUpdates: notifData.product_updates,
         });
       }
-
-      const { data: subData } = await supabase
-        .from('subscriptions')
-        .select('plan, status')
-        .eq('user_id', userData?.id || '')
-        .maybeSingle();
-
-      if (subData) {
-        setSubscription({ plan: subData.plan, status: subData.status });
-      }
-
+      const { data: subData } = await supabase.from('subscriptions').select('plan, status').eq('user_id', userData?.id || '').maybeSingle();
+      if (subData) setSubscription({ plan: subData.plan, status: subData.status });
       setLoading(false);
     };
     fetchAll();
@@ -189,39 +162,29 @@ export default function SettingsPage() {
   const handleSave = useCallback(async () => {
     setSaving(true);
     setSaved(false);
-
     try {
       if (supabase) {
         const { data: { user: authUser } } = await supabase.auth.getUser();
         if (authUser) {
-          const { error } = await supabase
-            .from('users')
-            .update({
-              full_name: fullName || undefined,
-              headline: headline || undefined,
-              location: location || undefined,
-              username: username || undefined,
-              bio: bio || undefined,
-              website_url: websiteUrl || undefined,
-              github_url: githubUrl || undefined,
-              linkedin_url: linkedinUrl || undefined,
-              twitter_url: twitterUrl || undefined,
-              is_profile_public: profilePublic,
-              hide_email: hideEmail,
-            })
-            .eq('auth_user_id', authUser.id);
-
+          const { error } = await supabase.from('users').update({
+            full_name: fullName || undefined,
+            headline: headline || undefined,
+            location: location || undefined,
+            username: username || undefined,
+            bio: bio || undefined,
+            website_url: websiteUrl || undefined,
+            github_url: githubUrl || undefined,
+            linkedin_url: linkedinUrl || undefined,
+            twitter_url: twitterUrl || undefined,
+            is_profile_public: profilePublic,
+            hide_email: hideEmail,
+          }).eq('auth_user_id', authUser.id);
           if (error) throw error;
         }
       }
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
-    } catch {
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2500);
-    } finally {
-      setSaving(false);
-    }
+    } catch { setSaved(true); setTimeout(() => setSaved(false), 2500); } finally { setSaving(false); }
   }, [fullName, headline, location, username, bio, websiteUrl, githubUrl, linkedinUrl, twitterUrl, profilePublic, hideEmail]);
 
   const handleNotifSave = async (key: keyof typeof notifs) => {
@@ -230,32 +193,14 @@ export default function SettingsPage() {
       if (supabase) {
         const { data: { user: authUser } } = await supabase.auth.getUser();
         if (authUser) {
-          const { data: userData } = await supabase
-            .from('users')
-            .select('id')
-            .eq('auth_user_id', authUser.id)
-            .maybeSingle();
-
+          const { data: userData } = await supabase.from('users').select('id').eq('auth_user_id', authUser.id).maybeSingle();
           if (userData) {
-            const dbKey = key === 'weeklySummary' ? 'weekly_summary' :
-              key === 'recruiterViews' ? 'recruiter_views' :
-              key === 'verificationStatus' ? 'verification_status' :
-              key === 'opportunityMatch' ? 'opportunity_match' :
-              key === 'coachTips' ? 'coach_tips' : 'product_updates';
-            await supabase
-              .from('notification_preferences')
-              .upsert({
-                user_id: userData.id,
-                [dbKey]: notifs[key],
-              } as Database['public']['Tables']['notification_preferences']['Insert'], { onConflict: 'user_id' });
+            const dbKey = key === 'weeklySummary' ? 'weekly_summary' : key === 'recruiterViews' ? 'recruiter_views' : key === 'verificationStatus' ? 'verification_status' : key === 'opportunityMatch' ? 'opportunity_match' : key === 'coachTips' ? 'coach_tips' : 'product_updates';
+            await supabase.from('notification_preferences').upsert({ user_id: userData.id, [dbKey]: notifs[key] } as Database['public']['Tables']['notification_preferences']['Insert'], { onConflict: 'user_id' });
           }
         }
       }
-    } catch {
-      // Demo mode
-    } finally {
-      setNotifSaving(false);
-    }
+    } catch {} finally { setNotifSaving(false); }
   };
 
   const handleDeleteAccount = async () => {
@@ -270,9 +215,7 @@ export default function SettingsPage() {
         }
       }
       router.push('/');
-    } catch {
-      setDeleting(false);
-    }
+    } catch { setDeleting(false); }
   };
 
   const handleCopy = () => {
@@ -281,9 +224,7 @@ export default function SettingsPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const initials = fullName
-    ? fullName.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
-    : 'U';
+  const initials = fullName ? fullName.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2) : 'U';
 
   const toggleNotif = (key: keyof typeof notifs) => {
     setNotifs((prev) => {
@@ -295,15 +236,8 @@ export default function SettingsPage() {
             sb.from('users').select('id').eq('auth_user_id', authUser.id).maybeSingle()
               .then(({ data: userData }) => {
                 if (userData) {
-                  const dbKey = key === 'weeklySummary' ? 'weekly_summary' :
-                    key === 'recruiterViews' ? 'recruiter_views' :
-                    key === 'verificationStatus' ? 'verification_status' :
-                    key === 'opportunityMatch' ? 'opportunity_match' :
-                    key === 'coachTips' ? 'coach_tips' : 'product_updates';
-                  void sb.from('notification_preferences').upsert({
-                    user_id: userData.id,
-                    [dbKey]: next[key],
-                  } as Database['public']['Tables']['notification_preferences']['Insert'], { onConflict: 'user_id' });
+                  const dbKey = key === 'weeklySummary' ? 'weekly_summary' : key === 'recruiterViews' ? 'recruiter_views' : key === 'verificationStatus' ? 'verification_status' : key === 'opportunityMatch' ? 'opportunity_match' : key === 'coachTips' ? 'coach_tips' : 'product_updates';
+                  void sb.from('notification_preferences').upsert({ user_id: userData.id, [dbKey]: next[key] } as Database['public']['Tables']['notification_preferences']['Insert'], { onConflict: 'user_id' });
                 }
               });
           }
@@ -316,95 +250,95 @@ export default function SettingsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin text-[var(--color-primary-emerald)]" />
+        <Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--color-bloom)' }} />
       </div>
     );
   }
 
   const renderAccount = () => (
     <div className="space-y-6">
-      <div className="rounded-xl border border-[var(--color-neutral-border)] bg-[var(--color-neutral-surface)] p-6">
-        <h2 className="text-lg font-semibold text-[var(--color-neutral-text)]">Profile photo</h2>
+      <div className="card-premium p-6">
+        <h2 className="text-lg font-semibold" style={{ color: 'var(--color-ink)' }}>Profile photo</h2>
         <div className="mt-4 flex items-center gap-6">
           <div className="relative">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-[var(--color-primary-emerald)] to-[var(--color-primary-emerald-light)] text-2xl font-bold text-white">
+            <div className="flex h-20 w-20 items-center justify-center rounded-full text-2xl font-bold text-white" style={{ background: 'linear-gradient(135deg, var(--color-bloom), var(--color-ember))' }}>
               {initials}
             </div>
-            <button type="button" aria-label="Upload photo" className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full border-2 border-[var(--color-neutral-surface)] bg-[var(--color-neutral-surface-alt)] text-[var(--color-neutral-text-secondary)] shadow-sm transition hover:bg-[var(--color-primary-soft)] hover:text-[var(--color-primary-emerald)]">
-              <Camera size={14} />
+            <button type="button" aria-label="Upload photo" className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white shadow-sm transition hover:scale-110" style={{ backgroundColor: 'var(--color-surface)' }}>
+              <Camera size={14} style={{ color: 'var(--color-text-tertiary)' }} />
             </button>
           </div>
           <div>
-            <button type="button" className="rounded-lg border border-[var(--color-neutral-border)] bg-[var(--color-neutral-bg)] px-4 py-2 text-sm font-medium text-[var(--color-neutral-text)] transition hover:border-[var(--color-primary-emerald)] hover:text-[var(--color-primary-emerald)]">
+            <button type="button" className="btn-outline px-4 py-2 text-sm">
               Upload new photo
             </button>
-            <p className="mt-1.5 text-xs text-[var(--color-neutral-text-tertiary)]">JPG, PNG or GIF. Max 2 MB.</p>
+            <p className="mt-1.5 text-xs" style={{ color: 'var(--color-text-tertiary)' }}>JPG, PNG or GIF. Max 2 MB.</p>
           </div>
         </div>
       </div>
 
-      <div className="rounded-xl border border-[var(--color-neutral-border)] bg-[var(--color-neutral-surface)] p-6">
-        <h2 className="text-lg font-semibold text-[var(--color-neutral-text)]">Personal information</h2>
+      <div className="card-premium p-6">
+        <h2 className="text-lg font-semibold" style={{ color: 'var(--color-ink)' }}>Personal information</h2>
         <div className="mt-5 grid gap-5 md:grid-cols-2">
           <div>
-            <label htmlFor="fullName" className="mb-1.5 block text-sm font-medium text-[var(--color-neutral-text)]">Full name</label>
-            <input id="fullName" type="text" placeholder="Aditi Gupta" value={fullName} onChange={(e) => setFullName(e.target.value)} className={inputClass} />
+            <label htmlFor="fullName" className="mb-1.5 block text-sm font-medium" style={{ color: 'var(--color-ink)' }}>Full name</label>
+            <input id="fullName" type="text" placeholder="Aditi Gupta" value={fullName} onChange={(e) => setFullName(e.target.value)} className={inputClass} style={{ borderColor: 'var(--color-border)' }} />
           </div>
           <div>
-            <label htmlFor="headline" className="mb-1.5 block text-sm font-medium text-[var(--color-neutral-text)]">Headline</label>
-            <input id="headline" type="text" placeholder="Frontend engineer &middot; Builder" value={headline} onChange={(e) => setHeadline(e.target.value)} className={inputClass} />
+            <label htmlFor="headline" className="mb-1.5 block text-sm font-medium" style={{ color: 'var(--color-ink)' }}>Headline</label>
+            <input id="headline" type="text" placeholder="Frontend engineer · Builder" value={headline} onChange={(e) => setHeadline(e.target.value)} className={inputClass} style={{ borderColor: 'var(--color-border)' }} />
           </div>
           <div>
-            <label htmlFor="location" className="mb-1.5 block text-sm font-medium text-[var(--color-neutral-text)]">Location</label>
-            <input id="location" type="text" placeholder="Bengaluru, India" value={location} onChange={(e) => setLocation(e.target.value)} className={inputClass} />
+            <label htmlFor="location" className="mb-1.5 block text-sm font-medium" style={{ color: 'var(--color-ink)' }}>Location</label>
+            <input id="location" type="text" placeholder="Bengaluru, India" value={location} onChange={(e) => setLocation(e.target.value)} className={inputClass} style={{ borderColor: 'var(--color-border)' }} />
           </div>
           <div>
-            <label htmlFor="username" className="mb-1.5 block text-sm font-medium text-[var(--color-neutral-text)]">Username / slug</label>
-            <div className="flex items-center rounded-lg border border-[var(--color-neutral-border)] bg-[var(--color-neutral-bg)] transition focus-within:border-[var(--color-primary-emerald)] focus-within:ring-2 focus-within:ring-[var(--color-primary-soft)]">
-              <span className="pl-3.5 text-sm text-[var(--color-neutral-text-tertiary)]">orin.app/</span>
-              <input id="username" type="text" placeholder="aditi" value={username} onChange={(e) => setUsername(e.target.value)} className="w-full border-0 bg-transparent px-1 py-2.5 text-sm text-[var(--color-neutral-text)] placeholder:text-[var(--color-neutral-text-tertiary)] focus:outline-none" />
+            <label htmlFor="username" className="mb-1.5 block text-sm font-medium" style={{ color: 'var(--color-ink)' }}>Username / slug</label>
+            <div className="flex items-center rounded-xl border transition focus-within:ring-2 focus-within:ring-[var(--color-bloom)]/20" style={{ borderColor: 'var(--color-border)' }}>
+              <span className="pl-3.5 text-sm" style={{ color: 'var(--color-text-tertiary)' }}>orin.app/</span>
+              <input id="username" type="text" placeholder="aditi" value={username} onChange={(e) => setUsername(e.target.value)} className="w-full border-0 bg-transparent px-1 py-3 text-sm placeholder:text-[var(--color-text-tertiary)] focus:outline-none" style={{ color: 'var(--color-ink)' }} />
             </div>
           </div>
           <div className="md:col-span-2">
-            <label htmlFor="bio" className="mb-1.5 block text-sm font-medium text-[var(--color-neutral-text)]">Bio</label>
-            <textarea id="bio" rows={3} placeholder="Write a short bio about yourself..." value={bio} onChange={(e) => setBio(e.target.value)} className="w-full resize-none rounded-lg border border-[var(--color-neutral-border)] bg-[var(--color-neutral-bg)] px-3.5 py-2.5 text-sm text-[var(--color-neutral-text)] placeholder:text-[var(--color-neutral-text-tertiary)] transition focus:border-[var(--color-primary-emerald)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-soft)]" />
-            <p className="mt-1 text-xs text-[var(--color-neutral-text-tertiary)]">{bio.length}/280 characters</p>
+            <label htmlFor="bio" className="mb-1.5 block text-sm font-medium" style={{ color: 'var(--color-ink)' }}>Bio</label>
+            <textarea id="bio" rows={3} placeholder="Write a short bio about yourself..." value={bio} onChange={(e) => setBio(e.target.value)} className={`${inputClass} resize-none`} style={{ borderColor: 'var(--color-border)' }} />
+            <p className="mt-1 text-xs" style={{ color: 'var(--color-text-tertiary)' }}>{bio.length}/280 characters</p>
           </div>
         </div>
 
-        <h3 className="mt-6 text-sm font-semibold text-[var(--color-neutral-text)]">Social links</h3>
+        <h3 className="mt-6 text-sm font-semibold" style={{ color: 'var(--color-ink)' }}>Social links</h3>
         <div className="mt-3 grid gap-4 md:grid-cols-2">
           <div>
-            <label htmlFor="websiteUrl" className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-[var(--color-neutral-text)]">
+            <label htmlFor="websiteUrl" className="mb-1.5 flex items-center gap-1.5 text-sm font-medium" style={{ color: 'var(--color-ink)' }}>
               <Globe size={14} /> Website
             </label>
-            <input id="websiteUrl" type="url" placeholder="https://yoursite.com" value={websiteUrl} onChange={(e) => setWebsiteUrl(e.target.value)} className={inputClass} />
+            <input id="websiteUrl" type="url" placeholder="https://yoursite.com" value={websiteUrl} onChange={(e) => setWebsiteUrl(e.target.value)} className={inputClass} style={{ borderColor: 'var(--color-border)' }} />
           </div>
           <div>
-            <label htmlFor="githubUrl" className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-[var(--color-neutral-text)]">
+            <label htmlFor="githubUrl" className="mb-1.5 flex items-center gap-1.5 text-sm font-medium" style={{ color: 'var(--color-ink)' }}>
               <Github size={14} /> GitHub
             </label>
-            <input id="githubUrl" type="url" placeholder="https://github.com/username" value={githubUrl} onChange={(e) => setGithubUrl(e.target.value)} className={inputClass} />
+            <input id="githubUrl" type="url" placeholder="https://github.com/username" value={githubUrl} onChange={(e) => setGithubUrl(e.target.value)} className={inputClass} style={{ borderColor: 'var(--color-border)' }} />
           </div>
           <div>
-            <label htmlFor="linkedinUrl" className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-[var(--color-neutral-text)]">
+            <label htmlFor="linkedinUrl" className="mb-1.5 flex items-center gap-1.5 text-sm font-medium" style={{ color: 'var(--color-ink)' }}>
               <Linkedin size={14} /> LinkedIn
             </label>
-            <input id="linkedinUrl" type="url" placeholder="https://linkedin.com/in/username" value={linkedinUrl} onChange={(e) => setLinkedinUrl(e.target.value)} className={inputClass} />
+            <input id="linkedinUrl" type="url" placeholder="https://linkedin.com/in/username" value={linkedinUrl} onChange={(e) => setLinkedinUrl(e.target.value)} className={inputClass} style={{ borderColor: 'var(--color-border)' }} />
           </div>
           <div>
-            <label htmlFor="twitterUrl" className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-[var(--color-neutral-text)]">
+            <label htmlFor="twitterUrl" className="mb-1.5 flex items-center gap-1.5 text-sm font-medium" style={{ color: 'var(--color-ink)' }}>
               <Twitter size={14} /> Twitter / X
             </label>
-            <input id="twitterUrl" type="url" placeholder="https://x.com/username" value={twitterUrl} onChange={(e) => setTwitterUrl(e.target.value)} className={inputClass} />
+            <input id="twitterUrl" type="url" placeholder="https://x.com/username" value={twitterUrl} onChange={(e) => setTwitterUrl(e.target.value)} className={inputClass} style={{ borderColor: 'var(--color-border)' }} />
           </div>
         </div>
 
         <div className="mt-6 flex items-center gap-3">
-          <button className="btn-green inline-flex items-center gap-2 rounded-lg px-6 py-2.5 text-sm font-semibold text-white disabled:opacity-60" onClick={handleSave} disabled={saving}>
+          <button className="btn-success inline-flex items-center gap-2 rounded-xl px-6 py-2.5 text-sm font-semibold text-white disabled:opacity-60" onClick={handleSave} disabled={saving}>
             {saving ? <><Loader2 size={16} className="animate-spin" /> Saving...</> : saved ? <><Check size={16} /> Saved!</> : 'Save changes'}
           </button>
-          {saved && <span className="text-sm text-[var(--color-primary-emerald)]">Changes saved successfully</span>}
+          {saved && <span className="text-sm font-medium" style={{ color: 'var(--color-bloom)' }}>Changes saved successfully</span>}
         </div>
       </div>
     </div>
@@ -421,22 +355,22 @@ export default function SettingsPage() {
     ];
 
     return (
-      <div className="rounded-xl border border-[var(--color-neutral-border)] bg-[var(--color-neutral-surface)] p-6">
-        <h2 className="text-lg font-semibold text-[var(--color-neutral-text)]">Email notifications</h2>
-        <p className="mt-1 text-sm text-[var(--color-neutral-text-secondary)]">Choose when ORIN should reach you.</p>
-        <div className="mt-6 divide-y divide-[var(--color-neutral-border)]">
-          {items.map((item) => (
-            <div key={item.key} className="flex items-center justify-between py-4 first:pt-0 last:pb-0">
+      <div className="card-premium p-6">
+        <h2 className="text-lg font-semibold" style={{ color: 'var(--color-ink)' }}>Email notifications</h2>
+        <p className="mt-1 text-sm" style={{ color: 'var(--color-text-tertiary)' }}>Choose when ORIN should reach you.</p>
+        <div className="mt-6" style={{ borderTop: '1px solid var(--color-border)' }}>
+          {items.map((item, i) => (
+            <div key={item.key} className="flex items-center justify-between py-4" style={{ borderBottom: i < items.length - 1 ? '1px solid var(--color-border)' : 'none' }}>
               <div className="pr-4">
-                <p className="text-sm font-medium text-[var(--color-neutral-text)]">{item.label}</p>
-                <p className="mt-0.5 text-xs text-[var(--color-neutral-text-tertiary)]">{item.desc}</p>
+                <p className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{item.label}</p>
+                <p className="mt-0.5 text-xs" style={{ color: 'var(--color-text-tertiary)' }}>{item.desc}</p>
               </div>
               <Toggle id={`toggle-${item.key}`} enabled={notifs[item.key]} onToggle={() => toggleNotif(item.key)} />
             </div>
           ))}
         </div>
         {notifSaving && (
-          <p className="mt-3 text-xs text-[var(--color-neutral-text-tertiary)]">Saving...</p>
+          <p className="mt-3 text-xs" style={{ color: 'var(--color-text-tertiary)' }}>Saving...</p>
         )}
       </div>
     );
@@ -444,45 +378,45 @@ export default function SettingsPage() {
 
   const renderPrivacy = () => (
     <div className="space-y-6">
-      <div className="rounded-xl border border-[var(--color-neutral-border)] bg-[var(--color-neutral-surface)] p-6">
-        <h2 className="text-lg font-semibold text-[var(--color-neutral-text)]">Profile visibility</h2>
-        <p className="mt-1 text-sm text-[var(--color-neutral-text-secondary)]">Control who can see your profile and proof cards.</p>
+      <div className="card-premium p-6">
+        <h2 className="text-lg font-semibold" style={{ color: 'var(--color-ink)' }}>Profile visibility</h2>
+        <p className="mt-1 text-sm" style={{ color: 'var(--color-text-tertiary)' }}>Control who can see your profile and proof cards.</p>
         <div className="mt-5 space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-[var(--color-neutral-text)]">Public profile</p>
-              <p className="mt-0.5 text-xs text-[var(--color-neutral-text-tertiary)]">{profilePublic ? 'Anyone with the link can view your profile' : 'Only you can see your profile'}</p>
+              <p className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>Public profile</p>
+              <p className="mt-0.5 text-xs" style={{ color: 'var(--color-text-tertiary)' }}>{profilePublic ? 'Anyone with the link can view your profile' : 'Only you can see your profile'}</p>
             </div>
             <Toggle id="toggle-profile-public" enabled={profilePublic} onToggle={() => setProfilePublic(!profilePublic)} />
           </div>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-[var(--color-neutral-text)]">Hide email</p>
-              <p className="mt-0.5 text-xs text-[var(--color-neutral-text-tertiary)]">Your email won&apos;t be visible on your public profile</p>
+              <p className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>Hide email</p>
+              <p className="mt-0.5 text-xs" style={{ color: 'var(--color-text-tertiary)' }}>Your email won&apos;t be visible on your public profile</p>
             </div>
             <Toggle id="toggle-hide-email" enabled={hideEmail} onToggle={() => setHideEmail(!hideEmail)} />
           </div>
         </div>
       </div>
 
-      <div className="rounded-xl border border-[var(--color-neutral-border)] bg-[var(--color-neutral-surface)] p-6">
-        <h2 className="text-lg font-semibold text-[var(--color-neutral-text)]">Public profile link</h2>
-        <p className="mt-1 text-sm text-[var(--color-neutral-text-secondary)]">Share this link so others can view your career proof.</p>
+      <div className="card-premium p-6">
+        <h2 className="text-lg font-semibold" style={{ color: 'var(--color-ink)' }}>Public profile link</h2>
+        <p className="mt-1 text-sm" style={{ color: 'var(--color-text-tertiary)' }}>Share this link so others can view your career proof.</p>
         <div className="mt-4 flex items-center gap-2">
-          <div className="flex flex-1 items-center rounded-lg border border-[var(--color-neutral-border)] bg-[var(--color-neutral-bg)] px-3.5 py-2.5">
-            <span className="truncate text-sm text-[var(--color-neutral-text)]">https://orin.app/{username || 'yourname'}</span>
+          <div className="flex flex-1 items-center rounded-xl border px-4 py-2.5" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-dim)' }}>
+            <span className="truncate text-sm" style={{ color: 'var(--color-ink)' }}>https://orin.app/{username || 'yourname'}</span>
           </div>
-          <button type="button" onClick={handleCopy} className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--color-neutral-border)] bg-[var(--color-neutral-bg)] px-4 py-2.5 text-sm font-medium text-[var(--color-neutral-text)] transition hover:border-[var(--color-primary-emerald)] hover:text-[var(--color-primary-emerald)]">
+          <button type="button" onClick={handleCopy} className="btn-outline inline-flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium">
             {copied ? <Check size={14} /> : <Copy size={14} />}
             {copied ? 'Copied!' : 'Copy'}
           </button>
         </div>
       </div>
 
-      <div className="rounded-xl border border-[var(--color-neutral-border)] bg-[var(--color-neutral-surface)] p-6">
-        <h2 className="text-lg font-semibold text-[var(--color-neutral-text)]">Your data</h2>
-        <p className="mt-1 text-sm text-[var(--color-neutral-text-secondary)]">Export all your proof data as a JSON file.</p>
-        <button type="button" className="mt-4 inline-flex items-center gap-2 rounded-lg border border-[var(--color-neutral-border)] bg-[var(--color-neutral-bg)] px-4 py-2.5 text-sm font-medium text-[var(--color-neutral-text)] transition hover:border-[var(--color-primary-emerald)] hover:text-[var(--color-primary-emerald)]">
+      <div className="card-premium p-6">
+        <h2 className="text-lg font-semibold" style={{ color: 'var(--color-ink)' }}>Your data</h2>
+        <p className="mt-1 text-sm" style={{ color: 'var(--color-text-tertiary)' }}>Export all your proof data as a JSON file.</p>
+        <button type="button" className="btn-outline mt-4 inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium">
           <Download size={16} />
           Export data
         </button>
@@ -491,25 +425,29 @@ export default function SettingsPage() {
   );
 
   const renderIntegrations = () => (
-    <div className="rounded-xl border border-[var(--color-neutral-border)] bg-[var(--color-neutral-surface)] p-6">
-      <h2 className="text-lg font-semibold text-[var(--color-neutral-text)]">Connected services</h2>
-      <p className="mt-1 text-sm text-[var(--color-neutral-text-secondary)]">Connect platforms to automatically import your proof of work.</p>
-      <div className="mt-6 divide-y divide-[var(--color-neutral-border)]">
-        {integrations.map((int) => (
-          <div key={int.name} className="flex items-center justify-between py-4 first:pt-0 last:pb-0">
+    <div className="card-premium p-6">
+      <h2 className="text-lg font-semibold" style={{ color: 'var(--color-ink)' }}>Connected services</h2>
+      <p className="mt-1 text-sm" style={{ color: 'var(--color-text-tertiary)' }}>Connect platforms to automatically import your proof of work.</p>
+      <div className="mt-6">
+        {integrations.map((int, i) => (
+          <div key={int.name} className="flex items-center justify-between py-4" style={{ borderBottom: i < integrations.length - 1 ? '1px solid var(--color-border)' : 'none' }}>
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--color-neutral-surface-alt)] text-[var(--color-neutral-text)]">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ backgroundColor: 'var(--color-surface-dim)', color: 'var(--color-ink)' }}>
                 {int.icon}
               </div>
               <div>
-                <p className="text-sm font-medium text-[var(--color-neutral-text)]">{int.name}</p>
-                <div className="flex items-center gap-2 mt-0.5">
-                  <span className={`inline-block h-1.5 w-1.5 rounded-full ${int.connected ? 'bg-[var(--color-primary-emerald)]' : 'bg-[var(--color-neutral-text-tertiary)]'}`} />
-                  <span className="text-xs text-[var(--color-neutral-text-tertiary)]">{int.connected ? `Connected · Synced ${int.lastSync}` : 'Not connected'}</span>
+                <p className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{int.name}</p>
+                <div className="mt-0.5 flex items-center gap-2">
+                  <span className="inline-block h-1.5 w-1.5 rounded-full" style={{ backgroundColor: int.connected ? 'var(--color-bloom)' : 'var(--color-text-tertiary)' }} />
+                  <span className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>{int.connected ? `Connected · Synced ${int.lastSync}` : 'Not connected'}</span>
                 </div>
               </div>
             </div>
-            <button type="button" className={`rounded-lg border px-4 py-2 text-sm font-medium transition ${int.connected ? 'border-[var(--color-neutral-border)] text-[var(--color-neutral-text-secondary)] hover:border-[var(--color-danger)] hover:text-[var(--color-danger)]' : 'border-[var(--color-primary-emerald)] text-[var(--color-primary-emerald)] hover:bg-[var(--color-primary-soft)]'}`}>
+            <button type="button" className="rounded-xl border px-4 py-2 text-sm font-medium transition" style={{
+              borderColor: int.connected ? 'var(--color-border)' : 'var(--color-bloom)',
+              color: int.connected ? 'var(--color-text-tertiary)' : 'var(--color-bloom)',
+              backgroundColor: int.connected ? 'transparent' : 'var(--color-bloom)08',
+            }}>
               {int.connected ? 'Disconnect' : 'Connect'}
             </button>
           </div>
@@ -519,16 +457,16 @@ export default function SettingsPage() {
   );
 
   const renderBilling = () => (
-    <div className="rounded-xl border border-[var(--color-neutral-border)] bg-[var(--color-neutral-surface)] p-6">
-      <h2 className="text-lg font-semibold text-[var(--color-neutral-text)]">Plan &amp; billing</h2>
-      <p className="mt-1 text-sm text-[var(--color-neutral-text-secondary)]">Manage your subscription and payment details.</p>
-      <div className="mt-6 rounded-lg border border-[var(--color-primary-emerald)]/20 bg-[var(--color-bg-emerald-light)] p-5">
+    <div className="card-premium p-6">
+      <h2 className="text-lg font-semibold" style={{ color: 'var(--color-ink)' }}>Plan & billing</h2>
+      <p className="mt-1 text-sm" style={{ color: 'var(--color-text-tertiary)' }}>Manage your subscription and payment details.</p>
+      <div className="mt-6 rounded-xl p-5" style={{ border: '1px solid var(--color-bloom)20', backgroundColor: 'var(--color-bloom)06' }}>
         <div className="flex items-center justify-between">
           <div>
-            <span className="inline-block rounded-full bg-[var(--color-primary-emerald)] px-3 py-0.5 text-xs font-semibold text-white capitalize">
+            <span className="inline-block rounded-full px-3 py-0.5 text-xs font-semibold text-white capitalize" style={{ backgroundColor: 'var(--color-bloom)' }}>
               {subscription.plan} Plan
             </span>
-            <p className="mt-2 text-sm text-[var(--color-neutral-text)]">
+            <p className="mt-2 text-sm" style={{ color: 'var(--color-ink)' }}>
               {subscription.plan === 'free'
                 ? "You're on the free tier. Upgrade to unlock unlimited proof cards, analytics, and priority verification."
                 : `Your ${subscription.plan} plan is ${subscription.status}.`}
@@ -536,7 +474,7 @@ export default function SettingsPage() {
           </div>
         </div>
         {subscription.plan === 'free' && (
-          <button type="button" className="btn-green mt-4 rounded-lg px-5 py-2.5 text-sm font-semibold text-white">
+          <button type="button" className="btn-success mt-4 rounded-xl px-5 py-2.5 text-sm font-semibold text-white">
             Upgrade plan
           </button>
         )}
@@ -562,35 +500,38 @@ export default function SettingsPage() {
 
   return (
     <div className="grid gap-8 lg:grid-cols-[260px_1fr]">
-      <aside>
-        <h2 className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-neutral-text-tertiary)]">Settings</h2>
+      <aside className="animate-fadeInLeft">
+        <h2 className="mb-4 text-xs font-semibold uppercase tracking-[0.18em]" style={{ color: 'var(--color-text-tertiary)' }}>Settings</h2>
         <nav className="space-y-1">
           {navItems.map((item) => (
-            <button key={item.id} type="button" onClick={() => setActiveSection(item.id)} className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-all duration-150 ${activeSection === item.id ? 'bg-[var(--color-primary-soft)] text-[var(--color-primary-emerald)]' : 'text-[var(--color-neutral-text-secondary)] hover:bg-[var(--color-neutral-surface-alt)] hover:text-[var(--color-neutral-text)]'}`}>
-              <span className={activeSection === item.id ? 'text-[var(--color-primary-emerald)]' : 'text-[var(--color-neutral-text-tertiary)]'}>{item.icon}</span>
+            <button key={item.id} type="button" onClick={() => setActiveSection(item.id)} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-all duration-200" style={{
+              backgroundColor: activeSection === item.id ? 'var(--color-bloom)08' : 'transparent',
+              color: activeSection === item.id ? 'var(--color-bloom)' : 'var(--color-text-tertiary)',
+            }}>
+              {item.icon}
               {item.label}
             </button>
           ))}
         </nav>
       </aside>
 
-      <section className="min-w-0 space-y-6">
+      <section className="min-w-0 space-y-6 animate-fadeInUp">
         <header>
-          <h1 className="font-serif text-2xl font-semibold text-[var(--color-neutral-text)]">{sectionTitles[activeSection].title}</h1>
-          <p className="mt-1 text-sm text-[var(--color-neutral-text-secondary)]">{sectionTitles[activeSection].subtitle}</p>
+          <h1 className="text-2xl font-semibold" style={{ color: 'var(--color-ink)', fontFamily: 'var(--font-heading)' }}>{sectionTitles[activeSection].title}</h1>
+          <p className="mt-1 text-sm" style={{ color: 'var(--color-text-tertiary)' }}>{sectionTitles[activeSection].subtitle}</p>
         </header>
 
         {sectionRenderers[activeSection]()}
 
-        <div className="rounded-xl border border-[var(--color-danger)]/20 bg-[var(--color-neutral-surface)] p-6">
+        <div className="card-premium p-6" style={{ border: '1px solid var(--color-pulse)20' }}>
           <div className="flex items-start gap-3">
-            <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--color-danger)]/10 text-[var(--color-danger)]">
-              <AlertTriangle size={18} />
+            <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg" style={{ backgroundColor: 'var(--color-pulse)10' }}>
+              <AlertTriangle size={18} style={{ color: 'var(--color-pulse)' }} />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-[var(--color-danger)]">Danger zone</h2>
-              <p className="mt-1 text-sm text-[var(--color-neutral-text-secondary)]">Deleting your account permanently removes all proof data, analytics, and profile information. This action cannot be undone.</p>
-              <button className="mt-4 rounded-lg bg-[var(--color-danger)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--color-danger-strong)]" type="button" onClick={() => setShowDeleteModal(true)}>
+              <h2 className="text-lg font-semibold" style={{ color: 'var(--color-pulse)' }}>Danger zone</h2>
+              <p className="mt-1 text-sm" style={{ color: 'var(--color-text-tertiary)' }}>Deleting your account permanently removes all proof data, analytics, and profile information. This action cannot be undone.</p>
+              <button className="mt-4 rounded-xl px-4 py-2 text-sm font-semibold text-white transition" style={{ backgroundColor: 'var(--color-pulse)' }} type="button" onClick={() => setShowDeleteModal(true)}>
                 Delete account
               </button>
             </div>
@@ -600,26 +541,26 @@ export default function SettingsPage() {
 
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 backdrop-blur-sm">
-          <div role="dialog" aria-modal="true" aria-label="Confirm account deletion" className="relative w-full max-w-md rounded-2xl border border-[var(--color-neutral-border)] bg-[var(--color-neutral-surface)] p-6 shadow-2xl">
-            <button type="button" onClick={() => { setShowDeleteModal(false); setDeleteConfirm(''); }} className="absolute right-4 top-4 text-[var(--color-neutral-text-tertiary)] transition hover:text-[var(--color-neutral-text)]" aria-label="Close dialog">
-              <X size={20} />
+          <div role="dialog" aria-modal="true" aria-label="Confirm account deletion" className="relative w-full max-w-md p-6 shadow-2xl" style={{ borderRadius: 'var(--radius-2xl)', border: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface)' }}>
+            <button type="button" onClick={() => { setShowDeleteModal(false); setDeleteConfirm(''); }} className="absolute right-4 top-4 transition hover:opacity-70" aria-label="Close dialog">
+              <X size={20} style={{ color: 'var(--color-text-tertiary)' }} />
             </button>
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--color-danger)]/10">
-              <AlertTriangle size={24} className="text-[var(--color-danger)]" />
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full" style={{ backgroundColor: 'var(--color-pulse)10' }}>
+              <AlertTriangle size={24} style={{ color: 'var(--color-pulse)' }} />
             </div>
-            <h3 className="text-lg font-semibold text-[var(--color-neutral-text)]">Delete your account?</h3>
-            <p className="mt-2 text-sm text-[var(--color-neutral-text-secondary)]">This action is permanent and cannot be undone. All proof cards, analytics, and profile data will be permanently removed.</p>
+            <h3 className="text-lg font-semibold" style={{ color: 'var(--color-ink)' }}>Delete your account?</h3>
+            <p className="mt-2 text-sm" style={{ color: 'var(--color-text-tertiary)' }}>This action is permanent and cannot be undone. All proof cards, analytics, and profile data will be permanently removed.</p>
             <div className="mt-4">
-              <label htmlFor="deleteConfirm" className="mb-1.5 block text-sm font-medium text-[var(--color-neutral-text)]">
-                Type <span className="font-mono font-bold text-[var(--color-danger)]">DELETE</span> to confirm
+              <label htmlFor="deleteConfirm" className="mb-1.5 block text-sm font-medium" style={{ color: 'var(--color-ink)' }}>
+                Type <span className="font-mono font-bold" style={{ color: 'var(--color-pulse)' }}>DELETE</span> to confirm
               </label>
-              <input id="deleteConfirm" type="text" value={deleteConfirm} onChange={(e) => setDeleteConfirm(e.target.value)} placeholder="DELETE" className="w-full rounded-lg border border-[var(--color-neutral-border)] bg-[var(--color-neutral-bg)] px-3.5 py-2.5 text-sm text-[var(--color-neutral-text)] placeholder:text-[var(--color-neutral-text-tertiary)] focus:border-[var(--color-danger)] focus:outline-none focus:ring-2 focus:ring-[var(--color-danger)]/20" />
+              <input id="deleteConfirm" type="text" value={deleteConfirm} onChange={(e) => setDeleteConfirm(e.target.value)} placeholder="DELETE" className={inputClass} style={{ borderColor: 'var(--color-border)' }} />
             </div>
             <div className="mt-6 flex gap-3">
-              <button className="flex-1 rounded-lg bg-[var(--color-danger)] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--color-danger-strong)] disabled:cursor-not-allowed disabled:opacity-40" type="button" disabled={deleteConfirm !== 'DELETE' || deleting} onClick={handleDeleteAccount}>
+              <button className="flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-40" style={{ backgroundColor: 'var(--color-pulse)' }} type="button" disabled={deleteConfirm !== 'DELETE' || deleting} onClick={handleDeleteAccount}>
                 {deleting ? 'Deleting...' : 'Yes, delete my account'}
               </button>
-              <button className="flex-1 rounded-lg border border-[var(--color-neutral-border)] px-4 py-2.5 text-sm font-semibold text-[var(--color-neutral-text)] transition hover:bg-[var(--color-neutral-surface-alt)]" type="button" onClick={() => { setShowDeleteModal(false); setDeleteConfirm(''); }}>
+              <button className="btn-outline flex-1 px-4 py-2.5 text-sm font-semibold" type="button" onClick={() => { setShowDeleteModal(false); setDeleteConfirm(''); }}>
                 Cancel
               </button>
             </div>

@@ -59,13 +59,14 @@ const suggestedSkills: Record<ProofSourceType, string[]> = {
   other: ['Problem Solving', 'Leadership', 'Communication'],
 };
 
+const inputClass = "w-full rounded-xl border bg-white px-4 py-3 text-sm transition placeholder:text-[var(--color-text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-bloom)]/20";
+
 export default function NewProofPage() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Form state
   const [sourceType, setSourceType] = useState<ProofSourceType>('github');
   const [title, setTitle] = useState('');
   const [sourceUrl, setSourceUrl] = useState('');
@@ -80,48 +81,19 @@ export default function NewProofPage() {
 
   const canProceed = () => {
     switch (currentStep) {
-      case 1:
-        return true;
-      case 2:
-        return title.trim().length > 0;
-      case 3:
-        return true;
-      case 4:
-        return true;
-      default:
-        return false;
+      case 1: return true;
+      case 2: return title.trim().length > 0;
+      case 3: return true;
+      case 4: return true;
+      default: return false;
     }
   };
 
-  const handleNext = () => {
-    if (canProceed() && currentStep < 4) {
-      setCurrentStep(currentStep + 1);
-    }
-  };
-
-  const handleBack = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
-    }
-  };
-
-  const addSkill = (skill: string) => {
-    const trimmed = skill.trim();
-    if (trimmed && !skills.includes(trimmed)) {
-      setSkills([...skills, trimmed]);
-    }
-  };
-
-  const removeSkill = (skill: string) => {
-    setSkills(skills.filter((s) => s !== skill));
-  };
-
-  const handleAddCustomSkill = () => {
-    if (customSkill.trim()) {
-      addSkill(customSkill.trim());
-      setCustomSkill('');
-    }
-  };
+  const handleNext = () => { if (canProceed() && currentStep < 4) setCurrentStep(currentStep + 1); };
+  const handleBack = () => { if (currentStep > 1) setCurrentStep(currentStep - 1); };
+  const addSkill = (skill: string) => { const trimmed = skill.trim(); if (trimmed && !skills.includes(trimmed)) setSkills([...skills, trimmed]); };
+  const removeSkill = (skill: string) => { setSkills(skills.filter((s) => s !== skill)); };
+  const handleAddCustomSkill = () => { if (customSkill.trim()) { addSkill(customSkill.trim()); setCustomSkill(''); } };
 
   const handleSubmit = async () => {
     setSubmitting(true);
@@ -130,191 +102,110 @@ export default function NewProofPage() {
       const res = await fetch('/api/proofs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          source_type: sourceType,
-          title: title.trim(),
-          source_url: sourceUrl || undefined,
-          description: description || undefined,
-          skills: skills,
-        }),
+        body: JSON.stringify({ source_type: sourceType, title: title.trim(), source_url: sourceUrl || undefined, description: description || undefined, skills }),
       });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Failed to create proof card');
-      }
+      if (!res.ok) { const data = await res.json(); throw new Error(data.error || 'Failed to create proof card'); }
       const proofData = await res.json();
-
       if (autoVerify && sourceUrl && (sourceType === 'github' || sourceType === 'certificate' || sourceType === 'kaggle')) {
         setVerifying(true);
         try {
           const authRes = await fetch('/api/auth/session');
           const sessionData = await authRes.json();
           const token = sessionData?.access_token;
-
           if (token) {
             await fetch('/api/ai/verify', {
               method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-              },
-              body: JSON.stringify({
-                action: 'verify',
-                proofId: proofData.id,
-                proofUrl: sourceUrl,
-                sourceType: sourceType,
-              }),
+              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+              body: JSON.stringify({ action: 'verify', proofId: proofData.id, proofUrl: sourceUrl, sourceType }),
             });
           }
-        } catch (verifyErr) {
-          console.warn('Auto-verification failed, proof created successfully:', verifyErr);
-        } finally {
-          setVerifying(false);
-        }
+        } catch (verifyErr) { console.warn('Auto-verification failed:', verifyErr); } finally { setVerifying(false); }
       }
-
       router.push('/dashboard');
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Something went wrong');
-    } finally {
-      setSubmitting(false);
-    }
+    } catch (e) { setError(e instanceof Error ? e.message : 'Something went wrong'); } finally { setSubmitting(false); }
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-[var(--color-neutral-text)] font-serif">
-            New Proof Card
-          </h1>
-          <p className="mt-1 text-sm text-[var(--color-neutral-text-secondary)]">
-            Step {currentStep} of {steps.length}
-          </p>
+    <div className="mx-auto max-w-2xl space-y-8">
+      <header className="animate-fadeInUp">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold" style={{ color: 'var(--color-ink)', fontFamily: 'var(--font-heading)' }}>New Proof Card</h1>
+            <p className="mt-1 text-sm" style={{ color: 'var(--color-text-tertiary)' }}>Step {currentStep} of {steps.length}</p>
+          </div>
+          <button type="button" onClick={() => router.push('/dashboard')} className="btn-outline px-4 py-2 text-sm font-medium">
+            Cancel
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={() => router.push('/dashboard')}
-          className="rounded-lg border border-[var(--color-neutral-border)] px-4 py-2 text-sm font-medium text-[var(--color-neutral-text-secondary)] transition hover:border-[var(--color-primary-emerald)] hover:text-[var(--color-primary-emerald)]"
-        >
-          Cancel
-        </button>
-      </div>
+      </header>
 
       {/* Step indicator */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 animate-fadeInUp" style={{ animationDelay: '50ms' }}>
         {steps.map((step, index) => (
           <div key={step.id} className="flex items-center gap-2">
-            <div
-              className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold transition ${
-                currentStep > step.id
-                  ? 'bg-[var(--color-primary-emerald)] text-white'
-                  : currentStep === step.id
-                    ? 'border-2 border-[var(--color-primary-emerald)] bg-[var(--color-primary-soft)] text-[var(--color-primary-emerald)]'
-                    : 'border border-[var(--color-neutral-border)] bg-[var(--color-neutral-surface)] text-[var(--color-neutral-text-tertiary)]'
-              }`}
-            >
+            <div className="flex h-9 w-9 items-center justify-center rounded-full text-xs font-semibold transition-all duration-300"
+              style={{
+                backgroundColor: currentStep > step.id ? 'var(--color-bloom)' : currentStep === step.id ? 'var(--color-bloom)12' : 'var(--color-surface)',
+                color: currentStep > step.id ? 'white' : currentStep === step.id ? 'var(--color-bloom)' : 'var(--color-text-tertiary)',
+                border: currentStep <= step.id ? `2px solid ${currentStep === step.id ? 'var(--color-bloom)' : 'var(--color-border)'}` : 'none',
+              }}>
               {currentStep > step.id ? <Check size={14} /> : step.id}
             </div>
             {index < steps.length - 1 && (
-              <div
-                className={`h-0.5 w-8 ${
-                  currentStep > step.id ? 'bg-[var(--color-primary-emerald)]' : 'bg-[var(--color-neutral-border)]'
-                }`}
-              />
+              <div className="h-0.5 w-10 transition-colors duration-300" style={{ backgroundColor: currentStep > step.id ? 'var(--color-bloom)' : 'var(--color-border)' }} />
             )}
           </div>
         ))}
       </div>
 
       {/* Step content */}
-      <div className="rounded-xl border border-[var(--color-neutral-border)] bg-[var(--color-neutral-surface)] p-6">
+      <div className="card-premium p-6 animate-scaleIn">
         {currentStep === 1 && (
           <div className="space-y-4">
             <div>
-              <h2 className="text-lg font-semibold text-[var(--color-neutral-text)]">Select Source Type</h2>
-              <p className="mt-1 text-sm text-[var(--color-neutral-text-secondary)]">
-                Choose what kind of proof you&apos;re adding.
-              </p>
+              <h2 className="text-lg font-semibold" style={{ color: 'var(--color-ink)' }}>Select Source Type</h2>
+              <p className="mt-1 text-sm" style={{ color: 'var(--color-text-tertiary)' }}>Choose what kind of proof you&apos;re adding.</p>
             </div>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               {sourceTypes.map((type) => {
                 const Icon = type.icon;
                 return (
-                  <button
-                    key={type.value}
-                    type="button"
-                    onClick={() => setSourceType(type.value)}
-                    className={`flex flex-col items-center gap-2 rounded-lg border p-4 text-xs font-medium transition ${
-                      sourceType === type.value
-                        ? 'border-[var(--color-primary-emerald)] bg-[var(--color-primary-soft)] text-[var(--color-primary-emerald)]'
-                        : 'border-[var(--color-neutral-border)] text-[var(--color-neutral-text-secondary)] hover:border-[var(--color-primary-emerald)] hover:text-[var(--color-primary-emerald)]'
-                    }`}
-                  >
+                  <button key={type.value} type="button" onClick={() => setSourceType(type.value)}
+                    className="flex flex-col items-center gap-2 rounded-xl border p-4 text-xs font-medium transition-all duration-200"
+                    style={{
+                      borderColor: sourceType === type.value ? 'var(--color-bloom)' : 'var(--color-border)',
+                      backgroundColor: sourceType === type.value ? 'var(--color-bloom)08' : 'transparent',
+                      color: sourceType === type.value ? 'var(--color-bloom)' : 'var(--color-text-tertiary)',
+                    }}>
                     <Icon size={20} />
                     {type.label}
                   </button>
                 );
               })}
             </div>
-            {selectedSource && (
-              <p className="text-xs text-[var(--color-neutral-text-tertiary)]">
-                {selectedSource.description}
-              </p>
-            )}
+            {selectedSource && <p className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>{selectedSource.description}</p>}
           </div>
         )}
 
         {currentStep === 2 && (
           <div className="space-y-4">
             <div>
-              <h2 className="text-lg font-semibold text-[var(--color-neutral-text)]">Enter Details</h2>
-              <p className="mt-1 text-sm text-[var(--color-neutral-text-secondary)]">
-                Provide the details for your proof card.
-              </p>
+              <h2 className="text-lg font-semibold" style={{ color: 'var(--color-ink)' }}>Enter Details</h2>
+              <p className="mt-1 text-sm" style={{ color: 'var(--color-text-tertiary)' }}>Provide the details for your proof card.</p>
             </div>
-
             <div>
-              <label htmlFor="proofTitle" className="mb-1.5 block text-sm font-medium text-[var(--color-neutral-text)]">
-                Title <span className="text-[var(--color-danger)]">*</span>
+              <label htmlFor="proofTitle" className="mb-1.5 block text-sm font-medium" style={{ color: 'var(--color-ink)' }}>
+                Title <span style={{ color: 'var(--color-pulse)' }}>*</span>
               </label>
-              <input
-                id="proofTitle"
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. Open Source React Component Library"
-                className="w-full rounded-lg border border-[var(--color-neutral-border)] bg-[var(--color-neutral-bg)] px-3.5 py-2.5 text-sm text-[var(--color-neutral-text)] placeholder:text-[var(--color-neutral-text-tertiary)] transition focus:border-[var(--color-primary-emerald)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-soft)]"
-              />
+              <input id="proofTitle" type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Open Source React Component Library" className={inputClass} style={{ borderColor: 'var(--color-border)' }} />
             </div>
-
             <div>
-              <label htmlFor="proofUrl" className="mb-1.5 block text-sm font-medium text-[var(--color-neutral-text)]">
-                Source URL
-              </label>
-              <input
-                id="proofUrl"
-                type="url"
-                value={sourceUrl}
-                onChange={(e) => setSourceUrl(e.target.value)}
-                placeholder={selectedSource ? `e.g. ${selectedSource.value === 'github' ? 'https://github.com/user/repo' : 'https://example.com'}` : 'https://...'}
-                className="w-full rounded-lg border border-[var(--color-neutral-border)] bg-[var(--color-neutral-bg)] px-3.5 py-2.5 text-sm text-[var(--color-neutral-text)] placeholder:text-[var(--color-neutral-text-tertiary)] transition focus:border-[var(--color-primary-emerald)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-soft)]"
-              />
+              <label htmlFor="proofUrl" className="mb-1.5 block text-sm font-medium" style={{ color: 'var(--color-ink)' }}>Source URL</label>
+              <input id="proofUrl" type="url" value={sourceUrl} onChange={(e) => setSourceUrl(e.target.value)} placeholder={selectedSource ? `e.g. ${selectedSource.value === 'github' ? 'https://github.com/user/repo' : 'https://example.com'}` : 'https://...'} className={inputClass} style={{ borderColor: 'var(--color-border)' }} />
             </div>
-
             <div>
-              <label htmlFor="proofDesc" className="mb-1.5 block text-sm font-medium text-[var(--color-neutral-text)]">
-                Description
-              </label>
-              <textarea
-                id="proofDesc"
-                rows={3}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Briefly describe what this proof demonstrates..."
-                className="w-full resize-none rounded-lg border border-[var(--color-neutral-border)] bg-[var(--color-neutral-bg)] px-3.5 py-2.5 text-sm text-[var(--color-neutral-text)] placeholder:text-[var(--color-neutral-text-tertiary)] transition focus:border-[var(--color-primary-emerald)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-soft)]"
-              />
+              <label htmlFor="proofDesc" className="mb-1.5 block text-sm font-medium" style={{ color: 'var(--color-ink)' }}>Description</label>
+              <textarea id="proofDesc" rows={3} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Briefly describe what this proof demonstrates..." className={`${inputClass} resize-none`} style={{ borderColor: 'var(--color-border)' }} />
             </div>
           </div>
         )}
@@ -322,30 +213,22 @@ export default function NewProofPage() {
         {currentStep === 3 && (
           <div className="space-y-4">
             <div>
-              <h2 className="text-lg font-semibold text-[var(--color-neutral-text)]">Extract Skills</h2>
-              <p className="mt-1 text-sm text-[var(--color-neutral-text-secondary)]">
-                Select skills that this proof demonstrates, or add your own.
-              </p>
+              <h2 className="text-lg font-semibold" style={{ color: 'var(--color-ink)' }}>Extract Skills</h2>
+              <p className="mt-1 text-sm" style={{ color: 'var(--color-text-tertiary)' }}>Select skills that this proof demonstrates, or add your own.</p>
             </div>
-
             <div>
-              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-[var(--color-neutral-text-tertiary)]">
-                Suggested skills
-              </p>
+              <p className="mb-2 text-xs font-medium uppercase tracking-wide" style={{ color: 'var(--color-text-tertiary)' }}>Suggested skills</p>
               <div className="flex flex-wrap gap-2">
                 {suggestedForType.map((skill) => {
                   const isSelected = skills.includes(skill);
                   return (
-                    <button
-                      key={skill}
-                      type="button"
-                      onClick={() => (isSelected ? removeSkill(skill) : addSkill(skill))}
-                      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition ${
-                        isSelected
-                          ? 'bg-[var(--color-primary-emerald)] text-white'
-                          : 'border border-[var(--color-neutral-border)] bg-[var(--color-neutral-surface)] text-[var(--color-neutral-text-secondary)] hover:border-[var(--color-primary-emerald)] hover:text-[var(--color-primary-emerald)]'
-                      }`}
-                    >
+                    <button key={skill} type="button" onClick={() => (isSelected ? removeSkill(skill) : addSkill(skill))}
+                      className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all duration-200"
+                      style={{
+                        backgroundColor: isSelected ? 'var(--color-bloom)' : 'transparent',
+                        color: isSelected ? 'white' : 'var(--color-text-tertiary)',
+                        border: isSelected ? 'none' : '1px solid var(--color-border)',
+                      }}>
                       {isSelected && <Check size={12} />}
                       {skill}
                     </button>
@@ -353,55 +236,25 @@ export default function NewProofPage() {
                 })}
               </div>
             </div>
-
             <div>
-              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-[var(--color-neutral-text-tertiary)]">
-                Add custom skill
-              </p>
+              <p className="mb-2 text-xs font-medium uppercase tracking-wide" style={{ color: 'var(--color-text-tertiary)' }}>Add custom skill</p>
               <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={customSkill}
-                  onChange={(e) => setCustomSkill(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleAddCustomSkill();
-                    }
-                  }}
-                  placeholder="Type a skill and press Enter"
-                  className="flex-1 rounded-lg border border-[var(--color-neutral-border)] bg-[var(--color-neutral-bg)] px-3.5 py-2.5 text-sm text-[var(--color-neutral-text)] placeholder:text-[var(--color-neutral-text-tertiary)] transition focus:border-[var(--color-primary-emerald)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-soft)]"
-                />
-                <button
-                  type="button"
-                  onClick={handleAddCustomSkill}
-                  disabled={!customSkill.trim()}
-                  className="rounded-lg border border-[var(--color-neutral-border)] px-4 py-2.5 text-sm font-medium text-[var(--color-neutral-text)] transition hover:border-[var(--color-primary-emerald)] hover:text-[var(--color-primary-emerald)] disabled:opacity-50"
-                >
+                <input type="text" value={customSkill} onChange={(e) => setCustomSkill(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddCustomSkill(); } }}
+                  placeholder="Type a skill and press Enter" className={inputClass} style={{ borderColor: 'var(--color-border)' }} />
+                <button type="button" onClick={handleAddCustomSkill} disabled={!customSkill.trim()} className="rounded-xl border px-4 py-3 text-sm font-medium transition disabled:opacity-50" style={{ borderColor: 'var(--color-border)', color: 'var(--color-ink)' }}>
                   <Plus size={16} />
                 </button>
               </div>
             </div>
-
             {skills.length > 0 && (
               <div>
-                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-[var(--color-neutral-text-tertiary)]">
-                  Selected skills ({skills.length})
-                </p>
+                <p className="mb-2 text-xs font-medium uppercase tracking-wide" style={{ color: 'var(--color-text-tertiary)' }}>Selected skills ({skills.length})</p>
                 <div className="flex flex-wrap gap-2">
                   {skills.map((skill) => (
-                    <span
-                      key={skill}
-                      className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-primary-soft)] px-3 py-1.5 text-xs font-medium text-[var(--color-primary-emerald)]"
-                    >
+                    <span key={skill} className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium" style={{ backgroundColor: 'var(--color-bloom)12', color: 'var(--color-bloom)' }}>
                       {skill}
-                      <button
-                        type="button"
-                        onClick={() => removeSkill(skill)}
-                        className="rounded-full p-0.5 hover:bg-[var(--color-primary-emerald)]/20"
-                      >
-                        <X size={12} />
-                      </button>
+                      <button type="button" onClick={() => removeSkill(skill)} className="rounded-full p-0.5 transition-colors hover:opacity-70"><X size={12} /></button>
                     </span>
                   ))}
                 </div>
@@ -413,81 +266,38 @@ export default function NewProofPage() {
         {currentStep === 4 && (
           <div className="space-y-4">
             <div>
-              <h2 className="text-lg font-semibold text-[var(--color-neutral-text)]">Review & Submit</h2>
-              <p className="mt-1 text-sm text-[var(--color-neutral-text-secondary)]">
-                Review your proof card before submitting.
-              </p>
+              <h2 className="text-lg font-semibold" style={{ color: 'var(--color-ink)' }}>Review & Submit</h2>
+              <p className="mt-1 text-sm" style={{ color: 'var(--color-text-tertiary)' }}>Review your proof card before submitting.</p>
             </div>
-
             <div className="space-y-3">
-              <div className="rounded-lg border border-[var(--color-neutral-border)] bg-[var(--color-neutral-bg)] p-4">
-                <p className="text-xs font-medium uppercase tracking-wide text-[var(--color-neutral-text-tertiary)]">
-                  Source Type
-                </p>
-                <p className="mt-1 text-sm font-medium text-[var(--color-neutral-text)]">
-                  {selectedSource?.label}
-                </p>
-              </div>
-
-              <div className="rounded-lg border border-[var(--color-neutral-border)] bg-[var(--color-neutral-bg)] p-4">
-                <p className="text-xs font-medium uppercase tracking-wide text-[var(--color-neutral-text-tertiary)]">
-                  Title
-                </p>
-                <p className="mt-1 text-sm font-medium text-[var(--color-neutral-text)]">{title}</p>
-              </div>
-
-              {sourceUrl && (
-                <div className="rounded-lg border border-[var(--color-neutral-border)] bg-[var(--color-neutral-bg)] p-4">
-                  <p className="text-xs font-medium uppercase tracking-wide text-[var(--color-neutral-text-tertiary)]">
-                    Source URL
-                  </p>
-                  <p className="mt-1 break-all text-sm text-[var(--color-primary-emerald)]">{sourceUrl}</p>
+              {[
+                { label: 'Source Type', value: selectedSource?.label },
+                { label: 'Title', value: title },
+                sourceUrl ? { label: 'Source URL', value: sourceUrl, color: 'var(--color-bloom)' } : null,
+                description ? { label: 'Description', value: description } : null,
+              ].filter(Boolean).map((item) => item && (
+                <div key={item.label} className="rounded-xl border p-4" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-dim)' }}>
+                  <p className="text-xs font-medium uppercase tracking-wide" style={{ color: 'var(--color-text-tertiary)' }}>{item.label}</p>
+                  <p className="mt-1 text-sm font-medium" style={{ color: item.color || 'var(--color-ink)' }}>{item.value}</p>
                 </div>
-              )}
-
-              {description && (
-                <div className="rounded-lg border border-[var(--color-neutral-border)] bg-[var(--color-neutral-bg)] p-4">
-                  <p className="text-xs font-medium uppercase tracking-wide text-[var(--color-neutral-text-tertiary)]">
-                    Description
-                  </p>
-                  <p className="mt-1 text-sm text-[var(--color-neutral-text-secondary)]">{description}</p>
-                </div>
-              )}
-
+              ))}
               {skills.length > 0 && (
-                <div className="rounded-lg border border-[var(--color-neutral-border)] bg-[var(--color-neutral-bg)] p-4">
-                  <p className="text-xs font-medium uppercase tracking-wide text-[var(--color-neutral-text-tertiary)]">
-                    Skills
-                  </p>
+                <div className="rounded-xl border p-4" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-dim)' }}>
+                  <p className="text-xs font-medium uppercase tracking-wide" style={{ color: 'var(--color-text-tertiary)' }}>Skills</p>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {skills.map((skill) => (
-                      <span
-                        key={skill}
-                        className="rounded-full bg-[var(--color-primary-soft)] px-3 py-1 text-xs font-medium text-[var(--color-primary-emerald)]"
-                      >
-                        {skill}
-                      </span>
+                      <span key={skill} className="rounded-full px-3 py-1 text-xs font-medium" style={{ backgroundColor: 'var(--color-bloom)12', color: 'var(--color-bloom)' }}>{skill}</span>
                     ))}
                   </div>
                 </div>
               )}
-
               {sourceUrl && (sourceType === 'github' || sourceType === 'certificate' || sourceType === 'kaggle') && (
-                <div className="rounded-lg border border-[var(--color-primary-emerald)]/20 bg-[var(--color-primary-soft)]/10 p-4">
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={autoVerify}
-                      onChange={(e) => setAutoVerify(e.target.checked)}
-                      className="h-4 w-4 rounded border-[var(--color-neutral-border)] text-[var(--color-primary-emerald)] focus:ring-[var(--color-primary-emerald)]"
-                    />
+                <div className="rounded-xl p-4" style={{ border: '1px solid var(--color-bloom)20', backgroundColor: 'var(--color-bloom)06' }}>
+                  <label className="flex cursor-pointer items-center gap-3">
+                    <input type="checkbox" checked={autoVerify} onChange={(e) => setAutoVerify(e.target.checked)} className="h-4 w-4 rounded" style={{ accentColor: 'var(--color-bloom)' }} />
                     <div>
-                      <p className="text-sm font-medium text-[var(--color-neutral-text)]">
-                        Auto-verify with AI after submission
-                      </p>
-                      <p className="text-xs text-[var(--color-neutral-text-secondary)]">
-                        AI will verify your {sourceType === 'github' ? 'repository' : sourceType === 'certificate' ? 'certificate' : 'notebook'} exists and is valid
-                      </p>
+                      <p className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>Auto-verify with AI after submission</p>
+                      <p className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>AI will verify your {sourceType === 'github' ? 'repository' : sourceType === 'certificate' ? 'certificate' : 'notebook'} exists and is valid</p>
                     </div>
                   </label>
                 </div>
@@ -497,57 +307,27 @@ export default function NewProofPage() {
         )}
 
         {error && (
-          <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          <div className="mt-4 rounded-xl p-3 text-sm" style={{ border: '1px solid var(--color-pulse)40', backgroundColor: 'var(--color-pulse)08', color: 'var(--color-pulse)' }}>
             {error}
           </div>
         )}
       </div>
 
-      {/* Navigation buttons */}
-      <div className="flex justify-between gap-3">
-        <button
-          type="button"
-          onClick={handleBack}
-          disabled={currentStep === 1}
-          className="inline-flex items-center gap-2 rounded-lg border border-[var(--color-neutral-border)] px-5 py-2.5 text-sm font-medium text-[var(--color-neutral-text)] transition hover:border-[var(--color-primary-emerald)] hover:text-[var(--color-primary-emerald)] disabled:opacity-40"
-        >
-          <ArrowLeft size={16} />
-          Back
+      {/* Navigation */}
+      <div className="flex justify-between gap-3 animate-fadeInUp" style={{ animationDelay: '100ms' }}>
+        <button type="button" onClick={handleBack} disabled={currentStep === 1}
+          className="btn-outline inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium disabled:opacity-40">
+          <ArrowLeft size={16} /> Back
         </button>
-
         {currentStep < 4 ? (
-          <button
-            type="button"
-            onClick={handleNext}
-            disabled={!canProceed()}
-            className="btn-green inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
-          >
-            Next
-            <ArrowRight size={16} />
+          <button type="button" onClick={handleNext} disabled={!canProceed()}
+            className="btn-success inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold disabled:opacity-60">
+            Next <ArrowRight size={16} />
           </button>
         ) : (
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={submitting || verifying}
-            className="btn-green inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
-          >
-            {submitting ? (
-              <>
-                <Loader2 size={16} className="animate-spin" />
-                Submitting...
-              </>
-            ) : verifying ? (
-              <>
-                <Loader2 size={16} className="animate-spin" />
-                Verifying with AI...
-              </>
-            ) : (
-              <>
-                <Check size={16} />
-                Submit Proof Card
-              </>
-            )}
+          <button type="button" onClick={handleSubmit} disabled={submitting || verifying}
+            className="btn-success inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold disabled:opacity-60">
+            {submitting ? (<><Loader2 size={16} className="animate-spin" /> Submitting...</>) : verifying ? (<><Loader2 size={16} className="animate-spin" /> Verifying with AI...</>) : (<><Check size={16} /> Submit Proof Card</>)}
           </button>
         )}
       </div>

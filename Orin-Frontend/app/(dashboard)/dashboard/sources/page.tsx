@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { Plus, ExternalLink, RefreshCw } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { mapDbProofSourceToProofSource, formatRelativeTime } from '@/lib/utils';
 import type { ProofSource, ProofSourceType } from '@/lib/types';
@@ -32,10 +33,10 @@ function SourceSkeleton() {
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {[1, 2, 3].map((i) => (
-        <div key={i} className="animate-pulse rounded-lg border border-[var(--color-neutral-border)] bg-[var(--color-neutral-surface)] p-5">
-          <div className="h-4 w-16 rounded bg-[var(--color-neutral-border)]" />
-          <div className="mt-3 h-5 w-40 rounded bg-[var(--color-neutral-border)]" />
-          <div className="mt-2 h-3 w-32 rounded bg-[var(--color-neutral-border)]" />
+        <div key={i} className="card-premium animate-pulse p-5">
+          <div className="h-4 w-16 rounded" style={{ backgroundColor: 'var(--color-border)' }} />
+          <div className="mt-3 h-5 w-40 rounded" style={{ backgroundColor: 'var(--color-border)' }} />
+          <div className="mt-2 h-3 w-32 rounded" style={{ backgroundColor: 'var(--color-border)' }} />
         </div>
       ))}
     </div>
@@ -44,22 +45,18 @@ function SourceSkeleton() {
 
 function EmptyState() {
   return (
-    <div className="flex flex-col items-center justify-center py-16 text-center">
-      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--color-primary-soft)]">
-        <svg className="h-8 w-8 text-[var(--color-primary-emerald)]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-          <path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
+    <div className="card-premium flex flex-col items-center justify-center py-16 text-center">
+      <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl" style={{ backgroundColor: 'var(--color-bloom)12' }}>
+        <Plus className="h-8 w-8" style={{ color: 'var(--color-bloom)' }} />
       </div>
-      <h3 className="mt-4 text-lg font-semibold text-[var(--color-neutral-text)]">
+      <h3 className="text-lg font-semibold" style={{ color: 'var(--color-ink)' }}>
         No sources connected
       </h3>
-      <p className="mt-1 max-w-sm text-sm text-[var(--color-neutral-text-secondary)]">
+      <p className="mt-1 max-w-sm text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
         Connect your GitHub, Kaggle, or other accounts to automatically import proof of work.
       </p>
-      <Link
-        href="/dashboard/sources/new"
-        className="mt-4 rounded-lg bg-[var(--color-primary-emerald)] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--color-primary-emerald)]/90"
-      >
+      <Link href="/dashboard/sources/new" className="btn-success mt-6 px-5 py-2.5 text-sm">
+        <Plus className="h-4 w-4" />
         Add a source
       </Link>
     </div>
@@ -94,49 +91,47 @@ export default function SourcesPage() {
   if (loading) return <SourceSkeleton />;
 
   return (
-    <div className="space-y-6">
-      <header className="flex items-center justify-between">
+    <div className="space-y-8">
+      <header className="flex items-center justify-between animate-fadeInUp">
         <div>
-          <h1 className="text-2xl font-semibold text-[var(--color-neutral-text)] font-serif">Sources</h1>
-          <p className="mt-1 text-sm text-[var(--color-neutral-text-secondary)]">
+          <h1 className="text-2xl font-semibold" style={{ color: 'var(--color-ink)', fontFamily: 'var(--font-heading)' }}>Sources</h1>
+          <p className="mt-1 text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
             Connected accounts and external data sources.
           </p>
         </div>
-        <Link
-          href="/dashboard/sources/new"
-          className="rounded-lg bg-[var(--color-primary-emerald)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--color-primary-emerald)]/90"
-        >
-          + Add source
+        <Link href="/dashboard/sources/new" className="btn-success px-4 py-2.5 text-sm">
+          <Plus className="h-4 w-4" />
+          Add source
         </Link>
       </header>
 
       {sources.length === 0 ? (
         <EmptyState />
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 animate-fadeInUp" style={{ animationDelay: '100ms' }}>
           {sources.map((source) => (
             <div
               key={source.id}
-              className="rounded-lg border border-[var(--color-neutral-border)] bg-[var(--color-neutral-surface)] p-5 transition hover:shadow-sm"
+              className="card-premium group p-5"
             >
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--color-neutral-surface-alt)] text-xs font-bold text-[var(--color-neutral-text)]">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-xs font-bold transition-transform duration-200 group-hover:scale-105" style={{ backgroundColor: 'var(--color-surface-dim)', color: 'var(--color-ink)' }}>
                   {SOURCE_ICONS[source.sourceType] || 'OT'}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-[var(--color-neutral-text)]">
+                  <p className="text-sm font-semibold" style={{ color: 'var(--color-ink)' }}>
                     {source.sourceName || SOURCE_LABELS[source.sourceType]}
                   </p>
-                  <p className="text-xs text-[var(--color-neutral-text-secondary)]">
+                  <p className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
                     {SOURCE_LABELS[source.sourceType]}
                   </p>
                 </div>
                 <span
-                  className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
-                    source.isConnected
-                      ? 'bg-emerald-100 text-emerald-700'
-                      : 'bg-slate-100 text-slate-500'
-                  }`}
+                  className="shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium"
+                  style={{
+                    backgroundColor: source.isConnected ? 'var(--color-bloom)12' : 'var(--color-surface-dim)',
+                    color: source.isConnected ? 'var(--color-bloom)' : 'var(--color-text-tertiary)',
+                  }}
                 >
                   {source.isConnected ? 'Connected' : 'Disconnected'}
                 </span>
@@ -147,14 +142,17 @@ export default function SourcesPage() {
                   href={source.sourceUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-3 block truncate text-xs text-[var(--color-primary-emerald)] hover:underline"
+                  className="mt-3 flex items-center gap-1.5 truncate text-xs font-medium transition-colors hover:underline"
+                  style={{ color: 'var(--color-bloom)' }}
                 >
+                  <ExternalLink className="h-3 w-3 shrink-0" />
                   {source.sourceUrl}
                 </a>
               )}
 
               {source.lastSyncedAt && (
-                <p className="mt-2 text-xs text-[var(--color-neutral-text-tertiary)]">
+                <p className="mt-2 flex items-center gap-1.5 text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
+                  <RefreshCw className="h-3 w-3" />
                   Last synced {formatRelativeTime(source.lastSyncedAt)}
                 </p>
               )}

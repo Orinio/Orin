@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { ArrowLeft, Loader2, Check } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import type { ProofSourceType } from '@/lib/types';
 
@@ -15,6 +16,8 @@ const sourceTypes: { value: ProofSourceType; label: string; icon: string; placeh
   { value: 'demo', label: 'Demo / Live Site', icon: 'M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z', placeholder: 'https://demo.mysite.com', description: 'Live deployments and demo links' },
   { value: 'other', label: 'Other', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z', placeholder: 'https://example.com/proof', description: 'Any other proof of work' },
 ];
+
+const inputClass = "w-full rounded-xl border bg-white px-4 py-3 text-sm transition placeholder:text-[var(--color-text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-bloom)]/20";
 
 export default function AddProofSourcePage() {
   const [sourceType, setSourceType] = useState<ProofSourceType>('github');
@@ -59,7 +62,7 @@ export default function AddProofSourcePage() {
       });
 
       if (response.ok) {
-        router.push('/dashboard/sources');
+        router.push('/dashboard');
       } else {
         const data = await response.json();
         setError(data.error || 'Failed to add source');
@@ -72,17 +75,21 @@ export default function AddProofSourcePage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
-      <div className="mb-6">
-        <h1 className="text-3xl font-semibold text-[var(--color-neutral-text)] font-serif">Add Proof Source</h1>
-        <p className="mt-1 text-[var(--color-neutral-text-secondary)]">
+    <div className="mx-auto max-w-2xl space-y-8">
+      <header className="animate-fadeInUp">
+        <button onClick={() => router.back()} className="mb-4 inline-flex items-center gap-2 text-sm font-medium transition-colors" style={{ color: 'var(--color-text-tertiary)' }}>
+          <ArrowLeft className="h-4 w-4" />
+          Back
+        </button>
+        <h1 className="text-2xl font-semibold" style={{ color: 'var(--color-ink)', fontFamily: 'var(--font-heading)' }}>Add Proof Source</h1>
+        <p className="mt-1 text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
           Connect a platform or link to add proof of your work.
         </p>
-      </div>
+      </header>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <label className="block text-sm font-medium text-[var(--color-neutral-text)] mb-3">
+      <form onSubmit={handleSubmit} className="space-y-6 animate-fadeInUp" style={{ animationDelay: '100ms' }}>
+        <div className="card-premium p-6">
+          <label className="mb-3 block text-sm font-medium" style={{ color: 'var(--color-ink)' }}>
             Source Type
           </label>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -91,7 +98,12 @@ export default function AddProofSourcePage() {
                 key={type.value}
                 type="button"
                 onClick={() => { setSourceType(type.value); setSourceUrl(''); }}
-                className={`flex flex-col items-center gap-1.5 rounded-lg border p-3 text-xs font-medium transition ${sourceType === type.value ? 'border-[var(--color-primary-emerald)] bg-[var(--color-primary-soft)] text-[var(--color-primary-emerald)]' : 'border-[var(--color-neutral-border)] text-[var(--color-neutral-text-secondary)] hover:border-[var(--color-primary-emerald)] hover:text-[var(--color-primary-emerald)]'}`}
+                className="flex flex-col items-center gap-1.5 rounded-xl border p-3 text-xs font-medium transition-all duration-200"
+                style={{
+                  borderColor: sourceType === type.value ? 'var(--color-bloom)' : 'var(--color-border)',
+                  backgroundColor: sourceType === type.value ? 'var(--color-bloom)08' : 'transparent',
+                  color: sourceType === type.value ? 'var(--color-bloom)' : 'var(--color-text-tertiary)',
+                }}
               >
                 <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
                   <path d={type.icon} />
@@ -101,55 +113,60 @@ export default function AddProofSourcePage() {
             ))}
           </div>
           {selectedType && (
-            <p className="mt-2 text-xs text-[var(--color-neutral-text-tertiary)]">{selectedType.description}</p>
+            <p className="mt-3 text-xs" style={{ color: 'var(--color-text-tertiary)' }}>{selectedType.description}</p>
           )}
         </div>
 
-        <div>
-          <label htmlFor="sourceUrl" className="block text-sm font-medium text-[var(--color-neutral-text)] mb-1.5">
-            Source URL
-          </label>
-          <input
-            id="sourceUrl"
-            type="url"
-            value={sourceUrl}
-            onChange={(e) => setSourceUrl(e.target.value)}
-            placeholder={selectedType?.placeholder}
-            required
-            className="w-full rounded-lg border border-[var(--color-neutral-border)] bg-[var(--color-neutral-bg)] px-3.5 py-2.5 text-sm text-[var(--color-neutral-text)] placeholder:text-[var(--color-neutral-text-tertiary)] transition focus:border-[var(--color-primary-emerald)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-soft)]"
-          />
-        </div>
+        <div className="card-premium p-6 space-y-5">
+          <div>
+            <label htmlFor="sourceUrl" className="mb-1.5 block text-sm font-medium" style={{ color: 'var(--color-ink)' }}>
+              Source URL
+            </label>
+            <input
+              id="sourceUrl"
+              type="url"
+              value={sourceUrl}
+              onChange={(e) => setSourceUrl(e.target.value)}
+              placeholder={selectedType?.placeholder}
+              required
+              className={inputClass}
+              style={{ borderColor: 'var(--color-border)' }}
+            />
+          </div>
 
-        <div>
-          <label htmlFor="sourceName" className="block text-sm font-medium text-[var(--color-neutral-text)] mb-1.5">
-            Display Name <span className="text-[var(--color-neutral-text-tertiary)]">(optional)</span>
-          </label>
-          <input
-            id="sourceName"
-            type="text"
-            value={sourceName}
-            onChange={(e) => setSourceName(e.target.value)}
-            placeholder="My awesome project"
-            className="w-full rounded-lg border border-[var(--color-neutral-border)] bg-[var(--color-neutral-bg)] px-3.5 py-2.5 text-sm text-[var(--color-neutral-text)] placeholder:text-[var(--color-neutral-text-tertiary)] transition focus:border-[var(--color-primary-emerald)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-soft)]"
-          />
-        </div>
+          <div>
+            <label htmlFor="sourceName" className="mb-1.5 block text-sm font-medium" style={{ color: 'var(--color-ink)' }}>
+              Display Name <span style={{ color: 'var(--color-text-tertiary)' }}>(optional)</span>
+            </label>
+            <input
+              id="sourceName"
+              type="text"
+              value={sourceName}
+              onChange={(e) => setSourceName(e.target.value)}
+              placeholder="My awesome project"
+              className={inputClass}
+              style={{ borderColor: 'var(--color-border)' }}
+            />
+          </div>
 
-        <div>
-          <label htmlFor="description" className="block text-sm font-medium text-[var(--color-neutral-text)] mb-1.5">
-            Description <span className="text-[var(--color-neutral-text-tertiary)]">(optional)</span>
-          </label>
-          <textarea
-            id="description"
-            rows={3}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Briefly describe what this proof demonstrates..."
-            className="w-full resize-none rounded-lg border border-[var(--color-neutral-border)] bg-[var(--color-neutral-bg)] px-3.5 py-2.5 text-sm text-[var(--color-neutral-text)] placeholder:text-[var(--color-neutral-text-tertiary)] transition focus:border-[var(--color-primary-emerald)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-soft)]"
-          />
+          <div>
+            <label htmlFor="description" className="mb-1.5 block text-sm font-medium" style={{ color: 'var(--color-ink)' }}>
+              Description <span style={{ color: 'var(--color-text-tertiary)' }}>(optional)</span>
+            </label>
+            <textarea
+              id="description"
+              rows={3}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Briefly describe what this proof demonstrates..."
+              className={`${inputClass} resize-none`}
+              style={{ borderColor: 'var(--color-border)' }}
+            />
+          </div>
         </div>
 
         {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          <div className="rounded-xl p-3 text-sm" style={{ border: '1px solid var(--color-pulse)40', backgroundColor: 'var(--color-pulse)08', color: 'var(--color-pulse)' }}>
             {error}
           </div>
         )}
@@ -158,24 +175,24 @@ export default function AddProofSourcePage() {
           <button
             type="submit"
             disabled={loading || !sourceUrl}
-            className="btn-green rounded-lg px-6 py-2.5 font-semibold text-white text-sm disabled:opacity-60 inline-flex items-center gap-2"
+            className="btn-success px-6 py-2.5 text-sm disabled:opacity-60"
           >
             {loading ? (
               <>
-                <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
+                <Loader2 className="h-4 w-4 animate-spin" />
                 Adding...
               </>
             ) : (
-              'Add Source'
+              <>
+                <Check className="h-4 w-4" />
+                Add Source
+              </>
             )}
           </button>
           <button
             type="button"
             onClick={() => router.back()}
-            className="rounded-lg border border-[var(--color-neutral-border)] px-6 py-2.5 font-semibold text-[var(--color-neutral-text)] text-sm hover:bg-[var(--color-neutral-surface-alt)]"
+            className="btn-outline px-6 py-2.5 text-sm"
           >
             Cancel
           </button>

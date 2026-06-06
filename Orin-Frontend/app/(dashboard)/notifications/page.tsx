@@ -1,14 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import {
-  Eye,
-  CheckCircle,
-  Briefcase,
-  Lightbulb,
-  Calendar,
-  Settings,
   Bell,
   CheckCheck,
 } from 'lucide-react';
@@ -20,34 +13,34 @@ const typeConfig: Record<
   { icon: typeof Bell; color: string; bg: string }
 > = {
   recruiter_view: {
-    icon: Eye,
-    color: 'text-blue-600',
-    bg: 'bg-blue-100',
+    icon: Bell,
+    color: 'var(--color-ember)',
+    bg: 'var(--color-ember)12',
   },
   verification_update: {
-    icon: CheckCircle,
-    color: 'text-green-600',
-    bg: 'bg-green-100',
+    icon: CheckCheck,
+    color: 'var(--color-bloom)',
+    bg: 'var(--color-bloom)12',
   },
   opportunity_match: {
-    icon: Briefcase,
-    color: 'text-purple-600',
-    bg: 'bg-purple-100',
+    icon: Bell,
+    color: 'var(--color-pulse)',
+    bg: 'var(--color-pulse)12',
   },
   coach_tip: {
-    icon: Lightbulb,
-    color: 'text-emerald-600',
-    bg: 'bg-emerald-100',
+    icon: Bell,
+    color: 'var(--color-spark)',
+    bg: 'var(--color-spark)12',
   },
   weekly_summary: {
-    icon: Calendar,
-    color: 'text-amber-600',
-    bg: 'bg-amber-100',
+    icon: Bell,
+    color: 'var(--color-ember)',
+    bg: 'var(--color-ember)12',
   },
   system: {
-    icon: Settings,
-    color: 'text-gray-600',
-    bg: 'bg-gray-100',
+    icon: Bell,
+    color: 'var(--color-text-tertiary)',
+    bg: 'var(--color-surface-dim)',
   },
 };
 
@@ -57,13 +50,13 @@ function NotificationSkeleton() {
       {Array.from({ length: 5 }).map((_, i) => (
         <div
           key={i}
-          className="flex items-start gap-4 rounded-lg border border-[var(--color-neutral-border)] bg-[var(--color-neutral-surface)] p-4"
+          className="card-premium flex items-start gap-4 p-4"
         >
-          <div className="h-10 w-10 shrink-0 animate-pulse rounded-full bg-[var(--color-neutral-bg)]" />
+          <div className="h-10 w-10 shrink-0 animate-pulse rounded-full" style={{ backgroundColor: 'var(--color-surface-dim)' }} />
           <div className="flex-1 space-y-2">
-            <div className="h-4 w-3/4 animate-pulse rounded bg-[var(--color-neutral-bg)]" />
-            <div className="h-3 w-full animate-pulse rounded bg-[var(--color-neutral-bg)]" />
-            <div className="h-3 w-1/3 animate-pulse rounded bg-[var(--color-neutral-bg)]" />
+            <div className="h-4 w-3/4 animate-pulse rounded" style={{ backgroundColor: 'var(--color-surface-dim)' }} />
+            <div className="h-3 w-full animate-pulse rounded" style={{ backgroundColor: 'var(--color-surface-dim)' }} />
+            <div className="h-3 w-1/3 animate-pulse rounded" style={{ backgroundColor: 'var(--color-surface-dim)' }} />
           </div>
         </div>
       ))}
@@ -73,14 +66,14 @@ function NotificationSkeleton() {
 
 function EmptyState() {
   return (
-    <div className="flex flex-col items-center justify-center py-16 text-center">
-      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--color-primary-soft)]">
-        <Bell size={28} className="text-[var(--color-primary-emerald)]" />
+    <div className="card-premium flex flex-col items-center justify-center py-16 text-center">
+      <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl" style={{ backgroundColor: 'var(--color-bloom)12' }}>
+        <Bell size={28} style={{ color: 'var(--color-bloom)' }} />
       </div>
-      <h3 className="mt-4 text-lg font-semibold text-[var(--color-neutral-text)]">
+      <h3 className="text-lg font-semibold" style={{ color: 'var(--color-ink)' }}>
         No notifications yet
       </h3>
-      <p className="mt-1 max-w-sm text-sm text-[var(--color-neutral-text-secondary)]">
+      <p className="mt-1 max-w-sm text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
         When you get notifications, they&apos;ll show up here. Things like recruiter views, verification updates, and more.
       </p>
     </div>
@@ -88,7 +81,6 @@ function EmptyState() {
 }
 
 export default function NotificationsPage() {
-  const router = useRouter();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [markingAll, setMarkingAll] = useState(false);
@@ -108,7 +100,7 @@ export default function NotificationsPage() {
         );
         setNotifications(items);
       } catch {
-        // silently fail — show empty state
+        // silently fail
       } finally {
         setLoading(false);
       }
@@ -133,26 +125,22 @@ export default function NotificationsPage() {
   };
 
   const handleClick = async (notification: Notification) => {
-    // Optimistically mark as read
     if (!notification.readAt) {
       setNotifications((prev) =>
         prev.map((n) => (n.id === notification.id ? { ...n, readAt: new Date() } : n))
       );
       fetch(`/api/notifications/${notification.id}/read`, { method: 'POST' }).catch(() => {});
     }
-    if (notification.link) {
-      router.push(notification.link);
-    }
   };
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
-      <header className="flex items-center justify-between">
+    <div className="mx-auto max-w-3xl space-y-8">
+      <header className="flex items-center justify-between animate-fadeInUp">
         <div>
-          <h1 className="text-2xl font-semibold text-[var(--color-neutral-text)] font-serif">
+          <h1 className="text-2xl font-semibold" style={{ color: 'var(--color-ink)', fontFamily: 'var(--font-heading)' }}>
             Notifications
           </h1>
-          <p className="mt-1 text-sm text-[var(--color-neutral-text-secondary)]">
+          <p className="mt-1 text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
             {unreadCount > 0
               ? `You have ${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}`
               : 'You\'re all caught up'}
@@ -162,7 +150,7 @@ export default function NotificationsPage() {
           <button
             onClick={handleMarkAllRead}
             disabled={markingAll}
-            className="inline-flex items-center gap-2 rounded-lg border border-[var(--color-neutral-border)] bg-[var(--color-neutral-surface)] px-4 py-2 text-sm font-medium text-[var(--color-neutral-text)] transition hover:border-[var(--color-primary-emerald)] hover:text-[var(--color-primary-emerald)] disabled:opacity-60"
+            className="btn-outline inline-flex items-center gap-2 px-4 py-2 text-sm disabled:opacity-60"
           >
             <CheckCheck size={16} />
             {markingAll ? 'Marking...' : 'Mark all as read'}
@@ -175,7 +163,7 @@ export default function NotificationsPage() {
       ) : notifications.length === 0 ? (
         <EmptyState />
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-3 animate-fadeInUp" style={{ animationDelay: '100ms' }}>
           {notifications.map((notification) => {
             const config = typeConfig[notification.type];
             const Icon = config.icon;
@@ -186,38 +174,34 @@ export default function NotificationsPage() {
                 key={notification.id}
                 onClick={() => handleClick(notification)}
                 type="button"
-                className={`flex w-full items-start gap-4 rounded-lg border p-4 text-left transition ${
-                  isUnread
-                    ? 'border-[var(--color-primary-emerald)]/30 bg-[var(--color-primary-soft)]/50'
-                    : 'border-[var(--color-neutral-border)] bg-[var(--color-neutral-surface)] hover:bg-[var(--color-neutral-bg)]'
-                } ${notification.link ? 'cursor-pointer' : 'cursor-default'}`}
+                className="flex w-full items-start gap-4 p-4 text-left transition-all duration-200"
+                style={{
+                  border: `1px solid ${isUnread ? 'var(--color-bloom)30' : 'var(--color-border)'}`,
+                  borderRadius: 'var(--radius-xl)',
+                  backgroundColor: isUnread ? 'var(--color-bloom)06' : 'var(--color-surface)',
+                }}
               >
                 <div
-                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${config.bg}`}
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
+                  style={{ backgroundColor: config.bg }}
                 >
-                  <Icon size={18} className={config.color} />
+                  <Icon size={18} style={{ color: config.color }} />
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-2">
-                    <p
-                      className={`text-sm font-medium ${
-                        isUnread
-                          ? 'text-[var(--color-neutral-text)]'
-                          : 'text-[var(--color-neutral-text-secondary)]'
-                      }`}
-                    >
+                    <p className="text-sm font-medium" style={{ color: isUnread ? 'var(--color-ink)' : 'var(--color-text-tertiary)' }}>
                       {notification.title}
                     </p>
                     {isUnread && (
-                      <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[var(--color-primary-emerald)]" />
+                      <span className="mt-1 h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: 'var(--color-bloom)' }} />
                     )}
                   </div>
                   {notification.body && (
-                    <p className="mt-1 line-clamp-2 text-sm text-[var(--color-neutral-text-tertiary)]">
+                    <p className="mt-1 line-clamp-2 text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
                       {notification.body}
                     </p>
                   )}
-                  <p className="mt-1.5 text-xs text-[var(--color-neutral-text-tertiary)]">
+                  <p className="mt-1.5 text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
                     {formatRelativeTime(notification.createdAt)}
                   </p>
                 </div>

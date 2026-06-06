@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { cn } from '@/lib/cn';
 
 export interface TabItem {
@@ -68,7 +68,7 @@ export function Tabs({ tabs, value, onChange, className, variant = 'default' }: 
 export interface TabPanelsProps {
   tabs: TabItem[];
   value: string;
-  children: ReactNode;
+  children: ReactNode | ((value: string) => ReactNode);
   className?: string;
 }
 

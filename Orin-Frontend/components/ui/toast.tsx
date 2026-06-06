@@ -68,7 +68,7 @@ export const toast = {
   ) =>
     sonnerToast.promise(promise, { ...messages, ...options }),
 
-  custom: (component: React.ReactNode, options?: ToastOptions) =>
+  custom: (component: (id: string | number) => React.ReactElement, options?: ToastOptions) =>
     sonnerToast.custom(component, options),
 
   dismiss: (toastId?: string | number) => sonnerToast.dismiss(toastId),

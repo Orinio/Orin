@@ -387,7 +387,7 @@ export function AgentChat({ initialAgent = 'chat', onMessageSent }: AgentChatPro
               backgroundColor: 'var(--color-surface-dim)',
               color: 'var(--color-ink)',
               border: '1px solid var(--color-border)',
-              focusRingColor: currentAgent.color,
+              outlineColor: currentAgent.color,
             }}
             disabled={isLoading}
           />

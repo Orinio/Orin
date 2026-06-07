@@ -131,20 +131,6 @@ export const MODEL_METADATA = {
 };
 
 // ============================================================
-// Agent Model Assignments
-// ============================================================
-export const AGENT_MODELS = {
-  chat: MODELS.primary.chat,
-  coach: MODELS.primary.coach,
-  verification: MODELS.fast.nano,
-  'skill-analysis': MODELS.fast.chat,
-  'opportunity-matcher': MODELS.toolCalling.primary,
-  'learning-path': MODELS.primary.learning,
-  'portfolio-scorer': MODELS.fast.chat,
-  'safety-guard': MODELS.safety.content,
-};
-
-// ============================================================
 // Helper Functions
 // ============================================================
 

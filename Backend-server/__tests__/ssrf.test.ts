@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isUrlSafe } from '@/lib/ai/tools';
+import { isUrlSafe } from '../src/lib/ai/tools/search.tools';
 
 describe('SSRF Protection - isUrlSafe', () => {
   describe('safe URLs', () => {

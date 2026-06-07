@@ -103,7 +103,7 @@ agentRouter.post('/agents/chat', async (req, res) => {
 });
 
 /**
- * POST /ai/agents/chat/stream - Stream chat responses
+ * POST /ai/agents/chat/stream - Stream chat responses with real SSE streaming
  * (Must be before /agents/:id to avoid matching "chat" as :id)
  */
 agentRouter.post('/agents/chat/stream', async (req, res) => {
@@ -113,7 +113,7 @@ agentRouter.post('/agents/chat/stream', async (req, res) => {
       return;
     }
 
-    const { query } = req.body;
+    const { query, conversationHistory } = req.body;
     const userId = (req as any).user?.id;
 
     if (!query) {
@@ -126,29 +126,48 @@ agentRouter.post('/agents/chat/stream', async (req, res) => {
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
     res.setHeader('X-Accel-Buffering', 'no');
+    res.flushHeaders();
 
     const sendEvent = (event: string, data: any) => {
       res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
     };
+
+    // Handle client disconnect
+    let aborted = false;
+    req.on('close', () => { aborted = true; });
 
     // Send initial event
     sendEvent('start', { agentId: 'chat', query });
 
     try {
       const orchestrator = createOrchestrator(userId);
-      const result = await orchestrator.runAgent('chat', query, { userId });
 
-      // Send result
-      sendEvent('complete', result);
+      // Auto-route: classify intent and pick the best agent
+      let agentId = 'chat';
+      try {
+        const routing = await orchestrator.routeQuery(query);
+        agentId = routing.agentId;
+        sendEvent('progress', { routing: { category: routing.category, confidence: routing.confidence, agentId } });
+      } catch {
+        // Fallback to chat if routing fails
+      }
+
+      await orchestrator.runAgentStream(agentId, query, { userId, conversationHistory }, (event, data) => {
+        if (!aborted) sendEvent(event, data);
+      });
     } catch (error) {
-      sendEvent('error', { message: 'Failed to process request' });
+      if (!aborted) sendEvent('error', { message: 'Failed to process request' });
     }
 
-    res.write('event: end\ndata: {}\n\n');
-    res.end();
+    if (!aborted) {
+      res.write('event: end\ndata: {}\n\n');
+      res.end();
+    }
   } catch (error) {
     logger.error({ error }, 'Failed to stream chat');
-    res.status(500).json({ error: { code: 'AGENT_ERROR', message: 'Failed to stream chat' } });
+    if (!res.headersSent) {
+      res.status(500).json({ error: { code: 'AGENT_ERROR', message: 'Failed to stream chat' } });
+    }
   }
 });
 

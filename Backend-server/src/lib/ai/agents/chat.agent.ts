@@ -5,6 +5,7 @@ export const chatAgent: AgentDefinition = {
   id: 'chat',
   name: 'Chat Agent',
   description: 'Interactive career Q&A with tool access',
+  role: 'chat',
   model: MODELS.fast.chat, // qwen/qwen3.5-397b-a17b - Best speed + tool calling
   temperature: 0.7,
   maxTokens: 600,

@@ -5,6 +5,7 @@ export const learningPathAgent: AgentDefinition = {
   id: 'learning-path',
   name: 'Learning Path Agent',
   description: 'Generates personalized learning paths based on skill gaps and market demand',
+  role: 'learning_advisor',
   model: MODELS.primary.learning, // qwen/qwen3-coder-480b-a35b-instruct - Best for detailed reasoning
   temperature: 0.5,
   maxTokens: 800,

@@ -7,6 +7,7 @@
 import { registerTool } from '../core/tool-registry.js';
 import { logger } from '../../logger.js';
 import { supabase } from '../../supabase.js';
+import { generateEmbedding } from '../services/embedding.service.js';
 
 // ============================================================
 // VERIFICATION TOOLS
@@ -590,61 +591,6 @@ registerTool({
   }
 });
 
-registerTool({
-  name: 'save_conversation',
-  description: 'Save conversation to memory for future reference',
-  category: 'memory',
-  parameters: {
-    type: 'object',
-    properties: {
-      userId: { type: 'string', description: 'User ID' },
-      agentId: { type: 'string', description: 'Agent ID (e.g. chat, coach)' },
-      messages: { type: 'string', description: 'JSON array of messages' }
-    },
-    required: ['userId', 'agentId', 'messages']
-  },
-  execute: async (args, context) => {
-    try {
-      const userId = args.userId || context?.userId;
-      const agentId = args.agentId;
-      const messages = JSON.parse(args.messages);
-
-      // Find existing conversation for this user+agent
-      const { data: existing } = await supabase
-        .from('ai_conversations')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('agent_id', agentId)
-        .limit(1)
-        .maybeSingle();
-
-      const now = new Date().toISOString();
-
-      if (existing) {
-        const { error } = await supabase
-          .from('ai_conversations')
-          .update({ messages, updated_at: now })
-          .eq('id', existing.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from('ai_conversations')
-          .insert({
-            user_id: userId,
-            agent_id: agentId,
-            messages,
-            metadata: {},
-          });
-        if (error) throw error;
-      }
-
-      return { success: true, data: { saved: true } };
-    } catch (error) {
-      return { success: false, error: error instanceof Error ? error.message : 'Database error' };
-    }
-  }
-});
-
 // ============================================================
 // USER DATA TOOLS (For Personalized AI Responses)
 // ============================================================
@@ -815,52 +761,6 @@ function generateRecommendations(profile: any): string[] {
   if (profile.opportunities?.total === 0) recs.push('Explore job opportunities that match your skills');
   return recs;
 }
-
-registerTool({
-  name: 'fetch_conversation_history',
-  description: 'Fetch previous conversation history from memory',
-  category: 'memory',
-  parameters: {
-    type: 'object',
-    properties: {
-      userId: { type: 'string', description: 'User ID' },
-      agentId: { type: 'string', description: 'Agent ID (e.g. chat, coach)' },
-      limit: { type: 'number', description: 'Number of messages (default 20)' }
-    },
-    required: ['userId']
-  },
-  execute: async (args, context) => {
-    try {
-      const userId = args.userId || context?.userId;
-      if (!userId) return { success: false, error: 'User ID required' };
-
-      let query = supabase
-        .from('ai_conversations')
-        .select('*')
-        .eq('user_id', userId);
-
-      if (args.agentId) {
-        query = query.eq('agent_id', args.agentId);
-      }
-
-      const { data, error } = await query
-        .order('updated_at', { ascending: false })
-        .limit(1);
-
-      if (error) throw error;
-
-      return {
-        success: true,
-        data: {
-          conversations: data || [],
-          messages: data?.[0]?.messages || []
-        }
-      };
-    } catch (error) {
-      return { success: false, error: error instanceof Error ? error.message : 'Database error' };
-    }
-  }
-});
 
 // ============================================================
 // LEARNING TOOLS
@@ -1113,13 +1013,15 @@ registerTool({
   execute: async (args) => {
     try {
       const texts = Array.isArray(args.texts) ? args.texts : [args.texts];
+      const results = await Promise.all(texts.map(t => generateEmbedding(t)));
       return {
         success: true,
         data: {
-          embeddings: texts.map(() => Array.from({ length: 384 }, () => Math.random() * 2 - 1)),
-          model: 'fallback-random',
-          dimension: 384,
-          count: texts.length
+          embeddings: results.map(r => r.embedding),
+          model: 'baai/bge-m3',
+          dimension: results[0]?.dimensions ?? 0,
+          tokensUsed: results.reduce((sum, r) => sum + r.tokensUsed, 0),
+          count: results.length
         }
       };
     } catch (error) {

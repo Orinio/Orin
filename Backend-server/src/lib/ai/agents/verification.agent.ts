@@ -5,6 +5,7 @@ export const verificationAgent: AgentDefinition = {
   id: 'verification',
   name: 'Verification Agent',
   description: 'Verifies proof sources (GitHub, certificates, Kaggle, LinkedIn)',
+  role: 'verifier',
   model: MODELS.fast.nano, // nvidia/llama-3.1-nemotron-nano-8b-v1 - Fast verification
   temperature: 0.3,
   maxTokens: 300,

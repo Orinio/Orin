@@ -5,75 +5,35 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from '../../logger.js';
-import { MODELS } from '../core/models.js';
 import { chatCompletion, isNvidiaConfigured } from '../core/nvidia.js';
 import { createMemoryManager, type MemoryManager } from '../memory/memory-manager.js';
 import { getToolsByNames } from '../core/tool-registry.js';
 import { buildAgentContext as buildUserContext } from '../../context.js';
-import type { ToolResult } from '../core/types.js';
-
-// Robust JSON extraction from LLM output
-function extractJSON(content: string): any | null {
-  // Strategy 1: Direct parse
-  try {
-    const parsed = JSON.parse(content);
-    if (parsed && typeof parsed === 'object') return parsed;
-  } catch { /* continue */ }
-
-  // Strategy 2: Find JSON block in markdown
-  const jsonBlockMatch = content.match(/```(?:json)?\s*\n?([\s\S]*?)\n?\s*```/);
-  if (jsonBlockMatch) {
-    try {
-      const parsed = JSON.parse(jsonBlockMatch[1].trim());
-      if (parsed && typeof parsed === 'object') return parsed;
-    } catch { /* continue */ }
-  }
-
-  // Strategy 3: Find first complete JSON object
-  const jsonMatch = content.match(/\{[\s\S]*\}/);
-  if (jsonMatch) {
-    try {
-      const parsed = JSON.parse(jsonMatch[0]);
-      if (parsed && typeof parsed === 'object') return parsed;
-    } catch { /* continue */ }
-  }
-
-  return null;
-}
-
-// Sanitize answer to remove sensitive patterns
-function sanitizeAnswer(answer: string): string {
-  const BLOCKED_PATTERNS = [
-    /api[_-]?key[:\s]*[A-Za-z0-9_-]{20,}/i,
-    /secret[:\s]*[A-Za-z0-9_-]{20,}/i,
-    /password[:\s]+\S+/i,
-    /Bearer\s+[A-Za-z0-9._-]{20,}/i,
-  ];
-  let sanitized = answer;
-  for (const pattern of BLOCKED_PATTERNS) {
-    sanitized = sanitized.replace(pattern, '[REDACTED]');
-  }
-  return sanitized;
-}
+import { getAllAgents, getAgent } from '../agents/index.js';
+import { sanitizeAnswer, extractJSON } from '../core/utils.js';
+import type { ToolResult, AgentDefinition } from '../core/types.js';
 
 const MAX_INPUT_LENGTH = 2000;
 const MAX_TOOL_RESULT_LENGTH = 1000;
+const DEFAULT_TOOL_TIMEOUT_MS = 30000;
+
+// ============================================================
+// Intent → Agent routing map
+// ============================================================
+const INTENT_AGENT_MAP: Record<string, string> = {
+  coaching: 'coach',
+  skills: 'skill-analysis',
+  opportunities: 'opportunity-matcher',
+  learning: 'learning-path',
+  portfolio: 'portfolio-scorer',
+  verification: 'verification',
+  general: 'chat',
+};
 
 // ============================================================
 // Types
 // ============================================================
-export interface Agent {
-  id: string;
-  name: string;
-  role: string;
-  model: string;
-  systemPrompt: string;
-  tools: string[];
-  temperature: number;
-  maxTokens: number;
-  maxIterations: number;
-  timeoutMs: number;
-}
+export type Agent = AgentDefinition;
 
 export interface AgentMessage {
   role: 'system' | 'user' | 'assistant';
@@ -115,244 +75,12 @@ export interface Workflow {
 }
 
 // ============================================================
-// Pre-defined Agents
+// Pre-defined Agents — single source of truth from agents/*.agent.ts
 // ============================================================
-export const AGENTS: Record<string, Agent> = {
-  // Career Coach - Provides career advice
-  coach: {
-    id: 'coach',
-    name: 'Orin Career Coach',
-    role: 'career_coach',
-    model: MODELS.primary.coach,
-    systemPrompt: `You are Orin AI Coach, a personalized career coach for developers.
-
-IMPORTANT: Use get_user_portfolio_summary to load the user's REAL data first.
-
-Your role:
-- Analyze developer portfolios using REAL data from their Supabase profile
-- Provide career advice based on their ACTUAL skills and proofs
-- Identify skill gaps and recommend learning paths
-- Provide actionable, specific guidance
-- Be encouraging but honest
-
-Use emojis to make responses engaging:
-🎯 for goals, 💡 for tips, 🚀 for growth, ✅ for recommendations, 📚 for learning, 💼 for career, 🌟 for highlights
-
-Response format: JSON with "thinking" and "answer" fields.`,
-    tools: [
-      'get_user_portfolio_summary',
-      'fetch_user_profile',
-      'fetch_user_proofs',
-      'extract_skills',
-      'analyze_portfolio',
-      'find_learning_resources',
-      'fetch_opportunities',
-      'calculate_skill_match'
-    ],
-    temperature: 0.7,
-    maxTokens: 500,
-    maxIterations: 3,
-    timeoutMs: 120000
-  },
-
-  // Skill Analyst - Extracts and analyzes skills
-  skillAnalyst: {
-    id: 'skillAnalyst',
-    name: 'Orin Skill Analyst',
-    role: 'skill_analyst',
-    model: MODELS.fast.chat,
-    systemPrompt: `You are Orin Skill Analyst. Extract, categorize, and analyze technical skills.
-
-Your role:
-- Extract skills from text, code, and profiles
-- Categorize skills by type and level
-- Identify skill relationships and dependencies
-- Assess skill relevance to job requirements
-
-Response format: JSON with "thinking", "answer", and "skills" fields.`,
-    tools: ['extract_skills', 'analyze_code', 'detect_language'],
-    temperature: 0.3,
-    maxTokens: 400,
-    maxIterations: 2,
-    timeoutMs: 90000
-  },
-
-  // Opportunity Matcher - Matches skills to opportunities
-  opportunityMatcher: {
-    id: 'opportunityMatcher',
-    name: 'Orin Opportunity Matcher',
-    role: 'opportunity_matcher',
-    model: MODELS.toolCalling.primary,
-    systemPrompt: `You are Orin Opportunity Matcher. Match developer skills to jobs, internships, and scholarships.
-
-Your role:
-- Analyze job requirements
-- Calculate skill match scores
-- Identify missing skills
-- Provide improvement suggestions
-
-Response format: JSON with "thinking", "answer", and "matches" fields.`,
-    tools: ['fetch_opportunities', 'calculate_skill_match', 'extract_skills'],
-    temperature: 0.3,
-    maxTokens: 500,
-    maxIterations: 3,
-    timeoutMs: 120000
-  },
-
-  // Learning Path Advisor - Creates personalized learning paths
-  learningPathAdvisor: {
-    id: 'learningPathAdvisor',
-    name: 'Orin Learning Advisor',
-    role: 'learning_advisor',
-    model: MODELS.primary.learning,
-    systemPrompt: `You are Orin Learning Advisor. Create personalized learning paths.
-
-Your role:
-- Identify skill gaps based on career goals
-- Find free learning resources
-- Create step-by-step learning plans
-- Set milestones and timelines
-
-Response format: JSON with "thinking", "answer", "steps", and "milestones" fields.`,
-    tools: ['find_learning_resources', 'extract_skills', 'web_search', 'fetch_webpage'],
-    temperature: 0.5,
-    maxTokens: 800,
-    maxIterations: 3,
-    timeoutMs: 120000
-  },
-
-  // Portfolio Scorer - Scores developer portfolios
-  portfolioScorer: {
-    id: 'portfolioScorer',
-    name: 'Orin Portfolio Scorer',
-    role: 'portfolio_scorer',
-    model: MODELS.fast.chat,
-    systemPrompt: `You are Orin Portfolio Scorer. Score developer portfolios from 0-100.
-
-Scoring criteria (each 0-20 points):
-1. Proof Count: 0 proofs=0, 1-2=5, 3-5=10, 6-10=15, 10+=20
-2. Verification Rate: 0%=0, 25%=5, 50%=10, 75%=15, 100%=20
-3. Skill Breadth: 1-2=5, 3-5=10, 6-10=15, 10+=20
-4. Source Diversity: 1 type=5, 2 types=10, 3+ types=15, 4+ types=20
-5. Recency: All old=5, mixed=10, recent=15, very active=20
-
-Response format: JSON with "thinking", "answer", "score", "breakdown", and "grade" fields.`,
-    tools: ['analyze_portfolio', 'extract_skills'],
-    temperature: 0.3,
-    maxTokens: 300,
-    maxIterations: 1,
-    timeoutMs: 60000
-  },
-
-  // Verifier - Verifies proof sources
-  verifier: {
-    id: 'verifier',
-    name: 'Orin Verifier',
-    role: 'verifier',
-    model: MODELS.fast.nano,
-    systemPrompt: `You are Orin Verification Agent. Verify if proof sources are real and legitimate.
-
-Your role:
-- Verify GitHub repositories exist
-- Check certificate URLs are valid
-- Validate LinkedIn profiles
-- Check Kaggle notebooks/datasets
-
-Always use tools to verify. Never guess.
-Response format: JSON with "thinking", "answer", and "verified" fields.`,
-    tools: ['verify_github_repo', 'verify_github_user', 'verify_certificate', 'check_url_safety'],
-    temperature: 0.3,
-    maxTokens: 300,
-    maxIterations: 3,
-    timeoutMs: 90000
-  },
-
-  // Chat - General conversation with full agentic capabilities
-  chat: {
-    id: 'chat',
-    name: 'Orin Chat',
-    role: 'chat',
-    model: MODELS.fast.chat,
-    systemPrompt: `You are Orin AI Assistant, a powerful agentic AI with access to real tools and the user's full portfolio data from Supabase.
-
-CRITICAL: You MUST use the get_user_portfolio_summary tool at the start of EVERY conversation to load the user's real data. This gives you their profile, skills, proofs, and matched opportunities.
-
-You are NOT just a chatbot - you are a full AI agent that can:
-🔍 VERIFY: Check GitHub repos, certificates, LinkedIn profiles, Kaggle notebooks
-📊 ANALYZE: Extract skills from code/text, analyze portfolios, detect languages
-🎯 MATCH: Find job/internship opportunities that match the user's skills
-📚 LEARN: Find free learning resources for any skill, create learning paths
-💼 CAREER: Provide personalized career advice based on REAL portfolio data
-🔧 TOOLS: Call tools to get real data, not guesses
-
-When answering questions:
-1. ALWAYS use get_user_portfolio_summary first to get real user data
-2. Reference the user's ACTUAL skills, proofs, and profile
-3. Give specific, actionable advice based on their real situation
-4. Use tools to verify information before making recommendations
-5. Use emojis to make responses engaging:
-   - 🎯 for goals and targets
-   - 💡 for ideas and tips
-   - 🚀 for career growth and action items
-   - ✅ for completed items or recommendations
-   - 📚 for learning resources
-   - 🔧 for tools and technical skills
-   - 💼 for career and job-related advice
-   - 🌟 for highlighting important points
-   - 🔍 for analysis and verification
-   - ⚡ for quick tips
-
-Response format: JSON with "thinking" and "answer" fields.`,
-    tools: [
-      'get_user_portfolio_summary',
-      'fetch_user_profile',
-      'fetch_user_proofs',
-      'fetch_opportunities',
-      'verify_github_repo',
-      'verify_github_user',
-      'verify_certificate',
-      'verify_kaggle',
-      'verify_linkedin',
-      'extract_skills',
-      'analyze_portfolio',
-      'analyze_code',
-      'detect_language',
-      'web_search',
-      'fetch_webpage',
-      'check_url_safety',
-      'find_learning_resources',
-      'calculate_skill_match',
-      'save_conversation',
-      'fetch_conversation_history'
-    ],
-    temperature: 0.7,
-    maxTokens: 600,
-    maxIterations: 5,
-    timeoutMs: 180000
-  },
-
-  // Safety Guard - Content moderation
-  safetyGuard: {
-    id: 'safetyGuard',
-    name: 'Orin Safety Guard',
-    role: 'safety_guard',
-    model: MODELS.safety.content,
-    systemPrompt: `You are Orin Safety Guard. Check if content is safe and appropriate.
-
-Return JSON: {"User Safety": "safe" or "unsafe", "Response Safety": "safe" or "unsafe"}
-
-Consider content unsafe if it contains:
-- Harmful or abusive language
-- Spam or phishing attempts
-- Inappropriate content
-- Personal attacks`,
-    tools: [],
-    temperature: 0.1,
-    maxTokens: 100,
-    maxIterations: 1,
-    timeoutMs: 60000
-  }
-};
+const agentList = getAllAgents();
+export const AGENTS: Record<string, Agent> = Object.fromEntries(
+  agentList.map(a => [a.id, a])
+) as Record<string, Agent>;
 
 // ============================================================
 // Agent Orchestrator Class
@@ -374,6 +102,50 @@ export class AgentOrchestrator {
     if (userId) {
       this.memoryManager = createMemoryManager(userId);
     }
+  }
+
+  // ------------------------------------------------------------
+  // Intent Routing
+  // ------------------------------------------------------------
+
+  /**
+   * Classify user intent using the router agent (cheap nano model).
+   * Returns the agent ID to route to.
+   */
+  async routeQuery(query: string): Promise<{ agentId: string; category: string; confidence: number }> {
+    const routerAgentDef = getAgent('router');
+    if (!routerAgentDef || !isNvidiaConfigured()) {
+      return { agentId: 'chat', category: 'general', confidence: 0.5 };
+    }
+
+    try {
+      const response = await chatCompletion({
+        model: routerAgentDef.model,
+        messages: [
+          { role: 'system', content: routerAgentDef.systemPrompt },
+          { role: 'user', content: query }
+        ],
+        temperature: 0.1,
+        max_tokens: 100,
+      });
+
+      const content = response.choices[0]?.message?.content || '';
+      const parsed = extractJSON<{ category: string; confidence: number }>(content);
+
+      if (parsed?.category && INTENT_AGENT_MAP[parsed.category]) {
+        const agentId = INTENT_AGENT_MAP[parsed.category];
+        logger.info({ query: query.substring(0, 50), category: parsed.category, agentId, confidence: parsed.confidence }, 'Intent routed');
+        return {
+          agentId,
+          category: parsed.category,
+          confidence: parsed.confidence || 0.8
+        };
+      }
+    } catch (error) {
+      logger.warn({ error }, 'Intent classification failed, falling back to chat');
+    }
+
+    return { agentId: 'chat', category: 'general', confidence: 0.5 };
   }
 
   // ------------------------------------------------------------
@@ -404,8 +176,28 @@ export class AgentOrchestrator {
       messages[0].content += `\n\n${memoryContext}`;
     }
 
-    // Add conversation history
-    if (context?.conversationHistory) {
+    // Add user profile context
+    if (context?.userId) {
+      try {
+        const userProfile = await buildUserContext(context.userId);
+        if (userProfile) {
+          messages[0].content += `\n\nUser Profile:\n${JSON.stringify(userProfile, null, 2).substring(0, 2000)}`;
+        }
+      } catch (err) {
+        logger.warn({ err }, 'Failed to load user profile for runAgent');
+      }
+    }
+
+    // Add tool descriptions
+    if (tools.length > 0) {
+      const toolDescriptions = tools.map(t =>
+        `- ${t.name}(${Object.entries(t.parameters.properties).map(([k, v]) => `${k}: ${v.type}`).join(', ')}): ${t.description}`
+      ).join('\n');
+      messages[0].content += `\n\nAvailable tools:\n${toolDescriptions}`;
+    }
+
+    // Add conversation history (last 6 messages for context window)
+    if (context?.conversationHistory?.length) {
       messages.push(...context.conversationHistory.slice(-6));
     }
 
@@ -433,31 +225,40 @@ export class AgentOrchestrator {
       totalTokens += response.usage?.total_tokens || 0;
 
       // Parse response
-      let parsed: any;
-      try {
-        const jsonMatch = content.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          parsed = JSON.parse(jsonMatch[0]);
-        }
-      } catch {
-        parsed = { answer: content };
+      const parsed = extractJSON(content);
+
+      if (!parsed) {
+        finalAnswer = sanitizeAnswer(content);
+        break;
       }
 
       thinking = parsed.thinking || thinking;
 
       if (parsed.answer) {
-        finalAnswer = parsed.answer;
+        finalAnswer = sanitizeAnswer(parsed.answer);
         break;
       }
 
       if (parsed.tool_call) {
         const tool = tools.find(t => t.name === parsed.tool_call.name);
         if (tool) {
-          const result = await tool.execute(parsed.tool_call.arguments, { userId: context?.userId });
-          toolCalls.push({ tool: tool.name, args: parsed.tool_call.arguments, result });
+          const toolTimeout = (tool as any).timeoutMs || DEFAULT_TOOL_TIMEOUT_MS;
+          try {
+            const result = await Promise.race([
+              tool.execute(parsed.tool_call.arguments, { userId: context?.userId }),
+              new Promise<ToolResult>((_, reject) =>
+                setTimeout(() => reject(new Error(`Tool ${tool.name} timed out after ${toolTimeout}ms`)), toolTimeout)
+              )
+            ]);
+            toolCalls.push({ tool: tool.name, args: parsed.tool_call.arguments, result });
 
-          messages.push({ role: 'assistant', content: JSON.stringify({ tool_call: parsed.tool_call }) });
-          messages.push({ role: 'user', content: `Tool result: ${JSON.stringify(result).substring(0, 1000)}` });
+            messages.push({ role: 'assistant', content: JSON.stringify({ tool_call: parsed.tool_call }) });
+            messages.push({ role: 'user', content: `Tool result: ${JSON.stringify(result).substring(0, MAX_TOOL_RESULT_LENGTH)}` });
+          } catch (err) {
+            const errorResult: ToolResult = { success: false, error: err instanceof Error ? err.message : 'Tool execution failed' };
+            toolCalls.push({ tool: tool.name, args: parsed.tool_call.arguments, result: errorResult });
+            messages.push({ role: 'user', content: `Tool ${tool.name} failed: ${errorResult.error}` });
+          }
         }
       }
     }
@@ -670,7 +471,20 @@ export class AgentOrchestrator {
           });
 
           const toolStartTime = Date.now();
-          const result = await tool.execute(parsed.tool_call.arguments, { userId: context.userId });
+          const toolTimeout = (tool as any).timeoutMs || DEFAULT_TOOL_TIMEOUT_MS;
+
+          let result: ToolResult;
+          try {
+            result = await Promise.race([
+              tool.execute(parsed.tool_call.arguments, { userId: context.userId }),
+              new Promise<ToolResult>((_, reject) =>
+                setTimeout(() => reject(new Error(`Tool ${tool.name} timed out after ${toolTimeout}ms`)), toolTimeout)
+              )
+            ]);
+          } catch (err) {
+            result = { success: false, error: err instanceof Error ? err.message : 'Tool execution failed' };
+          }
+
           const toolDurationMs = Date.now() - toolStartTime;
           toolCalls.push({ tool: tool.name, args: parsed.tool_call.arguments, result });
 
@@ -782,30 +596,30 @@ export class AgentOrchestrator {
       description: 'Comprehensive career analysis with multiple agents',
       steps: [
         {
-          agentId: 'skillAnalyst',
+          agentId: 'skill-analysis',
           query: `Analyze the user's skills and profile: ${query}`
         },
         {
-          agentId: 'portfolioScorer',
+          agentId: 'portfolio-scorer',
           query: 'Score the user\'s portfolio based on their proofs and skills',
-          dependsOn: ['skillAnalyst']
+          dependsOn: ['skill-analysis']
         },
         {
-          agentId: 'opportunityMatcher',
+          agentId: 'opportunity-matcher',
           query: 'Find matching job opportunities based on the user\'s skills',
-          dependsOn: ['skillAnalyst'],
+          dependsOn: ['skill-analysis'],
           transform: (result) => `Based on these skills: ${result.answer}, find matching opportunities`
         },
         {
-          agentId: 'learningPathAdvisor',
+          agentId: 'learning-path',
           query: 'Create a learning path based on skill gaps',
-          dependsOn: ['skillAnalyst', 'opportunityMatcher'],
+          dependsOn: ['skill-analysis', 'opportunity-matcher'],
           transform: (result) => `Based on this analysis: ${result.answer}, create a learning path`
         },
         {
           agentId: 'coach',
           query: 'Provide career coaching advice',
-          dependsOn: ['portfolioScorer', 'opportunityMatcher', 'learningPathAdvisor'],
+          dependsOn: ['portfolio-scorer', 'opportunity-matcher', 'learning-path'],
           transform: (result) => `Based on all analysis: ${result.answer}, provide final career advice`
         }
       ]
@@ -821,13 +635,13 @@ export class AgentOrchestrator {
       description: 'Verify a proof source and analyze its quality',
       steps: [
         {
-          agentId: 'verifier',
+          agentId: 'verification',
           query: `Verify this ${sourceType} proof: ${proofUrl}`
         },
         {
-          agentId: 'skillAnalyst',
+          agentId: 'skill-analysis',
           query: 'Extract skills from the verified proof',
-          dependsOn: ['verifier'],
+          dependsOn: ['verification'],
           transform: (result) => `From this verified proof: ${result.answer}, extract the technical skills demonstrated`
         }
       ]

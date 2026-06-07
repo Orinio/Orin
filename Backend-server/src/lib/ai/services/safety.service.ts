@@ -5,6 +5,10 @@
 
 import { NVIDIA_CONFIG, MODELS } from '../core/models.js';
 import { logger } from '../../logger.js';
+import { sanitizeAnswer } from '../core/utils.js';
+
+// Re-export for backward compatibility
+export const sanitizeResponse = sanitizeAnswer;
 
 export interface SafetyCheckResult {
   isSafe: boolean;
@@ -287,29 +291,6 @@ export function sanitizeInput(input: string): string {
   const MAX_LENGTH = 5000;
   if (sanitized.length > MAX_LENGTH) {
     sanitized = sanitized.substring(0, MAX_LENGTH) + '...';
-  }
-
-  return sanitized;
-}
-
-/**
- * Sanitize AI response before sending to user
- */
-export function sanitizeResponse(response: string): string {
-  // Remove any API keys or secrets that might have leaked
-  let sanitized = response;
-
-  // Patterns to redact
-  const patterns = [
-    /api[_-]?key[:\s]*[A-Za-z0-9_-]{20,}/gi,
-    /secret[:\s]*[A-Za-z0-9_-]{20,}/gi,
-    /password[:\s]+\S+/gi,
-    /Bearer\s+[A-Za-z0-9._-]{20,}/gi,
-    /nvapi-[A-Za-z0-9_-]{20,}/gi
-  ];
-
-  for (const pattern of patterns) {
-    sanitized = sanitized.replace(pattern, '[REDACTED]');
   }
 
   return sanitized;

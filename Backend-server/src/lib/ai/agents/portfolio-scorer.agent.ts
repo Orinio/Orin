@@ -5,6 +5,7 @@ export const portfolioScorerAgent: AgentDefinition = {
   id: 'portfolio-scorer',
   name: 'Portfolio Scorer Agent',
   description: 'Scores a developer portfolio from 0-100 based on multiple factors',
+  role: 'portfolio_scorer',
   model: MODELS.fast.chat, // qwen/qwen3.5-397b-a17b - Fast structured output
   temperature: 0.3,
   maxTokens: 300,

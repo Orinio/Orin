@@ -7,10 +7,12 @@ import { opportunityMatcherAgent } from './opportunity-matcher.agent.js';
 import { learningPathAgent } from './learning-path.agent.js';
 import { portfolioScorerAgent } from './portfolio-scorer.agent.js';
 import { safetyGuardAgent } from './safety-guard.agent.js';
+import { routerAgent } from './router.agent.js';
 
 const agentRegistry = new Map<string, AgentDefinition>();
 
 const allAgents: AgentDefinition[] = [
+  routerAgent,
   verificationAgent,
   coachAgent,
   chatAgent,
@@ -38,6 +40,7 @@ export function getAgentIds(): string[] {
 }
 
 export {
+  routerAgent,
   verificationAgent,
   coachAgent,
   chatAgent,

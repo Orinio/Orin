@@ -5,6 +5,7 @@ export const skillAnalysisAgent: AgentDefinition = {
   id: 'skill-analysis',
   name: 'Skill Analysis Agent',
   description: 'Extracts, categorizes, and scores technical skills',
+  role: 'skill_analyst',
   model: MODELS.fast.chat, // qwen/qwen3.5-397b-a17b - Fast with good analysis
   temperature: 0.3,
   maxTokens: 400,

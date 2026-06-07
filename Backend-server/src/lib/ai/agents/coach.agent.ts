@@ -5,6 +5,7 @@ export const coachAgent: AgentDefinition = {
   id: 'coach',
   name: 'Coach Agent',
   description: 'Provides personalized career coaching and advice',
+  role: 'career_coach',
   model: MODELS.primary.coach, // qwen/qwen3-coder-480b-a35b-instruct - Best quality
   temperature: 0.7,
   maxTokens: 500,

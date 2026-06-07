@@ -1,27 +1,12 @@
-import type { AgentDefinition, AgentContext, AgentResult, AgentResponse } from './types.js';
+import type { AgentDefinition, AgentContext, AgentResult } from './types.js';
 import { chatCompletion, chatCompletionStream, isNvidiaConfigured } from './nvidia.js';
 import { getToolsByNames } from './tool-registry.js';
 import { logAIOperation } from '../metrics.js';
 import { getRequestId, getUserId } from '../../request-context.js';
+import { sanitizeAnswer, extractJSON } from './utils.js';
 
 const MAX_INPUT_LENGTH = 2000;
 const MAX_TOOL_RESULT_LENGTH = 1000;
-
-// ---- Safety: patterns that should never appear in AI responses ----
-const BLOCKED_PATTERNS = [
-  /api[_-]?key[:\s]*[A-Za-z0-9_-]{20,}/i,
-  /secret[:\s]*[A-Za-z0-9_-]{20,}/i,
-  /password[:\s]+\S+/i,
-  /Bearer\s+[A-Za-z0-9._-]{20,}/i,
-];
-
-function sanitizeAnswer(answer: string): string {
-  let sanitized = answer;
-  for (const pattern of BLOCKED_PATTERNS) {
-    sanitized = sanitized.replace(pattern, '[REDACTED]');
-  }
-  return sanitized;
-}
 
 function buildContextualQuery(query: string, context: AgentContext): string {
   const profileInfo = context.userProfile
@@ -33,38 +18,6 @@ function buildContextualQuery(query: string, context: AgentContext): string {
     : '';
 
   return `${profileInfo}${proofInfo}\n\nQuery: ${query}`;
-}
-
-/**
- * Robust JSON extraction from LLM output.
- * Tries multiple strategies to parse structured responses.
- */
-function extractJSON(content: string): AgentResponse | null {
-  // Strategy 1: Direct parse (LLM returns clean JSON)
-  try {
-    const parsed = JSON.parse(content);
-    if (parsed && typeof parsed === 'object') return parsed;
-  } catch { /* continue */ }
-
-  // Strategy 2: Find JSON block in markdown or text
-  const jsonBlockMatch = content.match(/```(?:json)?\s*\n?([\s\S]*?)\n?\s*```/);
-  if (jsonBlockMatch) {
-    try {
-      const parsed = JSON.parse(jsonBlockMatch[1].trim());
-      if (parsed && typeof parsed === 'object') return parsed;
-    } catch { /* continue */ }
-  }
-
-  // Strategy 3: Find first complete JSON object
-  const jsonMatch = content.match(/\{[\s\S]*\}/);
-  if (jsonMatch) {
-    try {
-      const parsed = JSON.parse(jsonMatch[0]);
-      if (parsed && typeof parsed === 'object') return parsed;
-    } catch { /* continue */ }
-  }
-
-  return null;
 }
 
 export async function runAgent(

@@ -370,9 +370,9 @@ function AppHeader() {
     <div className="flex items-center justify-between mb-3 animate-slideInUp">
       <div className="flex items-center gap-2">
         <div
-          className="w-7 h-7 rounded-lg flex items-center justify-center shadow-sm overflow-hidden"
+          className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center shadow-sm overflow-hidden"
         >
-          <Image src="/logo.svg" alt="ORIN" width={28} height={28} className="object-contain" />
+          <Image src="/logo.svg" alt="ORIN" width={48} height={48} className="object-contain w-full h-full" />
         </div>
         <div>
           <p

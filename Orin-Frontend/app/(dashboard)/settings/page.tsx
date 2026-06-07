@@ -77,7 +77,7 @@ const navItems: { id: Section; label: string; icon: React.ReactNode }[] = [
   { id: 'billing', label: 'Billing', icon: <CreditCard size={18} /> },
 ];
 
-const inputClass = "w-full rounded-xl border bg-white px-4 py-3 text-sm transition placeholder:text-[var(--color-text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-bloom)]/20";
+const inputClass = "w-full rounded-xl border bg-[var(--color-surface)] px-4 py-3 text-sm transition placeholder:text-[var(--color-text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-bloom)]/20";
 
 export default function SettingsPage() {
   const router = useRouter();

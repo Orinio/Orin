@@ -17,7 +17,7 @@ const sourceTypes: { value: ProofSourceType; label: string; icon: string; placeh
   { value: 'other', label: 'Other', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z', placeholder: 'https://example.com/proof', description: 'Any other proof of work' },
 ];
 
-const inputClass = "w-full rounded-xl border bg-white px-4 py-3 text-sm transition placeholder:text-[var(--color-text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-bloom)]/20";
+const inputClass = "w-full rounded-xl border bg-[var(--color-surface)] px-4 py-3 text-sm transition placeholder:text-[var(--color-text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-bloom)]/20";
 
 export default function AddProofSourcePage() {
   const [sourceType, setSourceType] = useState<ProofSourceType>('github');

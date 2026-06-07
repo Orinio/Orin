@@ -344,9 +344,9 @@ export default function ProofDetailPage() {
             </div>
 
             {aiError && (
-              <div className="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 flex items-start gap-2">
-                <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0 mt-0.5" />
-                <p className="text-xs text-red-700">{aiError}</p>
+              <div className="mt-3 rounded-lg border p-3 flex items-start gap-2" style={{ borderColor: 'var(--color-pulse)', backgroundColor: 'color-mix(in srgb, var(--color-pulse) 5%, transparent)' }}>
+                <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" style={{ color: 'var(--color-pulse)' }} />
+                <p className="text-xs" style={{ color: 'var(--color-pulse)' }}>{aiError}</p>
               </div>
             )}
 

@@ -220,7 +220,7 @@ export default function EditProofPage() {
         </div>
 
         {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          <div className="rounded-lg border p-3 text-sm" style={{ borderColor: 'var(--color-pulse)', backgroundColor: 'color-mix(in srgb, var(--color-pulse) 5%, transparent)', color: 'var(--color-pulse)' }}>
             {error}
           </div>
         )}

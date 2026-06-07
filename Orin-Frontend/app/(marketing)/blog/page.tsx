@@ -77,7 +77,7 @@ export default function BlogPage() {
                 <div className="flex items-center gap-3 mb-3">
                   <span
                     className="text-xs font-bold px-2.5 py-1 rounded-full"
-                    style={{ backgroundColor: 'var(--color-ember)', color: '#fff' }}
+                    style={{ backgroundColor: 'var(--color-ember)', color: 'var(--color-paper)' }}
                   >
                     {post.category}
                   </span>

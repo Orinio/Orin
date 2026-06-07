@@ -64,7 +64,7 @@ const suggestedSkills: Record<ProofSourceType, string[]> = {
   other: ['Problem Solving', 'Leadership', 'Communication'],
 };
 
-const inputClass = "w-full rounded-xl border bg-white px-4 py-3 text-sm transition placeholder:text-[var(--color-text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-bloom)]/20";
+const inputClass = "w-full rounded-xl border bg-[var(--color-surface)] px-4 py-3 text-sm transition placeholder:text-[var(--color-text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-bloom)]/20";
 
 export default function NewProofPage() {
   const router = useRouter();

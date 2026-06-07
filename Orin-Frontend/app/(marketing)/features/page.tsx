@@ -180,7 +180,7 @@ export default function FeaturesPage() {
             >
               <div
                 className="w-12 h-12 rounded-[var(--radius-lg)] flex items-center justify-center mb-4 shadow-md transition-transform duration-300 group-hover:scale-110"
-                style={{ background: feature.gradient, color: '#fff' }}
+                style={{ background: feature.gradient, color: 'var(--color-paper)' }}
               >
                 {feature.icon}
               </div>
@@ -215,7 +215,7 @@ export default function FeaturesPage() {
               >
                 <div
                   className="w-10 h-10 rounded-[var(--radius-md)] flex items-center justify-center mb-4"
-                  style={{ backgroundColor: 'var(--color-bloom)', color: '#fff' }}
+                  style={{ backgroundColor: 'var(--color-bloom)', color: 'var(--color-paper)' }}
                 >
                   {item.icon}
                 </div>

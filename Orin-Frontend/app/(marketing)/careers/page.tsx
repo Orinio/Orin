@@ -157,7 +157,7 @@ export default function CareersPage() {
               >
                 <div
                   className="w-10 h-10 rounded-[var(--radius-md)] flex items-center justify-center mb-3"
-                  style={{ backgroundColor: 'var(--color-bloom)', color: '#fff' }}
+                  style={{ backgroundColor: 'var(--color-bloom)', color: 'var(--color-paper)' }}
                 >
                   {p.icon}
                 </div>

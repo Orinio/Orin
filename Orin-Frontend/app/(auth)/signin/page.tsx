@@ -103,7 +103,7 @@ function SignInForm() {
         <h2 className="text-3xl font-bold tracking-tight sm:text-4xl" style={{ color: 'var(--color-ink)', fontFamily: 'var(--font-heading)' }}>
           Welcome back
         </h2>
-        <p className="mt-2 text-[15px]" style={{ color: 'var(--color-text-secondary)' }}>
+        <p className="mt-2 text-[15px]" style={{ color: 'var(--color-mist)' }}>
           Sign in to your Orin account to continue building your proof portfolio.
         </p>
       </div>
@@ -154,7 +154,7 @@ function SignInForm() {
           type="button"
           onClick={() => handleSocialLogin('google')}
           disabled={socialLoading !== null || loading}
-          className="group relative flex items-center justify-center gap-2.5 rounded-[var(--radius-md)] border bg-white px-4 py-3 text-sm font-medium shadow-sm transition-all hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60" style={{ borderColor: 'var(--color-border)', color: 'var(--color-ink)' }}
+          className="group relative flex items-center justify-center gap-2.5 rounded-[var(--radius-md)] border px-4 py-3 text-sm font-medium shadow-sm transition-all hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60" style={{ borderColor: 'var(--color-border)', color: 'var(--color-ink)', backgroundColor: 'var(--color-surface)' }}
         >
           {socialLoading === 'google' ? (
             <Loader2 className="h-4 w-4 animate-spin" style={{ color: 'var(--color-pulse)' }} />
@@ -169,7 +169,7 @@ function SignInForm() {
           type="button"
           onClick={() => handleSocialLogin('github')}
           disabled={socialLoading !== null || loading}
-          className="group relative flex items-center justify-center gap-2.5 rounded-[var(--radius-md)] border bg-white px-4 py-3 text-sm font-medium shadow-sm transition-all hover:shadow-md hover:bg-[var(--color-ink)] hover:text-white disabled:cursor-not-allowed disabled:opacity-60" style={{ borderColor: 'var(--color-border)', color: 'var(--color-ink)' }}
+          className="group relative flex items-center justify-center gap-2.5 rounded-[var(--radius-md)] border px-4 py-3 text-sm font-medium shadow-sm transition-all hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60" style={{ borderColor: 'var(--color-border)', color: 'var(--color-ink)', backgroundColor: 'var(--color-surface)' }}
         >
           {socialLoading === 'github' ? (
             <Loader2 className="h-4 w-4 animate-spin" style={{ color: 'var(--color-pulse)' }} />
@@ -185,7 +185,7 @@ function SignInForm() {
           <div className="w-full border-t" style={{ borderColor: 'var(--color-border)' }} />
         </div>
         <div className="relative flex justify-center text-xs">
-          <span className="px-3" style={{ backgroundColor: 'var(--color-surface)', color: 'var(--color-text-secondary)' }}>
+          <span className="px-3" style={{ backgroundColor: 'var(--color-canvas)', color: 'var(--color-mist)' }}>
             or sign in with email
           </span>
         </div>
@@ -198,7 +198,7 @@ function SignInForm() {
           </label>
           <div className="group relative">
             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
-              <Mail className="h-4 w-4 transition-colors" style={{ color: 'var(--color-text-tertiary)' }} />
+              <Mail className="h-4 w-4 transition-colors" style={{ color: 'var(--color-mist)' }} />
             </div>
             <input
               id="email"
@@ -209,8 +209,8 @@ function SignInForm() {
               onChange={(e) => { setEmail(e.target.value); setFieldErrors((p) => ({ ...p, email: undefined })); }}
               onBlur={() => { const err = validateEmail(email); setFieldErrors((p) => ({ ...p, email: err ?? undefined })); }}
               required
-              className={`block w-full rounded-[var(--radius-md)] border bg-white py-3 pl-10 pr-3.5 text-[15px] shadow-sm transition-all hover:border-slate-300 focus:outline-none focus:ring-4 ${fieldErrors.email ? 'border-red-300 focus:border-red-500 focus:ring-red-500/10' : ''}`}
-              style={{ borderColor: fieldErrors.email ? undefined : 'var(--color-border)', color: 'var(--color-ink)' }}
+              className={`block w-full rounded-[var(--radius-md)] border py-3 pl-10 pr-3.5 text-[15px] shadow-sm transition-all focus:outline-none focus:ring-4 ${fieldErrors.email ? 'focus:ring-[var(--color-pulse)]/10' : ''}`}
+              style={{ borderColor: fieldErrors.email ? 'var(--color-pulse)' : 'var(--color-border)', color: 'var(--color-ink)', backgroundColor: 'var(--color-surface)' }}
               aria-invalid={!!fieldErrors.email}
               aria-describedby={fieldErrors.email ? 'email-error' : undefined}
             />
@@ -226,7 +226,7 @@ function SignInForm() {
           </label>
           <div className="group relative">
             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
-              <Lock className="h-4 w-4 transition-colors" style={{ color: 'var(--color-text-tertiary)' }} />
+              <Lock className="h-4 w-4 transition-colors" style={{ color: 'var(--color-mist)' }} />
             </div>
             <input
               id="password"
@@ -237,8 +237,8 @@ function SignInForm() {
               onChange={(e) => { setPassword(e.target.value); setFieldErrors((p) => ({ ...p, password: undefined })); }}
               onBlur={() => { const err = validatePassword(password); setFieldErrors((p) => ({ ...p, password: err ?? undefined })); }}
               required
-              className={`block w-full rounded-[var(--radius-md)] border bg-white py-3 pl-10 pr-11 text-[15px] shadow-sm transition-all hover:border-slate-300 focus:outline-none focus:ring-4 ${fieldErrors.password ? 'border-red-300 focus:border-red-500 focus:ring-red-500/10' : ''}`}
-              style={{ borderColor: fieldErrors.password ? undefined : 'var(--color-border)', color: 'var(--color-ink)' }}
+              className={`block w-full rounded-[var(--radius-md)] border py-3 pl-10 pr-11 text-[15px] shadow-sm transition-all focus:outline-none focus:ring-4 ${fieldErrors.password ? 'focus:ring-[var(--color-pulse)]/10' : ''}`}
+              style={{ borderColor: fieldErrors.password ? 'var(--color-pulse)' : 'var(--color-border)', color: 'var(--color-ink)', backgroundColor: 'var(--color-surface)' }}
               aria-invalid={!!fieldErrors.password}
               aria-describedby={fieldErrors.password ? 'password-error' : undefined}
             />
@@ -246,7 +246,7 @@ function SignInForm() {
               type="button"
               onClick={() => setShowPassword((s) => !s)}
               tabIndex={-1}
-              className="absolute inset-y-0 right-0 flex items-center pr-3.5 transition-colors" style={{ color: 'var(--color-text-tertiary)' }}
+              className="absolute inset-y-0 right-0 flex items-center pr-3.5 transition-colors" style={{ color: 'var(--color-mist)' }}
               aria-label={showPassword ? 'Hide password' : 'Show password'}
             >
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -286,14 +286,14 @@ function SignInForm() {
         </button>
       </form>
 
-      <p className="mt-7 text-center text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+      <p className="mt-7 text-center text-sm" style={{ color: 'var(--color-mist)' }}>
         Don&rsquo;t have an account?{' '}
         <Link href="/signup" className="font-semibold transition-colors" style={{ color: 'var(--color-pulse)' }}>
           Create one for free
         </Link>
       </p>
 
-      <p className="mt-6 text-center text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
+      <p className="mt-6 text-center text-xs" style={{ color: 'var(--color-mist)' }}>
         Protected by industry-standard encryption.{' '}
         <Link href="#" className="underline-offset-2 hover:underline">Privacy</Link>
         &middot;

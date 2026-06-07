@@ -147,7 +147,7 @@ export default function AboutPage() {
               >
                 <div
                   className="w-10 h-10 rounded-[var(--radius-md)] flex items-center justify-center mb-4"
-                  style={{ backgroundColor: 'var(--color-ink)', color: '#fff' }}
+                  style={{ backgroundColor: 'var(--color-ink)', color: 'var(--color-paper)' }}
                 >
                   {v.icon}
                 </div>

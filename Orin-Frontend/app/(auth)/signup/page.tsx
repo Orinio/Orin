@@ -110,7 +110,7 @@ export default function SignupPage() {
             </svg>
           </div>
           <h3 className="mb-2 text-xl font-bold" style={{ color: 'var(--color-ink)', fontFamily: 'var(--font-heading)' }}>Check your inbox</h3>
-          <p className="mb-6 text-sm" style={{ color: 'var(--color-text-secondary)' }}>{success}</p>
+          <p className="mb-6 text-sm" style={{ color: 'var(--color-mist)' }}>{success}</p>
           <Link
             href="/signin"
             className="btn-primary inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-[var(--radius-md)]"
@@ -134,7 +134,7 @@ export default function SignupPage() {
         <h2 className="text-3xl font-bold tracking-tight sm:text-4xl" style={{ color: 'var(--color-ink)', fontFamily: 'var(--font-heading)' }}>
           Create Account
         </h2>
-        <p className="mt-2 text-[15px]" style={{ color: 'var(--color-text-secondary)' }}>
+        <p className="mt-2 text-[15px]" style={{ color: 'var(--color-mist)' }}>
           Set up your profile to start building and sharing verified career proof.
         </p>
       </div>
@@ -161,7 +161,7 @@ export default function SignupPage() {
               type="button"
               onClick={() => handleSocialLogin('google')}
               disabled={socialLoading !== null || loading}
-              className="group relative flex items-center justify-center gap-2.5 rounded-[var(--radius-md)] border bg-white px-4 py-3 text-sm font-medium shadow-sm transition-all hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60" style={{ borderColor: 'var(--color-border)', color: 'var(--color-ink)' }}
+              className="group relative flex items-center justify-center gap-2.5 rounded-[var(--radius-md)] border px-4 py-3 text-sm font-medium shadow-sm transition-all hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60" style={{ borderColor: 'var(--color-border)', color: 'var(--color-ink)', backgroundColor: 'var(--color-surface)' }}
             >
               {socialLoading === 'google' ? (
                 <Loader2 className="h-4 w-4 animate-spin" style={{ color: 'var(--color-pulse)' }} />
@@ -176,7 +176,7 @@ export default function SignupPage() {
               type="button"
               onClick={() => handleSocialLogin('github')}
               disabled={socialLoading !== null || loading}
-              className="group relative flex items-center justify-center gap-2.5 rounded-[var(--radius-md)] border bg-white px-4 py-3 text-sm font-medium shadow-sm transition-all hover:shadow-md hover:bg-[var(--color-ink)] hover:text-white disabled:cursor-not-allowed disabled:opacity-60" style={{ borderColor: 'var(--color-border)', color: 'var(--color-ink)' }}
+              className="group relative flex items-center justify-center gap-2.5 rounded-[var(--radius-md)] border px-4 py-3 text-sm font-medium shadow-sm transition-all hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60" style={{ borderColor: 'var(--color-border)', color: 'var(--color-ink)', backgroundColor: 'var(--color-surface)' }}
             >
               {socialLoading === 'github' ? (
                 <Loader2 className="h-4 w-4 animate-spin" style={{ color: 'var(--color-pulse)' }} />
@@ -192,7 +192,7 @@ export default function SignupPage() {
               <div className="w-full border-t" style={{ borderColor: 'var(--color-border)' }} />
             </div>
             <div className="relative flex justify-center text-xs">
-              <span className="px-3" style={{ backgroundColor: 'var(--color-surface)', color: 'var(--color-text-secondary)' }}>or continue with</span>
+              <span className="px-3" style={{ backgroundColor: 'var(--color-surface)', color: 'var(--color-mist)' }}>or continue with</span>
             </div>
           </div>
 
@@ -207,7 +207,7 @@ export default function SignupPage() {
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
           </motion.button>
 
-          <p className="mt-7 text-center text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+          <p className="mt-7 text-center text-sm" style={{ color: 'var(--color-mist)' }}>
             Already have an account?{' '}
             <Link href="/signin" className="font-semibold transition-colors" style={{ color: 'var(--color-pulse)' }}>
               Sign in
@@ -222,7 +222,7 @@ export default function SignupPage() {
             </label>
             <div className="group relative">
               <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
-                <User className="h-4 w-4" style={{ color: 'var(--color-text-tertiary)' }} />
+                <User className="h-4 w-4" style={{ color: 'var(--color-mist)' }} />
               </div>
               <Input
                 id="fullName"
@@ -231,8 +231,8 @@ export default function SignupPage() {
                 value={fullName}
                 onChange={(e) => { setFullName(e.target.value); setFieldErrors((p) => ({ ...p, fullName: '' })); }}
                 required
-                className={`pl-10 ${fieldErrors.fullName ? 'border-red-300' : ''}`}
-                style={{ borderColor: fieldErrors.fullName ? undefined : 'var(--color-border)' }}
+                className={`pl-10 ${fieldErrors.fullName ? 'border-[var(--color-pulse)]' : ''}`}
+                style={{ borderColor: fieldErrors.fullName ? 'var(--color-pulse)' : 'var(--color-border)' }}
                 aria-invalid={!!fieldErrors.fullName}
               />
             </div>
@@ -245,7 +245,7 @@ export default function SignupPage() {
             </label>
             <div className="group relative">
               <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
-                <Mail className="h-4 w-4" style={{ color: 'var(--color-text-tertiary)' }} />
+                <Mail className="h-4 w-4" style={{ color: 'var(--color-mist)' }} />
               </div>
               <Input
                 id="email"
@@ -254,8 +254,8 @@ export default function SignupPage() {
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); setFieldErrors((p) => ({ ...p, email: '' })); }}
                 required
-                className={`pl-10 ${fieldErrors.email ? 'border-red-300' : ''}`}
-                style={{ borderColor: fieldErrors.email ? undefined : 'var(--color-border)' }}
+                className={`pl-10 ${fieldErrors.email ? 'border-[var(--color-pulse)]' : ''}`}
+                style={{ borderColor: fieldErrors.email ? 'var(--color-pulse)' : 'var(--color-border)' }}
                 aria-invalid={!!fieldErrors.email}
               />
             </div>
@@ -268,7 +268,7 @@ export default function SignupPage() {
             </label>
             <div className="group relative">
               <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
-                <Lock className="h-4 w-4" style={{ color: 'var(--color-text-tertiary)' }} />
+                <Lock className="h-4 w-4" style={{ color: 'var(--color-mist)' }} />
               </div>
               <Input
                 id="password"
@@ -277,15 +277,15 @@ export default function SignupPage() {
                 value={password}
                 onChange={(e) => { setPassword(e.target.value); setFieldErrors((p) => ({ ...p, password: '' })); }}
                 required
-                className={`pl-10 ${fieldErrors.password ? 'border-red-300' : ''}`}
-                style={{ borderColor: fieldErrors.password ? undefined : 'var(--color-border)' }}
+                className={`pl-10 ${fieldErrors.password ? 'border-[var(--color-pulse)]' : ''}`}
+                style={{ borderColor: fieldErrors.password ? 'var(--color-pulse)' : 'var(--color-border)' }}
                 aria-invalid={!!fieldErrors.password}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((s) => !s)}
                 tabIndex={-1}
-                className="absolute inset-y-0 right-0 flex items-center pr-3.5" style={{ color: 'var(--color-text-tertiary)' }}
+                className="absolute inset-y-0 right-0 flex items-center pr-3.5" style={{ color: 'var(--color-mist)' }}
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -299,7 +299,7 @@ export default function SignupPage() {
                   <div className="h-1.5 flex-1 overflow-hidden rounded-full" style={{ backgroundColor: 'var(--color-surface-dim)' }}>
                     <div className={`h-full rounded-full transition-all ${passwordStrength?.color}`} style={{ width: `${(passwordStrength!.score / 6) * 100}%`, backgroundColor: 'var(--color-bloom)' }} />
                   </div>
-                  <span className="text-xs font-medium" style={{ color: 'var(--color-text-tertiary)' }}>{passwordStrength?.label}</span>
+                  <span className="text-xs font-medium" style={{ color: 'var(--color-mist)' }}>{passwordStrength?.label}</span>
                 </div>
                 <ul className="space-y-1">
                   {passwordChecks.map((check) => (
@@ -309,7 +309,7 @@ export default function SignupPage() {
                       ) : (
                         <XCircle className="h-3.5 w-3.5" style={{ color: 'var(--color-mist)' }} />
                       )}
-                      <span style={{ color: check.met ? 'var(--color-bloom)' : 'var(--color-text-tertiary)' }}>{check.label}</span>
+                      <span style={{ color: check.met ? 'var(--color-bloom)' : 'var(--color-mist)' }}>{check.label}</span>
                     </li>
                   ))}
                 </ul>
@@ -323,7 +323,7 @@ export default function SignupPage() {
             </label>
             <div className="group relative">
               <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
-                <Lock className="h-4 w-4" style={{ color: 'var(--color-text-tertiary)' }} />
+                <Lock className="h-4 w-4" style={{ color: 'var(--color-mist)' }} />
               </div>
               <Input
                 id="confirmPassword"
@@ -332,8 +332,8 @@ export default function SignupPage() {
                 value={confirmPassword}
                 onChange={(e) => { setConfirmPassword(e.target.value); setFieldErrors((p) => ({ ...p, confirmPassword: '' })); }}
                 required
-                className={`pl-10 ${fieldErrors.confirmPassword ? 'border-red-300' : ''}`}
-                style={{ borderColor: fieldErrors.confirmPassword ? undefined : 'var(--color-border)' }}
+                className={`pl-10 ${fieldErrors.confirmPassword ? 'border-[var(--color-pulse)]' : ''}`}
+                style={{ borderColor: fieldErrors.confirmPassword ? 'var(--color-pulse)' : 'var(--color-border)' }}
                 aria-invalid={!!fieldErrors.confirmPassword}
               />
             </div>
@@ -352,12 +352,12 @@ export default function SignupPage() {
                   onChange={(e) => { setAgreeTerms(e.target.checked); setFieldErrors((p) => ({ ...p, terms: '' })); }}
                   className="peer sr-only"
                 />
-                <div className={`h-[18px] w-[18px] rounded-[var(--radius-sm)] border-2 bg-white transition-all peer-checked:border-[var(--color-bloom)] peer-checked:bg-[var(--color-bloom)] peer-focus-visible:ring-2 peer-focus-visible:ring-[var(--color-bloom)]/30 group-hover:border-slate-400 ${fieldErrors.terms ? 'border-red-400' : ''}`} style={{ borderColor: fieldErrors.terms ? undefined : 'var(--color-border)' }} />
+                <div className={`h-[18px] w-[18px] rounded-[var(--radius-sm)] border-2 bg-[var(--color-surface)] transition-all peer-checked:border-[var(--color-bloom)] peer-checked:bg-[var(--color-bloom)] peer-focus-visible:ring-2 peer-focus-visible:ring-[var(--color-bloom)]/30 group-hover:border-[var(--color-mist)] ${fieldErrors.terms ? 'border-[var(--color-pulse)]' : ''}`} style={{ borderColor: fieldErrors.terms ? undefined : 'var(--color-border)' }} />
                 <svg className="pointer-events-none absolute left-0.5 top-0.5 h-3 w-3 text-white opacity-0 transition-opacity peer-checked:opacity-100" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <span className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+              <span className="text-sm" style={{ color: 'var(--color-mist)' }}>
                 I agree to the{' '}
                 <Link href="#" className="font-medium underline-offset-2 hover:underline" style={{ color: 'var(--color-pulse)' }}>Terms of Service</Link>
                 {' '}and{' '}
@@ -395,7 +395,7 @@ export default function SignupPage() {
         </form>
       )}
 
-      <p className="mt-6 text-center text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
+      <p className="mt-6 text-center text-xs" style={{ color: 'var(--color-mist)' }}>
         Protected by industry-standard encryption.{' '}
         <Link href="#" className="underline-offset-2 hover:underline">Privacy</Link>
         &middot;

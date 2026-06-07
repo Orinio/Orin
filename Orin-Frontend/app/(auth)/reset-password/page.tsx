@@ -112,7 +112,7 @@ export default function ResetPasswordPage() {
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); setFieldError(null); }}
                 required
-                className={`pl-10 ${fieldError ? 'border-red-300' : ''}`}
+                className={`pl-10 ${fieldError ? 'border-[var(--color-pulse)]' : ''}`}
                 style={{ borderColor: fieldError ? undefined : 'var(--color-border)' }}
                 aria-invalid={!!fieldError}
               />

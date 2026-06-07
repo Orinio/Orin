@@ -95,23 +95,23 @@ export default function ContactPage() {
       <section
         className="relative overflow-hidden pt-28 pb-16 px-6"
         style={{
-          background: 'linear-gradient(135deg, #ecfdf5 0%, #ffffff 50%, #fff7ed 100%)',
+          background: 'linear-gradient(135deg, var(--color-paper) 0%, var(--color-surface) 50%, var(--color-paper) 100%)',
         }}
       >
         {/* Decorative blobs */}
-        <div className="pointer-events-none absolute -top-20 -left-20 h-72 w-72 rounded-full bg-[var(--color-primary-emerald)] opacity-[0.06] blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-20 -right-20 h-72 w-72 rounded-full bg-[var(--color-primary-orange)] opacity-[0.06] blur-3xl" />
+        <div className="pointer-events-none absolute -top-20 -left-20 h-72 w-72 rounded-full bg-[var(--color-bloom)] opacity-[0.06] blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-20 -right-20 h-72 w-72 rounded-full bg-[var(--color-ember)] opacity-[0.06] blur-3xl" />
 
         <div className="relative mx-auto max-w-3xl text-center">
-          <span className="inline-block rounded-full border border-[var(--color-primary-emerald)]/20 bg-[var(--color-primary-soft)] px-4 py-1.5 text-xs font-semibold tracking-wide text-[var(--color-primary-emerald)] uppercase">
+          <span className="inline-block rounded-full border border-[var(--color-bloom)]/20 bg-[var(--color-surface-dim)] px-4 py-1.5 text-xs font-semibold tracking-wide text-[var(--color-bloom)] uppercase">
             Get in touch
           </span>
-          <h1 className="mt-5 font-serif text-4xl font-bold text-[var(--color-neutral-text)] md:text-5xl">
+          <h1 className="mt-5 font-serif text-4xl font-bold text-[var(--color-ink)] md:text-5xl">
             We&apos;d love to hear
             <br />
             from you
           </h1>
-          <p className="mx-auto mt-4 max-w-lg text-lg text-[var(--color-neutral-text-secondary)]">
+          <p className="mx-auto mt-4 max-w-lg text-lg text-[var(--color-mist)]">
             Have a question, feedback, or just want to say hello? Drop us a line and our team will
             get back to you as soon as possible.
           </p>
@@ -124,48 +124,48 @@ export default function ContactPage() {
           {/* ─── Left: Contact Info ─── */}
           <div className="space-y-8">
             {/* Email card */}
-            <div className="rounded-xl border border-[var(--color-neutral-border)] bg-[var(--color-neutral-surface)] p-6">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--color-primary-soft)] text-[var(--color-primary-emerald)]">
+            <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--color-surface-dim)] text-[var(--color-bloom)]">
                 <Mail size={20} />
               </div>
-              <h3 className="mt-4 text-sm font-semibold text-[var(--color-neutral-text)]">
+              <h3 className="mt-4 text-sm font-semibold text-[var(--color-ink)]">
                 Email us
               </h3>
               <a
                 href="mailto:support@orin.app"
-                className="mt-1 block text-sm text-[var(--color-primary-emerald)] hover:underline"
+                className="mt-1 block text-sm text-[var(--color-bloom)] hover:underline"
               >
                 support@orin.app
               </a>
             </div>
 
             {/* Response time card */}
-            <div className="rounded-xl border border-[var(--color-neutral-border)] bg-[var(--color-neutral-surface)] p-6">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--color-bg-orange-light)] text-[var(--color-primary-orange)]">
+            <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--color-surface-dim)] text-[var(--color-ember)]">
                 <Clock size={20} />
               </div>
-              <h3 className="mt-4 text-sm font-semibold text-[var(--color-neutral-text)]">
+              <h3 className="mt-4 text-sm font-semibold text-[var(--color-ink)]">
                 Response time
               </h3>
-              <p className="mt-1 text-sm text-[var(--color-neutral-text-secondary)]">
-                We typically respond within <strong className="text-[var(--color-neutral-text)]">24 hours</strong> on business days.
+              <p className="mt-1 text-sm text-[var(--color-mist)]">
+                We typically respond within <strong className="text-[var(--color-ink)]">24 hours</strong> on business days.
               </p>
             </div>
 
             {/* FAQ link card */}
-            <div className="rounded-xl border border-[var(--color-neutral-border)] bg-[var(--color-neutral-surface)] p-6">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--color-primary-soft)] text-[var(--color-primary-emerald)]">
+            <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--color-surface-dim)] text-[var(--color-bloom)]">
                 <HelpCircle size={20} />
               </div>
-              <h3 className="mt-4 text-sm font-semibold text-[var(--color-neutral-text)]">
+              <h3 className="mt-4 text-sm font-semibold text-[var(--color-ink)]">
                 Check our FAQ
               </h3>
-              <p className="mt-1 text-sm text-[var(--color-neutral-text-secondary)]">
+              <p className="mt-1 text-sm text-[var(--color-mist)]">
                 Find quick answers to common questions about proof cards, verification, and more.
               </p>
               <Link
                 href="/faq"
-                className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-[var(--color-primary-emerald)] hover:underline"
+                className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-[var(--color-bloom)] hover:underline"
               >
                 Browse FAQ
                 <ArrowRight size={14} />
@@ -174,24 +174,24 @@ export default function ContactPage() {
           </div>
 
           {/* ─── Right: Form ─── */}
-          <div className="rounded-2xl border border-[var(--color-neutral-border)] bg-[var(--color-neutral-surface)] p-8 shadow-sm">
+          <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-8 shadow-sm">
             {success ? (
               /* ─── Success State ─── */
               <div className="flex flex-col items-center justify-center py-12 text-center">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--color-primary-soft)] animate-[scaleIn_0.4s_ease-out]">
-                  <CheckCircle2 size={32} className="text-[var(--color-primary-emerald)]" />
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--color-surface-dim)] animate-[scaleIn_0.4s_ease-out]">
+                  <CheckCircle2 size={32} className="text-[var(--color-bloom)]" />
                 </div>
-                <h3 className="mt-6 font-serif text-2xl font-semibold text-[var(--color-neutral-text)]">
+                <h3 className="mt-6 font-serif text-2xl font-semibold text-[var(--color-ink)]">
                   Message sent!
                 </h3>
-                <p className="mt-2 max-w-sm text-sm text-[var(--color-neutral-text-secondary)]">
+                <p className="mt-2 max-w-sm text-sm text-[var(--color-mist)]">
                   Thank you for reaching out, {name.split(' ')[0]}! We&apos;ve received your
                   message and will get back to you within 24 hours.
                 </p>
                 <button
                   type="button"
                   onClick={handleReset}
-                  className="mt-6 rounded-lg border border-[var(--color-neutral-border)] px-5 py-2.5 text-sm font-medium text-[var(--color-neutral-text)] transition hover:border-[var(--color-primary-emerald)] hover:text-[var(--color-primary-emerald)]"
+                  className="mt-6 rounded-lg border border-[var(--color-border)] px-5 py-2.5 text-sm font-medium text-[var(--color-ink)] transition hover:border-[var(--color-bloom)] hover:text-[var(--color-bloom)]"
                 >
                   Send another message
                 </button>
@@ -199,10 +199,10 @@ export default function ContactPage() {
             ) : (
               /* ─── Form ─── */
               <>
-                <h2 className="font-serif text-xl font-semibold text-[var(--color-neutral-text)]">
+                <h2 className="font-serif text-xl font-semibold text-[var(--color-ink)]">
                   Send us a message
                 </h2>
-                <p className="mt-1 text-sm text-[var(--color-neutral-text-secondary)]">
+                <p className="mt-1 text-sm text-[var(--color-mist)]">
                   Fill out the form below and we&apos;ll get back to you soon.
                 </p>
 
@@ -211,18 +211,18 @@ export default function ContactPage() {
                   <div>
                     <label
                       htmlFor="contactName"
-                      className="mb-1.5 block text-sm font-medium text-[var(--color-neutral-text)]"
+                      className="mb-1.5 block text-sm font-medium text-[var(--color-ink)]"
                     >
                       Name
                     </label>
                     <div
-                      className={`flex items-center rounded-lg border bg-[var(--color-neutral-bg)] transition ${
+                      className={`flex items-center rounded-lg border bg-[var(--color-surface-dim)] transition ${
                         errors.name
-                          ? 'border-[var(--color-danger)] ring-2 ring-[var(--color-danger)]/10'
-                          : 'border-[var(--color-neutral-border)] focus-within:border-[var(--color-primary-emerald)] focus-within:ring-2 focus-within:ring-[var(--color-primary-soft)]'
+                          ? 'border-[var(--color-pulse)] ring-2 ring-[var(--color-pulse)]/10'
+                          : 'border-[var(--color-border)] focus-within:border-[var(--color-bloom)] focus-within:ring-2 focus-within:ring-[var(--color-surface-dim)]'
                       }`}
                     >
-                      <span className="pl-3.5 text-[var(--color-neutral-text-tertiary)]">
+                      <span className="pl-3.5 text-[var(--color-mist)]">
                         <User size={16} />
                       </span>
                       <input
@@ -232,11 +232,11 @@ export default function ContactPage() {
                         onChange={(e) => setName(e.target.value)}
                         onBlur={() => handleBlur('name')}
                         placeholder="Your name"
-                        className="w-full border-0 bg-transparent px-3 py-2.5 text-sm text-[var(--color-neutral-text)] placeholder:text-[var(--color-neutral-text-tertiary)] focus:outline-none"
+                        className="w-full border-0 bg-transparent px-3 py-2.5 text-sm text-[var(--color-ink)] placeholder:text-[var(--color-mist)] focus:outline-none"
                       />
                     </div>
                     {errors.name && (
-                      <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.name}</p>
+                      <p className="mt-1 text-xs text-[var(--color-pulse)]">{errors.name}</p>
                     )}
                   </div>
 
@@ -244,18 +244,18 @@ export default function ContactPage() {
                   <div>
                     <label
                       htmlFor="contactEmail"
-                      className="mb-1.5 block text-sm font-medium text-[var(--color-neutral-text)]"
+                      className="mb-1.5 block text-sm font-medium text-[var(--color-ink)]"
                     >
                       Email
                     </label>
                     <div
-                      className={`flex items-center rounded-lg border bg-[var(--color-neutral-bg)] transition ${
+                      className={`flex items-center rounded-lg border bg-[var(--color-surface-dim)] transition ${
                         errors.email
-                          ? 'border-[var(--color-danger)] ring-2 ring-[var(--color-danger)]/10'
-                          : 'border-[var(--color-neutral-border)] focus-within:border-[var(--color-primary-emerald)] focus-within:ring-2 focus-within:ring-[var(--color-primary-soft)]'
+                          ? 'border-[var(--color-pulse)] ring-2 ring-[var(--color-pulse)]/10'
+                          : 'border-[var(--color-border)] focus-within:border-[var(--color-bloom)] focus-within:ring-2 focus-within:ring-[var(--color-surface-dim)]'
                       }`}
                     >
-                      <span className="pl-3.5 text-[var(--color-neutral-text-tertiary)]">
+                      <span className="pl-3.5 text-[var(--color-mist)]">
                         <Mail size={16} />
                       </span>
                       <input
@@ -265,11 +265,11 @@ export default function ContactPage() {
                         onChange={(e) => setEmail(e.target.value)}
                         onBlur={() => handleBlur('email')}
                         placeholder="you@example.com"
-                        className="w-full border-0 bg-transparent px-3 py-2.5 text-sm text-[var(--color-neutral-text)] placeholder:text-[var(--color-neutral-text-tertiary)] focus:outline-none"
+                        className="w-full border-0 bg-transparent px-3 py-2.5 text-sm text-[var(--color-ink)] placeholder:text-[var(--color-mist)] focus:outline-none"
                       />
                     </div>
                     {errors.email && (
-                      <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.email}</p>
+                      <p className="mt-1 text-xs text-[var(--color-pulse)]">{errors.email}</p>
                     )}
                   </div>
 
@@ -277,12 +277,12 @@ export default function ContactPage() {
                   <div>
                     <label
                       htmlFor="contactSubject"
-                      className="mb-1.5 block text-sm font-medium text-[var(--color-neutral-text)]"
+                      className="mb-1.5 block text-sm font-medium text-[var(--color-ink)]"
                     >
-                      Subject <span className="text-[var(--color-neutral-text-tertiary)]">(optional)</span>
+                      Subject <span className="text-[var(--color-mist)]">(optional)</span>
                     </label>
-                    <div className="flex items-center rounded-lg border border-[var(--color-neutral-border)] bg-[var(--color-neutral-bg)] transition focus-within:border-[var(--color-primary-emerald)] focus-within:ring-2 focus-within:ring-[var(--color-primary-soft)]">
-                      <span className="pl-3.5 text-[var(--color-neutral-text-tertiary)]">
+                    <div className="flex items-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-dim)] transition focus-within:border-[var(--color-bloom)] focus-within:ring-2 focus-within:ring-[var(--color-surface-dim)]">
+                      <span className="pl-3.5 text-[var(--color-mist)]">
                         <MessageSquare size={16} />
                       </span>
                       <input
@@ -291,7 +291,7 @@ export default function ContactPage() {
                         value={subject}
                         onChange={(e) => setSubject(e.target.value)}
                         placeholder="What's this about?"
-                        className="w-full border-0 bg-transparent px-3 py-2.5 text-sm text-[var(--color-neutral-text)] placeholder:text-[var(--color-neutral-text-tertiary)] focus:outline-none"
+                        className="w-full border-0 bg-transparent px-3 py-2.5 text-sm text-[var(--color-ink)] placeholder:text-[var(--color-mist)] focus:outline-none"
                       />
                     </div>
                   </div>
@@ -300,18 +300,18 @@ export default function ContactPage() {
                   <div>
                     <label
                       htmlFor="contactMessage"
-                      className="mb-1.5 block text-sm font-medium text-[var(--color-neutral-text)]"
+                      className="mb-1.5 block text-sm font-medium text-[var(--color-ink)]"
                     >
                       Message
                     </label>
                     <div
-                      className={`flex rounded-lg border bg-[var(--color-neutral-bg)] transition ${
+                      className={`flex rounded-lg border bg-[var(--color-surface-dim)] transition ${
                         errors.message
-                          ? 'border-[var(--color-danger)] ring-2 ring-[var(--color-danger)]/10'
-                          : 'border-[var(--color-neutral-border)] focus-within:border-[var(--color-primary-emerald)] focus-within:ring-2 focus-within:ring-[var(--color-primary-soft)]'
+                          ? 'border-[var(--color-pulse)] ring-2 ring-[var(--color-pulse)]/10'
+                          : 'border-[var(--color-border)] focus-within:border-[var(--color-bloom)] focus-within:ring-2 focus-within:ring-[var(--color-surface-dim)]'
                       }`}
                     >
-                      <span className="pl-3.5 pt-3 text-[var(--color-neutral-text-tertiary)]">
+                      <span className="pl-3.5 pt-3 text-[var(--color-mist)]">
                         <MessageSquare size={16} />
                       </span>
                       <textarea
@@ -322,16 +322,16 @@ export default function ContactPage() {
                         placeholder="Tell us what's on your mind..."
                         rows={5}
                         maxLength={1000}
-                        className="w-full resize-none border-0 bg-transparent px-3 py-2.5 text-sm text-[var(--color-neutral-text)] placeholder:text-[var(--color-neutral-text-tertiary)] focus:outline-none"
+                        className="w-full resize-none border-0 bg-transparent px-3 py-2.5 text-sm text-[var(--color-ink)] placeholder:text-[var(--color-mist)] focus:outline-none"
                       />
                     </div>
                     <div className="mt-1 flex items-center justify-between">
                       {errors.message ? (
-                        <p className="text-xs text-[var(--color-danger)]">{errors.message}</p>
+                        <p className="text-xs text-[var(--color-pulse)]">{errors.message}</p>
                       ) : (
                         <span />
                       )}
-                      <p className="text-xs text-[var(--color-neutral-text-tertiary)]">
+                      <p className="text-xs text-[var(--color-mist)]">
                         {message.length}/1000
                       </p>
                     </div>
@@ -339,7 +339,7 @@ export default function ContactPage() {
 
                   {/* Error */}
                   {error && (
-                    <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                    <div className="rounded-lg border p-3 text-sm" style={{ borderColor: 'var(--color-pulse)', backgroundColor: 'color-mix(in srgb, var(--color-pulse) 5%, transparent)', color: 'var(--color-pulse)' }}>
                       {error}
                     </div>
                   )}

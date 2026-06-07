@@ -79,34 +79,34 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
 
   return (
     <main id="main-content" className="mx-auto w-full max-w-[1200px] px-4 py-8 md:px-8">
-      <section className="rounded-[var(--radius-lg)] bg-gradient-to-br from-white to-[var(--color-neutral-surface-alt)] p-6 border border-[var(--color-neutral-border)]">
+      <section className="rounded-[var(--radius-lg)] bg-gradient-to-br from-[var(--color-surface)] to-[var(--color-surface-dim)] p-6 border border-[var(--color-border)]">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="text-sm text-[var(--color-primary-emerald)]">@{user.username}</p>
+            <p className="text-sm text-[var(--color-bloom)]">@{user.username}</p>
             <h1 className="mt-2 text-4xl font-semibold md:text-5xl font-serif">{user.fullName || user.username}</h1>
             {user.headline && (
-              <p className="mt-2 text-[var(--color-neutral-text)] font-medium">{user.headline}</p>
+              <p className="mt-2 text-[var(--color-ink)] font-medium">{user.headline}</p>
             )}
-            <p className="mt-1 text-[var(--color-neutral-text-secondary)]">
+            <p className="mt-1 text-[var(--color-mist)]">
               {user.year && yearLabels[user.year]}{user.college && ` @ ${user.college}`}
               {user.location && ` · ${user.location}`}
             </p>
             {user.bio && (
-              <p className="mt-3 max-w-2xl text-sm text-[var(--color-neutral-text-secondary)]">{user.bio}</p>
+              <p className="mt-3 max-w-2xl text-sm text-[var(--color-mist)]">{user.bio}</p>
             )}
           </div>
           <div className="flex gap-4 text-center">
-            <div className="rounded-lg border border-[var(--color-neutral-border)] bg-[var(--color-neutral-surface)] px-4 py-3">
-              <p className="text-2xl font-bold text-[var(--color-primary-emerald)]">{proofs.length}</p>
-              <p className="text-xs text-[var(--color-neutral-text-secondary)]">Proofs</p>
+            <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3">
+              <p className="text-2xl font-bold text-[var(--color-bloom)]">{proofs.length}</p>
+              <p className="text-xs text-[var(--color-mist)]">Proofs</p>
             </div>
-            <div className="rounded-lg border border-[var(--color-neutral-border)] bg-[var(--color-neutral-surface)] px-4 py-3">
-              <p className="text-2xl font-bold text-[var(--color-primary-emerald)]">{allSkills.length}</p>
-              <p className="text-xs text-[var(--color-neutral-text-secondary)]">Skills</p>
+            <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3">
+              <p className="text-2xl font-bold text-[var(--color-bloom)]">{allSkills.length}</p>
+              <p className="text-xs text-[var(--color-mist)]">Skills</p>
             </div>
-            <div className="rounded-lg border border-[var(--color-neutral-border)] bg-[var(--color-neutral-surface)] px-4 py-3">
-              <p className="text-2xl font-bold text-[var(--color-primary-emerald)]">{totalViewCount}</p>
-              <p className="text-xs text-[var(--color-neutral-text-secondary)]">Views</p>
+            <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3">
+              <p className="text-2xl font-bold text-[var(--color-bloom)]">{totalViewCount}</p>
+              <p className="text-xs text-[var(--color-mist)]">Views</p>
             </div>
           </div>
         </div>
@@ -118,7 +118,7 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
                 href={link.url!}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-md border-2 border-[var(--color-primary-emerald)] bg-transparent px-4 py-2 font-semibold text-[var(--color-primary-emerald)] transition hover:bg-[var(--color-primary-soft)]"
+                className="inline-flex items-center gap-2 rounded-md border-2 border-[var(--color-bloom)] bg-transparent px-4 py-2 font-semibold text-[var(--color-bloom)] transition hover:bg-[var(--color-surface-dim)]"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                   <path d={link.icon} />
@@ -139,16 +139,16 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
 
       {allSkills.length > 0 && (
         <section className="mt-8">
-          <h2 className="text-2xl font-semibold text-[var(--color-neutral-text)] font-serif">Verified Skills</h2>
+          <h2 className="text-2xl font-semibold text-[var(--color-ink)] font-serif">Verified Skills</h2>
           <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
             {skillCounts.slice(0, 8).map((skill) => (
-              <div key={skill.name} className="rounded-lg border border-[var(--color-neutral-border)] bg-[var(--color-neutral-surface)] p-4">
-                <h3 className="text-base font-semibold text-[var(--color-neutral-text)]">{skill.name}</h3>
-                <p className="mt-1 text-sm text-[var(--color-neutral-text-secondary)]">
+              <div key={skill.name} className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
+                <h3 className="text-base font-semibold text-[var(--color-ink)]">{skill.name}</h3>
+                <p className="mt-1 text-sm text-[var(--color-mist)]">
                   {skill.count} proof{skill.count !== 1 ? 's' : ''} verified
                 </p>
                 <div className="mt-3">
-                  <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-800">
+                  <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium" style={{ backgroundColor: 'var(--color-bloom)', color: 'var(--color-paper)' }}>
                     Verified
                   </span>
                 </div>
@@ -160,13 +160,13 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
 
       {Object.keys(sourceTypeCounts).length > 0 && (
         <section className="mt-8">
-          <h2 className="text-lg font-semibold text-[var(--color-neutral-text)]">Proof by Type</h2>
+          <h2 className="text-lg font-semibold text-[var(--color-ink)]">Proof by Type</h2>
           <div className="mt-3 flex flex-wrap gap-2">
             {Object.entries(sourceTypeCounts).map(([type, count]) => (
-              <div key={type} className="flex items-center gap-2 rounded-lg border border-[var(--color-neutral-border)] bg-[var(--color-neutral-surface)] px-4 py-2">
+              <div key={type} className="flex items-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2">
                 <span className="h-2 w-2 rounded-full" style={{ backgroundColor: getProofTypeColor(type) }} />
-                <span className="text-sm font-medium text-[var(--color-neutral-text)] capitalize">{type}</span>
-                <span className="text-xs text-[var(--color-neutral-text-secondary)]">({count})</span>
+                <span className="text-sm font-medium text-[var(--color-ink)] capitalize">{type}</span>
+                <span className="text-xs text-[var(--color-mist)]">({count})</span>
               </div>
             ))}
           </div>
@@ -174,7 +174,7 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
       )}
 
       <section className="mt-8">
-        <h2 className="text-2xl font-semibold text-[var(--color-neutral-text)] font-serif">
+        <h2 className="text-2xl font-semibold text-[var(--color-ink)] font-serif">
           {user.fullName || user.username}&apos;s Proof ({proofs.length} total)
         </h2>
         <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -184,8 +184,8 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
         </div>
       </section>
 
-      <footer className="mt-10 border-t border-[var(--color-neutral-border)] py-6 text-sm text-[var(--color-neutral-text-secondary)]">
-        <p>Create your own proof profile on <Link href="/" className="text-[var(--color-primary-emerald)] hover:underline">Orin</Link>.</p>
+      <footer className="mt-10 border-t border-[var(--color-border)] py-6 text-sm text-[var(--color-mist)]">
+        <p>Create your own proof profile on <Link href="/" className="text-[var(--color-bloom)] hover:underline">Orin</Link>.</p>
       </footer>
     </main>
   );

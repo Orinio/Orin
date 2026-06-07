@@ -346,7 +346,7 @@ function OpportunitiesContent() {
                     {opp.location && <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{opp.location}</span>}
                     {opp.isRemote && <span className="inline-flex items-center gap-1 rounded px-2 py-0.5" style={{ backgroundColor: 'var(--color-ember)12', color: 'var(--color-ember)' }}><Globe className="h-3 w-3" />Remote</span>}
                     {formatSalary(opp) && <span className="inline-flex items-center gap-1"><DollarSign className="h-3 w-3" />{formatSalary(opp)}</span>}
-                    {opp.applyDeadline && <span className="inline-flex items-center gap-1"><Clock className="h-3 w-3" />{opp.applyDeadline.toLocaleDateString()}</span>}
+                    {opp.applyDeadline && <span className="inline-flex items-center gap-1"><Clock className="h-3 w-3" />{new Date(opp.applyDeadline).toLocaleDateString()}</span>}
                   </div>
 
                   {opp.requiredSkills.length > 0 && (

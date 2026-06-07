@@ -109,7 +109,7 @@ export default function DocsPage() {
             >
               <div
                 className="w-10 h-10 rounded-[var(--radius-md)] flex items-center justify-center mb-4 transition-transform duration-300 group-hover:scale-110"
-                style={{ backgroundColor: 'var(--color-bloom)', color: '#fff' }}
+                style={{ backgroundColor: 'var(--color-bloom)', color: 'var(--color-paper)' }}
               >
                 {section.icon}
               </div>
@@ -146,7 +146,7 @@ export default function DocsPage() {
             >
               <div
                 className="w-10 h-10 rounded-[var(--radius-md)] flex items-center justify-center flex-shrink-0"
-                style={{ backgroundColor: 'var(--color-ember)', color: '#fff' }}
+                style={{ backgroundColor: 'var(--color-ember)', color: 'var(--color-paper)' }}
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="10" />
@@ -165,7 +165,7 @@ export default function DocsPage() {
             >
               <div
                 className="w-10 h-10 rounded-[var(--radius-md)] flex items-center justify-center flex-shrink-0"
-                style={{ backgroundColor: 'var(--color-pulse)', color: '#fff' }}
+                style={{ backgroundColor: 'var(--color-pulse)', color: 'var(--color-paper)' }}
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />

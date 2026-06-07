@@ -257,7 +257,7 @@ export default function DashboardPage() {
               </p>
               <div className="mt-3 space-y-2">
                 {opportunities.slice(0, 3).map((opportunity) => (
-                  <div key={opportunity.id} className="rounded-xl p-3 transition-colors hover:bg-white/60" style={{ border: '1px solid var(--color-border)' }}>
+                  <div key={opportunity.id} className="rounded-xl p-3 transition-colors hover:bg-[var(--color-surface)]/60" style={{ border: '1px solid var(--color-border)' }}>
                     <p className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{opportunity.company}</p>
                     <p className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
                       {opportunity.title}

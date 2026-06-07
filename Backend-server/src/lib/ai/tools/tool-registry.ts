@@ -608,6 +608,177 @@ registerTool({
   }
 });
 
+// ============================================================
+// USER DATA TOOLS (For Personalized AI Responses)
+// ============================================================
+
+registerTool({
+  name: 'get_user_portfolio_summary',
+  description: 'Get comprehensive user portfolio data including profile, skills, proofs, and opportunities for personalized AI responses',
+  category: 'data',
+  parameters: {
+    type: 'object',
+    properties: {
+      userId: { type: 'string', description: 'User ID (optional, uses context userId if not provided)' },
+      includeProofs: { type: 'boolean', description: 'Include proof cards (default true)' },
+      includeOpportunities: { type: 'boolean', description: 'Include matched opportunities (default true)' },
+      includeSkillAnalysis: { type: 'boolean', description: 'Include skill analysis (default true)' }
+    },
+    required: []
+  },
+  execute: async (args, context) => {
+    try {
+      const userId = args.userId || context?.userId;
+      if (!userId) return { success: false, error: 'User ID required' };
+
+      // Fetch user profile
+      const { data: userProfile, error: userError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (userError || !userProfile) {
+        return { success: false, error: 'User profile not found' };
+      }
+
+      const result: any = {
+        profile: {
+          id: userProfile.id,
+          username: userProfile.username,
+          fullName: userProfile.full_name,
+          email: userProfile.email,
+          college: userProfile.college,
+          year: userProfile.year,
+          bio: userProfile.bio,
+          headline: userProfile.headline,
+          location: userProfile.location,
+          websiteUrl: userProfile.website_url,
+          githubUrl: userProfile.github_url,
+          linkedinUrl: userProfile.linkedin_url,
+          twitterUrl: userProfile.twitter_url,
+          createdAt: userProfile.created_at
+        }
+      };
+
+      // Fetch proofs if requested
+      if (args.includeProofs !== false) {
+        const { data: proofs } = await supabase
+          .from('proof_cards')
+          .select('*')
+          .eq('user_id', userId)
+          .is('deleted_at', null)
+          .order('created_at', { ascending: false });
+
+        const allProofs = proofs || [];
+        const verifiedProofs = allProofs.filter(p => p.verification_status === 'verified');
+        const allSkills = [...new Set(allProofs.flatMap(p => [...(p.skills_extracted || []), ...(p.skills_user_added || [])]))];
+        const skillCounts = allSkills.map(skill => ({
+          name: skill,
+          count: allProofs.filter(p => (p.skills_extracted || []).includes(skill) || (p.skills_user_added || []).includes(skill)).length
+        })).sort((a, b) => b.count - a.count);
+
+        result.proofs = {
+          total: allProofs.length,
+          verified: verifiedProofs.length,
+          verificationRate: allProofs.length > 0 ? Math.round((verifiedProofs.length / allProofs.length) * 100) : 0,
+          byType: allProofs.reduce((acc, p) => {
+            acc[p.source_type] = (acc[p.source_type] || 0) + 1;
+            return acc;
+          }, {} as Record<string, number>),
+          recentProofs: allProofs.slice(0, 5).map(p => ({
+            title: p.title,
+            sourceType: p.source_type,
+            skills: [...(p.skills_extracted || []), ...(p.skills_user_added || [])],
+            verificationStatus: p.verification_status,
+            viewCount: p.view_count
+          }))
+        };
+
+        result.skills = {
+          total: allSkills.length,
+          topSkills: skillCounts.slice(0, 10),
+          allSkills: allSkills
+        };
+      }
+
+      // Fetch opportunities if requested
+      if (args.includeOpportunities !== false) {
+        const { data: opportunities } = await supabase
+          .from('opportunities')
+          .select('*')
+          .eq('is_active', true)
+          .is('deleted_at', null)
+          .order('created_at', { ascending: false })
+          .limit(20);
+
+        const userSkills = result.skills?.allSkills?.map((s: string) => s.toLowerCase()) || [];
+        const matchedOpps = (opportunities || []).map(opp => {
+          const required = (opp.required_skills || []).map((s: string) => s.toLowerCase());
+          const nice = (opp.nice_to_have || []).map((s: string) => s.toLowerCase());
+          const matchedRequired = required.filter((s: string) => userSkills.includes(s));
+          const matchedNice = nice.filter((s: string) => userSkills.includes(s));
+          const score = Math.round(
+            ((matchedRequired.length * 1.0 + matchedNice.length * 0.3) /
+              (required.length * 1.0 + nice.length * 0.3)) * 100
+          );
+          return {
+            id: opp.id,
+            title: opp.title,
+            company: opp.company,
+            type: opp.type,
+            matchScore: Math.min(100, Math.max(0, score || 0)),
+            matchedSkills: [...matchedRequired, ...matchedNice],
+            missingSkills: required.filter((s: string) => !userSkills.includes(s))
+          };
+        }).sort((a: any, b: any) => b.matchScore - a.matchScore);
+
+        result.opportunities = {
+          total: matchedOpps.length,
+          topMatches: matchedOpps.slice(0, 5),
+          byType: matchedOpps.reduce((acc: any, o: any) => {
+            acc[o.type] = (acc[o.type] || 0) + 1;
+            return acc;
+          }, {} as Record<string, number>)
+        };
+      }
+
+      // Generate skill analysis if requested
+      if (args.includeSkillAnalysis !== false && result.skills) {
+        const skillGaps = identifySkillGapsFromProfile(result);
+        result.skillAnalysis = {
+          strengths: result.skills.topSkills.slice(0, 5).map((s: any) => s.name),
+          gaps: skillGaps,
+          recommendations: generateRecommendations(result)
+        };
+      }
+
+      return { success: true, data: result };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Database error' };
+    }
+  }
+});
+
+// Helper functions for skill analysis
+function identifySkillGapsFromProfile(profile: any): string[] {
+  const commonSkills = [
+    'javascript', 'typescript', 'python', 'react', 'node.js', 'git',
+    'sql', 'html', 'css', 'api', 'testing', 'docker'
+  ];
+  const userSkills = (profile.skills?.allSkills || []).map((s: string) => s.toLowerCase());
+  return commonSkills.filter(skill => !userSkills.some((us: string) => us.includes(skill) || skill.includes(us)));
+}
+
+function generateRecommendations(profile: any): string[] {
+  const recs: string[] = [];
+  if (profile.proofs?.total < 5) recs.push('Add more proof cards to strengthen your portfolio');
+  if (profile.proofs?.verificationRate < 50) recs.push('Get more proofs verified to increase credibility');
+  if (profile.skills?.total < 10) recs.push('Diversify your skill set with new technologies');
+  if (profile.opportunities?.total === 0) recs.push('Explore job opportunities that match your skills');
+  return recs;
+}
+
 registerTool({
   name: 'fetch_conversation_history',
   description: 'Fetch previous conversation history from memory',

@@ -270,4 +270,56 @@ export const api = {
   // Metrics
   metrics: () =>
     request<any>('/metrics'),
+
+  // Chat history (server-backed for Pro/Team, but exposed for all)
+  chat: {
+    list: () =>
+      request<{ success: boolean; data: any[] }>('/chat').then(r => r.data),
+
+    get: (id: string) =>
+      request<{ success: boolean; data: any }>(`/chat/${id}`).then(r => r.data),
+
+    save: (conversation: any) =>
+      request<{ success: boolean; data: any }>('/chat', {
+        method: 'POST',
+        body: JSON.stringify(conversation),
+      }).then(r => r.data),
+
+    remove: (id: string) =>
+      request<{ success: boolean }>(`/chat/${id}`, { method: 'DELETE' }),
+  },
+
+  // Cloud integrations
+  integrations: {
+    list: () =>
+      request<{ success: boolean; data: any[] }>('/integrations').then(r => r.data),
+
+    connect: (providerId: string) =>
+      request<{ success: boolean; data: { authUrl: string } }>(`/integrations/${providerId}/connect`)
+        .then(r => r.data),
+
+    disconnect: (providerId: string) =>
+      request<{ success: boolean }>(`/integrations/${providerId}`, { method: 'DELETE' }),
+
+    import: (providerId: string) =>
+      request<{ success: boolean; data: { imported: any[] } }>(`/integrations/${providerId}/import`, {
+        method: 'POST',
+      }).then(r => r.data),
+  },
+
+  // Subscription / billing
+  billing: {
+    me: () =>
+      request<{ success: boolean; data: { plan: string; status: string } }>('/billing/me')
+        .then(r => r.data),
+
+    checkout: (plan: string) =>
+      request<{ success: boolean; data: { url: string } }>('/billing/checkout', {
+        method: 'POST',
+        body: JSON.stringify({ plan }),
+      }).then(r => r.data),
+
+    portal: () =>
+      request<{ success: boolean; data: { url: string } }>('/billing/portal').then(r => r.data),
+  },
 };

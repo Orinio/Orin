@@ -33,7 +33,10 @@ export function AIChat({ initialMessage, onMessageSent, onResponseReceived }: AI
   }, [initialMessage]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const timer = setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }, 50);
+    return () => clearTimeout(timer);
   }, [messages]);
 
   const handleSend = async () => {

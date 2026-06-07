@@ -53,12 +53,24 @@ function AIChatContent() {
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }
   };
 
+  // Scroll on message changes (including streaming updates)
   useEffect(() => {
-    scrollToBottom();
+    const timer = setTimeout(scrollToBottom, 50);
+    return () => clearTimeout(timer);
   }, [messages]);
+
+  // Also scroll when loading state changes
+  useEffect(() => {
+    if (loading) {
+      const timer = setTimeout(scrollToBottom, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [loading]);
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -145,6 +157,24 @@ function AIChatContent() {
             ? { ...m, content: 'I apologize, but I was unable to generate a response. Please try again.' }
             : m
         ));
+      } else {
+        // Parse JSON response if it contains thinking/answer structure
+        try {
+          const trimmed = fullContent.trim();
+          // Check if the response is JSON with thinking/answer structure
+          if (trimmed.startsWith('{') && trimmed.includes('"answer"')) {
+            const parsed = JSON.parse(trimmed);
+            if (parsed.answer) {
+              setMessages(prev => prev.map(m =>
+                m.id === assistantId
+                  ? { ...m, content: parsed.answer, thinking: parsed.thinking }
+                  : m
+              ));
+            }
+          }
+        } catch {
+          // If JSON parsing fails, keep the raw content
+        }
       }
     } catch (error) {
       console.error('Chat error:', error);
@@ -253,7 +283,32 @@ function AIChatContent() {
                   border: message.role === 'assistant' ? '1px solid var(--color-border)' : 'none',
                 }}
               >
-                <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
+                <div className="text-sm whitespace-pre-wrap leading-relaxed" style={{ wordBreak: 'break-word' }}>
+                  {message.content.split('\n').map((line, i) => {
+                    // Handle bullet points
+                    if (line.match(/^[\s]*[-•*]\s/)) {
+                      return <div key={i} className="ml-2 mt-1">{line}</div>;
+                    }
+                    // Handle numbered lists
+                    if (line.match(/^[\s]*\d+\.\s/)) {
+                      return <div key={i} className="ml-2 mt-1">{line}</div>;
+                    }
+                    // Handle headers (### or ##)
+                    if (line.match(/^#{1,3}\s/)) {
+                      return <div key={i} className="font-bold mt-2 mb-1">{line.replace(/^#+\s*/, '')}</div>;
+                    }
+                    // Handle bold text
+                    if (line.includes('**')) {
+                      const parts = line.split(/\*\*(.*?)\*\*/g);
+                      return (
+                        <div key={i}>
+                          {parts.map((part, j) => j % 2 === 1 ? <strong key={j}>{part}</strong> : part)}
+                        </div>
+                      );
+                    }
+                    return <div key={i}>{line || <br />}</div>;
+                  })}
+                </div>
               </div>
 
               {message.thinking && (

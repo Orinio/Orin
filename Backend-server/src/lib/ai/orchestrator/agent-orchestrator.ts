@@ -11,6 +11,8 @@ import { getToolsByNames } from '../core/tool-registry.js';
 import { buildAgentContext as buildUserContext } from '../../context.js';
 import { getAllAgents, getAgent } from '../agents/index.js';
 import { sanitizeAnswer, extractJSON } from '../core/utils.js';
+import { logAIOperation } from '../metrics.js';
+import { getRequestId } from '../../request-context.js';
 import type { ToolResult, AgentDefinition } from '../core/types.js';
 
 const MAX_INPUT_LENGTH = 2000;
@@ -265,6 +267,21 @@ export class AgentOrchestrator {
 
     const durationMs = Date.now() - startTime;
 
+    // Structured AI operation log
+    logAIOperation({
+      operation: agentId,
+      model: agent.model,
+      tokensIn: 0,
+      tokensOut: 0,
+      tokensTotal,
+      durationMs,
+      iterations,
+      toolCallsCount: toolCalls.length,
+      success: !!finalAnswer,
+      requestId: getRequestId(),
+      userId: context?.userId,
+    });
+
     // Save to memory if available
     if (this.memoryManager && context?.userId) {
       await this.memoryManager.saveConversation(this.sessionId, [
@@ -513,6 +530,21 @@ export class AgentOrchestrator {
     }
 
     const durationMs = Date.now() - startTime;
+
+    // Structured AI operation log
+    logAIOperation({
+      operation: `${agentId}-stream`,
+      model: agent.model,
+      tokensIn: 0,
+      tokensOut: 0,
+      tokensTotal,
+      durationMs,
+      iterations,
+      toolCallsCount: toolCalls.length,
+      success: !!finalAnswer,
+      requestId: getRequestId(),
+      userId: context?.userId,
+    });
 
     // Save conversation to memory
     if (this.memoryManager && context.userId) {

@@ -61,6 +61,8 @@ export async function runAgent(
   const toolCalls: AgentResult['toolCalls'] = [];
   let iterations = 0;
   let totalTokens = 0;
+  let totalTokensIn = 0;
+  let totalTokensOut = 0;
   let finalAnswer = '';
   let thinking = '';
   const agentStartTime = Date.now();
@@ -84,6 +86,8 @@ export async function runAgent(
 
     const content = response.choices[0]?.message?.content || '';
     totalTokens += response.usage?.total_tokens || 0;
+    totalTokensIn += response.usage?.prompt_tokens || 0;
+    totalTokensOut += response.usage?.completion_tokens || 0;
 
     // Try robust JSON extraction
     const parsed = extractJSON(content);
@@ -151,8 +155,8 @@ export async function runAgent(
   logAIOperation({
     operation: agent.id,
     model: agent.model,
-    tokensIn: 0, // Will be updated if we track prompt tokens separately
-    tokensOut: 0,
+    tokensIn: totalTokensIn,
+    tokensOut: totalTokensOut,
     tokensTotal: totalTokens,
     durationMs,
     iterations,

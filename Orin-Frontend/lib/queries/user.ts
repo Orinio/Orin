@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import { mapDbUserToUser } from '@/lib/utils';
+import { mapDbUserToUser, mapDbCoachNoteToCoachNote } from '@/lib/utils';
 import type { User } from '@/lib/types';
 
 export function useUser(userId: string | null) {

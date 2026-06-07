@@ -3,13 +3,13 @@
 import Link from 'next/link';
 import { Sparkles, Cloud, HardDrive, Infinity as InfinityIcon, ArrowRight, Crown } from 'lucide-react';
 import { usePlan } from '@/lib/plan-context';
-import { useUsage } from '@/lib/use-usage';
+import { useServerUsage } from '@/lib/use-usage';
 import { UsageMeter } from './UpgradePrompt';
 import { PLAN_LIMITS } from '@/lib/chat-types';
 
 export function PlanCard() {
   const { plan, planDef, isFree, isPro, isTeam, tier } = usePlan();
-  const usage = useUsage();
+  const usage = useServerUsage();
   const limits = PLAN_LIMITS[plan];
 
   const visibleMetrics = [

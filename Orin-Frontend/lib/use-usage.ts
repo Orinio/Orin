@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { usePlan } from './plan-context';
 import { useAuth } from './auth-context';
+import { supabase } from './supabase';
 import {
   PLAN_LIMITS,
   USAGE_LABELS,
@@ -197,4 +198,66 @@ export function formatTimeUntilReset(iso: string): string {
   if (hours < 24) return `${hours}h ${minutes % 60}m`;
   const days = Math.floor(hours / 24);
   return `${days}d ${hours % 24}h`;
+}
+
+/**
+ * Enhanced usage hook that overrides localStorage counts with real DB counts.
+ * Use this instead of useUsage() for components that need accurate data.
+ */
+export function useServerUsage(): UseUsageResult {
+  const base = useUsage();
+  const { user } = useAuth();
+  const [serverCounts, setServerCounts] = useState<Partial<Record<UsageMetric, number>>>({});
+
+  useEffect(() => {
+    if (!user || !supabase) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data: userData } = await supabase
+          .from('users')
+          .select('id')
+          .eq('auth_user_id', user.id)
+          .maybeSingle();
+        if (!userData || cancelled) return;
+
+        const { count } = await supabase
+          .from('proof_cards')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', userData.id)
+          .is('deleted_at', null);
+
+        if (!cancelled) {
+          setServerCounts({ proof_cards: count ?? 0 });
+        }
+      } catch {}
+    })();
+    return () => { cancelled = true; };
+  }, [user]);
+
+  const get = useCallback(
+    (metric: UsageMetric): LimitInfo => {
+      const info = base.get(metric);
+      if (metric === 'proof_cards' && serverCounts.proof_cards !== undefined) {
+        const limit = PLAN_LIMITS[info.plan][metric];
+        const used = serverCounts.proof_cards;
+        const isUnlimited = !Number.isFinite(limit);
+        return {
+          ...info,
+          used,
+          limit,
+          remaining: isUnlimited ? Infinity : Math.max(0, limit - used),
+          percent: isUnlimited ? 0 : Math.min(100, (used / limit) * 100),
+          isExhausted: !isUnlimited && used >= limit,
+        };
+      }
+      return info;
+    },
+    [base, serverCounts],
+  );
+
+  return useMemo(
+    () => ({ ...base, get }),
+    [base, get],
+  );
 }

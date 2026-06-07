@@ -97,10 +97,18 @@ export default function NewProofPage() {
     let cancelled = false;
     (async () => {
       try {
+        // Resolve auth UUID to DB user ID
+        const { data: userData } = await supabase
+          .from('users')
+          .select('id')
+          .eq('auth_user_id', user.id)
+          .maybeSingle();
+        if (!userData || cancelled) return;
+
         const { count } = await supabase
           .from('proof_cards')
           .select('id', { count: 'exact', head: true })
-          .eq('user_id', user.id)
+          .eq('user_id', userData.id)
           .is('deleted_at', null);
         if (!cancelled) setLiveCount(count ?? 0);
       } catch {}

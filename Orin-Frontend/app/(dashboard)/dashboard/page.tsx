@@ -2,105 +2,63 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { Sparkles, ArrowRight, Plus, BarChart3, TrendingUp, Briefcase } from "lucide-react";
+import { Plus, BarChart3, TrendingUp, Briefcase, AlertCircle, RefreshCw } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
-import { supabase } from "@/lib/supabase";
-import { mapDbProofToProof, mapDbOpportunityToOpportunity, mapDbCoachNoteToCoachNote, mapDbUserToUser, formatNumber, getProofTypeColor } from "@/lib/utils";
-import type { Database } from "@/lib/supabase";
+import { useCurrentUser, useDashboardStats } from "@/lib/queries/user";
+import { useProofs } from "@/lib/queries/proofs";
+import { formatNumber, getProofTypeColor } from "@/lib/utils";
 import ProofCard from "@/components/ProofCard";
 import CoachNote from "@/components/CoachNote";
 import { PlanCard } from "@/components/PlanCard";
-import type { Proof, Opportunity, CoachNote as CoachNoteType, User } from "@/lib/types";
+
+function DashboardSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="grid gap-4 md:grid-cols-3">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="card-premium animate-pulse p-6">
+            <div className="h-3 w-20 rounded" style={{ backgroundColor: 'var(--color-border)' }} />
+            <div className="mt-3 h-8 w-16 rounded" style={{ backgroundColor: 'var(--color-border)' }} />
+          </div>
+        ))}
+      </div>
+      <div className="grid gap-4 md:grid-cols-2">
+        {[1, 2].map((i) => (
+          <div key={i} className="card-premium animate-pulse p-6">
+            <div className="h-4 w-32 rounded" style={{ backgroundColor: 'var(--color-border)' }} />
+            <div className="mt-3 h-3 w-48 rounded" style={{ backgroundColor: 'var(--color-border)' }} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function DashboardPage() {
   const router = useRouter();
   const { user: authUser, initialized } = useAuth();
-  const [user, setUser] = useState<User | null>(null);
-  const [proofs, setProofs] = useState<Proof[]>([]);
-  const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
-  const [coachNote, setCoachNote] = useState<CoachNoteType | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: user, isLoading: userLoading } = useCurrentUser();
+  const { data: stats, isLoading: statsLoading, error: statsError, refetch } = useDashboardStats(user?.id ?? null);
 
-  useEffect(() => {
-    if (!initialized) return;
-    if (!authUser) {
-      router.push('/signin');
-      return;
-    }
-    setLoading(true);
+  if (!initialized || userLoading || statsLoading) {
+    return <DashboardSkeleton />;
+  }
 
-    const userId = authUser.id;
+  if (!authUser) {
+    router.push('/signin');
+    return null;
+  }
 
-    async function fetchData() {
-      try {
-        if (!supabase) return;
-
-        const { data: userDataRaw } = await supabase
-          .from('users')
-          .select('*')
-          .eq('auth_user_id', userId)
-          .maybeSingle();
-
-        if (!userDataRaw) return;
-
-        const currentUser = mapDbUserToUser(userDataRaw);
-        setUser(currentUser);
-
-        const [proofsResult, oppsResult, notesResult] = await Promise.all([
-          supabase
-            .from('proof_cards')
-            .select('*')
-            .eq('user_id', userDataRaw.id)
-            .is('deleted_at', null)
-            .order('created_at', { ascending: false }),
-          supabase
-            .from('opportunities')
-            .select('*')
-            .eq('is_active', true)
-            .is('deleted_at', null)
-            .order('created_at', { ascending: false })
-            .limit(10),
-          supabase
-            .from('coach_notes')
-            .select('*')
-            .eq('user_id', userDataRaw.id)
-            .is('deleted_at', null)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .maybeSingle(),
-        ]);
-
-        const { data: proofsData } = proofsResult;
-        const { data: oppsData } = oppsResult;
-        const { data: noteDataRaw } = notesResult;
-
-        if (proofsData) setProofs(proofsData.map(mapDbProofToProof));
-        if (oppsData) setOpportunities(oppsData.map(mapDbOpportunityToOpportunity));
-
-        if (noteDataRaw) {
-          setCoachNote(mapDbCoachNoteToCoachNote(noteDataRaw as Database['public']['Tables']['coach_notes']['Row']));
-        }
-      } catch (e) {
-        console.warn('Failed to fetch dashboard data:', e);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchData();
-  }, [authUser, initialized]);
-
-  if (!initialized || loading) {
+  if (statsError) {
     return (
       <div className="space-y-6">
-        <div className="grid gap-4 md:grid-cols-3">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="card-premium animate-pulse p-6">
-              <div className="h-3 w-20 rounded" style={{ backgroundColor: 'var(--color-border)' }} />
-              <div className="mt-3 h-8 w-16 rounded" style={{ backgroundColor: 'var(--color-border)' }} />
-            </div>
-          ))}
+        <div className="card-premium p-8 text-center">
+          <AlertCircle className="mx-auto h-10 w-10" style={{ color: 'var(--color-pulse)' }} />
+          <h3 className="mt-4 text-lg font-semibold" style={{ color: 'var(--color-ink)' }}>Failed to load dashboard</h3>
+          <p className="mt-2 text-sm" style={{ color: 'var(--color-text-tertiary)' }}>{statsError.message}</p>
+          <button onClick={() => refetch()} className="btn-success mt-4 px-4 py-2 text-sm inline-flex items-center gap-2">
+            <RefreshCw className="h-4 w-4" /> Retry
+          </button>
         </div>
       </div>
     );
@@ -108,23 +66,19 @@ export default function DashboardPage() {
 
   if (!user) return null;
 
-  const totalViews = proofs.reduce((sum, p) => sum + p.viewCount, 0);
-  const verifiedCount = proofs.filter((p) => p.verificationStatus === 'verified').length;
-  const allSkills = Array.from(new Set(proofs.flatMap((p) => [...p.skillsExtracted, ...p.skillsUserAdded])));
-  const skillCounts = allSkills.map((skill) => ({
-    name: skill,
-    count: proofs.filter((p) => p.skillsExtracted.includes(skill) || p.skillsUserAdded.includes(skill)).length,
-  })).sort((a, b) => b.count - a.count);
+  const proofsCount = stats?.proofsCount ?? 0;
+  const verifiedCount = stats?.verifiedCount ?? 0;
+  const totalViews = stats?.totalViews ?? 0;
+  const uniqueSkills = stats?.uniqueSkills ?? 0;
+  const topSkills = stats?.topSkills ?? [];
+  const sourceTypeCounts = stats?.sourceTypeCounts ?? {};
+  const opportunities = stats?.recentOpportunities ?? [];
+  const coachNote = stats?.latestCoachNote ?? null;
 
-  const sourceTypeCounts = proofs.reduce((acc, p) => {
-    acc[p.sourceType] = (acc[p.sourceType] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-
-  const stats = [
-    { label: "Proof cards", value: proofs.length, delta: `${verifiedCount} verified`, icon: BarChart3, color: 'var(--color-bloom)' },
-    { label: "Total skills", value: allSkills.length, delta: `${skillCounts.length} unique`, icon: Sparkles, color: 'var(--color-ember)' },
-    { label: "Profile views", value: formatNumber(totalViews), delta: "across all proofs", icon: TrendingUp, color: 'var(--color-pulse)' },
+  const statsCards = [
+    { label: "Proof cards", value: proofsCount, delta: `${verifiedCount} verified`, icon: BarChart3, color: 'var(--color-bloom)' },
+    { label: "Total skills", value: uniqueSkills, delta: `${topSkills.length} top`, icon: TrendingUp, color: 'var(--color-ember)' },
+    { label: "Profile views", value: formatNumber(totalViews), delta: "across all proofs", icon: Briefcase, color: 'var(--color-pulse)' },
   ];
 
   return (
@@ -160,7 +114,7 @@ export default function DashboardPage() {
         <section className="space-y-8 lg:col-span-8">
           {/* Stats Grid */}
           <div className="grid gap-4 md:grid-cols-3 animate-fadeInUp" style={{ animationDelay: '100ms' }}>
-            {stats.map((stat) => {
+            {statsCards.map((stat) => {
               const Icon = stat.icon;
               return (
                 <div key={stat.label} className="card-premium group p-5">
@@ -184,12 +138,10 @@ export default function DashboardPage() {
             <div className="animate-fadeInUp" style={{ animationDelay: '200ms' }}>
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="flex items-center gap-3 text-lg font-semibold" style={{ color: 'var(--color-ink)' }}>
-                  <Sparkles className="h-4 w-4" style={{ color: 'var(--color-spark)' }} />
                   AI Career Coach
                 </h2>
                 <Link href="/dashboard/coach" className="flex items-center gap-2 text-sm font-medium transition-colors" style={{ color: 'var(--color-bloom)' }}>
                   View all notes
-                  <ArrowRight className="h-3 w-3" />
                 </Link>
               </div>
               <CoachNote note={coachNote} isLatest={true} />
@@ -210,7 +162,7 @@ export default function DashboardPage() {
               </Link>
             </div>
 
-            {proofs.length === 0 ? (
+            {proofsCount === 0 ? (
               <div className="card-premium p-8 text-center">
                 <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl" style={{ backgroundColor: 'var(--color-bloom)12' }}>
                   <Plus className="h-8 w-8" style={{ color: 'var(--color-bloom)' }} />
@@ -225,11 +177,7 @@ export default function DashboardPage() {
                 </Link>
               </div>
             ) : (
-              <div id="my-proof" className="grid gap-4 md:grid-cols-2">
-                {proofs.slice(0, 6).map((proof) => (
-                  <ProofCard key={proof.id} proof={proof} variant="dashboard" />
-                ))}
-              </div>
+              <ProofFeed dbUserId={user.id} />
             )}
           </div>
         </section>
@@ -247,24 +195,24 @@ export default function DashboardPage() {
                     cx="40" cy="40" r="34" fill="none"
                     stroke="var(--color-bloom)" strokeWidth="8"
                     strokeLinecap="round"
-                    strokeDasharray={`${Math.min((allSkills.length / 20) * 213.6, 213.6)} 213.6`}
+                    strokeDasharray={`${Math.min((uniqueSkills / 20) * 213.6, 213.6)} 213.6`}
                     className="progress-ring"
                   />
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-lg font-bold" style={{ color: 'var(--color-ink)' }}>{allSkills.length}</span>
+                  <span className="text-lg font-bold" style={{ color: 'var(--color-ink)' }}>{uniqueSkills}</span>
                 </div>
               </div>
               <div>
                 <p className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>skills discovered</p>
                 <p className="mt-0.5 text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
-                  {skillCounts.slice(0, 3).map((s) => s.name).join(', ') || 'No skills yet'}
+                  {topSkills.slice(0, 3).map((s) => s.name).join(', ') || 'No skills yet'}
                 </p>
               </div>
             </div>
-            {skillCounts.length > 0 && (
+            {topSkills.length > 0 && (
               <div className="mt-4 space-y-2">
-                {skillCounts.slice(0, 5).map((skill) => (
+                {topSkills.slice(0, 5).map((skill) => (
                   <div key={skill.name} className="flex items-center justify-between text-sm">
                     <span style={{ color: 'var(--color-ink)' }}>{skill.name}</span>
                     <span className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>{skill.count} proof{skill.count !== 1 ? 's' : ''}</span>
@@ -302,28 +250,56 @@ export default function DashboardPage() {
             <div id="opportunities" className="card-premium p-5 animate-fadeInUp" style={{ animationDelay: '350ms' }}>
               <div className="mb-3 flex items-center gap-2">
                 <Briefcase className="h-4 w-4" style={{ color: 'var(--color-ember)' }} />
-                <h2 className="text-base font-semibold" style={{ color: 'var(--color-ink)' }}>Opportunities matched</h2>
+                <h2 className="text-base font-semibold" style={{ color: 'var(--color-ink)' }}>Trending opportunities</h2>
               </div>
               <p className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
-                {opportunities.length} opportunities match your proof.
+                {opportunities.length} opportunities available.
               </p>
               <div className="mt-3 space-y-2">
-                {opportunities.slice(0, 2).map((opportunity) => (
+                {opportunities.slice(0, 3).map((opportunity) => (
                   <div key={opportunity.id} className="rounded-xl p-3 transition-colors hover:bg-white/60" style={{ border: '1px solid var(--color-border)' }}>
                     <p className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{opportunity.company}</p>
                     <p className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
-                      {opportunity.title} &middot; {opportunity.matchPercentage}% match
+                      {opportunity.title}
                     </p>
                   </div>
                 ))}
               </div>
               <Link href="/opportunities" className="btn-outline mt-4 block w-full px-4 py-2 text-center text-sm">
-                View opportunities
+                View all opportunities
               </Link>
             </div>
           )}
         </aside>
       </div>
+    </div>
+  );
+}
+
+/**
+ * Separate component for proof feed — uses React Query for automatic refetching.
+ */
+function ProofFeed({ dbUserId }: { dbUserId: string }) {
+  const { data: proofs, isLoading } = useProofs(dbUserId);
+
+  if (isLoading) {
+    return (
+      <div className="grid gap-4 md:grid-cols-2">
+        {[1, 2].map((i) => (
+          <div key={i} className="card-premium animate-pulse p-6">
+            <div className="h-4 w-32 rounded" style={{ backgroundColor: 'var(--color-border)' }} />
+            <div className="mt-3 h-3 w-48 rounded" style={{ backgroundColor: 'var(--color-border)' }} />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div id="my-proof" className="grid gap-4 md:grid-cols-2">
+      {(proofs || []).slice(0, 6).map((proof) => (
+        <ProofCard key={proof.id} proof={proof} variant="dashboard" />
+      ))}
     </div>
   );
 }

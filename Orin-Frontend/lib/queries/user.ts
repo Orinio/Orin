@@ -1,27 +1,28 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import { mapDbUserToUser, mapDbCoachNoteToCoachNote } from '@/lib/utils';
-import type { User } from '@/lib/types';
+import { mapDbUserToUser, mapDbCoachNoteToCoachNote, mapDbOpportunityToOpportunity } from '@/lib/utils';
+import type { User, CoachNote, Opportunity } from '@/lib/types';
 
-export function useUser(userId: string | null) {
-  return useQuery({
-    queryKey: ['user', userId],
-    enabled: !!userId,
-    queryFn: async () => {
-      if (!supabase || !userId) return null;
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle();
-
-      if (error) throw new Error(error.message);
-      if (!data) return null;
-      return mapDbUserToUser(data) as User;
-    },
-  });
+/**
+ * Resolve a Supabase Auth UUID to the internal database user row.
+ * This is the critical bridge: auth.users.id ≠ users.id
+ * auth.users.id is stored in users.auth_user_id
+ */
+async function resolveDbUser(authUserId: string) {
+  if (!supabase) return null;
+  const { data, error } = await supabase
+    .from('users')
+    .select('*')
+    .eq('auth_user_id', authUserId)
+    .maybeSingle();
+  if (error || !data) return null;
+  return data;
 }
 
+/**
+ * Hook: Get the current user's database row from their Auth UUID.
+ * Returns the full User object with all profile fields.
+ */
 export function useCurrentUser() {
   return useQuery({
     queryKey: ['current-user'],
@@ -29,17 +30,50 @@ export function useCurrentUser() {
       if (!supabase) return null;
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
+      const dbUser = await resolveDbUser(user.id);
+      if (!dbUser) return null;
+      return mapDbUserToUser(dbUser) as User;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+}
 
-      const { data: userData, error } = await supabase
+/**
+ * Hook: Get a user by their internal database ID.
+ */
+export function useUser(dbUserId: string | null) {
+  return useQuery({
+    queryKey: ['user', dbUserId],
+    enabled: !!dbUserId,
+    queryFn: async () => {
+      if (!supabase || !dbUserId) return null;
+      const { data, error } = await supabase
         .from('users')
         .select('*')
-        .eq('auth_user_id', user.id)
+        .eq('id', dbUserId)
         .maybeSingle();
-
       if (error) throw new Error(error.message);
-      if (!userData) return null;
-      return mapDbUserToUser(userData) as User;
+      if (!data) return null;
+      return mapDbUserToUser(data) as User;
     },
+  });
+}
+
+/**
+ * Hook: Get the current user's database ID (the users.id UUID).
+ * This is the ID needed for all child table queries (proof_cards.user_id, etc.)
+ */
+export function useCurrentDbUserId() {
+  return useQuery({
+    queryKey: ['current-db-user-id'],
+    queryFn: async () => {
+      if (!supabase) return null;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+      const dbUser = await resolveDbUser(user.id);
+      return dbUser?.id ?? null;
+    },
+    staleTime: 10 * 60 * 1000,
   });
 }
 
@@ -78,18 +112,34 @@ export function useUpdateProfile() {
   });
 }
 
-export function useDashboardStats(userId: string | null) {
+export interface DashboardStats {
+  proofsCount: number;
+  verifiedCount: number;
+  totalViews: number;
+  uniqueSkills: number;
+  topSkills: { name: string; count: number }[];
+  sourceTypeCounts: Record<string, number>;
+  opportunitiesCount: number;
+  latestCoachNote: CoachNote | null;
+  recentOpportunities: Opportunity[];
+}
+
+/**
+ * Hook: Fetch all dashboard stats in a single optimized query.
+ * Accepts a DB user ID (users.id), NOT the auth UUID.
+ */
+export function useDashboardStats(dbUserId: string | null) {
   return useQuery({
-    queryKey: ['dashboard-stats', userId],
-    enabled: !!userId,
-    queryFn: async () => {
-      if (!supabase || !userId) return null;
+    queryKey: ['dashboard-stats', dbUserId],
+    enabled: !!dbUserId,
+    queryFn: async (): Promise<DashboardStats | null> => {
+      if (!supabase || !dbUserId) return null;
 
       const [proofsResult, opportunitiesResult, notesResult] = await Promise.all([
         supabase
           .from('proof_cards')
           .select('id, verification_status, view_count, skills_extracted, skills_user_added, source_type')
-          .eq('user_id', userId)
+          .eq('user_id', dbUserId)
           .is('deleted_at', null),
         supabase
           .from('opportunities')
@@ -101,7 +151,7 @@ export function useDashboardStats(userId: string | null) {
         supabase
           .from('coach_notes')
           .select('*')
-          .eq('user_id', userId)
+          .eq('user_id', dbUserId)
           .is('deleted_at', null)
           .order('created_at', { ascending: false })
           .limit(1)
@@ -140,7 +190,34 @@ export function useDashboardStats(userId: string | null) {
         sourceTypeCounts,
         opportunitiesCount: opportunities.length,
         latestCoachNote: latestNote ? mapDbCoachNoteToCoachNote(latestNote) : null,
+        recentOpportunities: opportunities.map(mapDbOpportunityToOpportunity),
       };
     },
+    staleTime: 30 * 1000,
+    refetchOnWindowFocus: true,
+  });
+}
+
+/**
+ * Hook: Get proof count for a user (for usage limits).
+ * Accepts the auth UUID and resolves internally.
+ */
+export function useProofCount() {
+  return useQuery({
+    queryKey: ['proof-count'],
+    queryFn: async () => {
+      if (!supabase) return 0;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return 0;
+      const dbUser = await resolveDbUser(user.id);
+      if (!dbUser) return 0;
+      const { count } = await supabase
+        .from('proof_cards')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', dbUser.id)
+        .is('deleted_at', null);
+      return count ?? 0;
+    },
+    staleTime: 10 * 1000,
   });
 }

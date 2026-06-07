@@ -148,69 +148,103 @@ export default function SuperAgentChat() {
       let agentId = 'chat';
       let tokensUsed = 0;
 
+      const processMessage = (eventType: string, dataStr: string) => {
+        try {
+          const data = JSON.parse(dataStr);
+          if (data.agentId) agentId = data.agentId;
+          if (data.tokensUsed) tokensUsed = data.tokensUsed;
+
+          if (eventType === 'thinking' && data.content) {
+            thinking = data.content;
+          }
+
+          if (eventType === 'answer' && data.content) {
+            fullContent += data.content;
+          }
+
+          if (eventType === 'tool_start' && data.tool) {
+            toolCalls = [...toolCalls, { name: data.tool, arguments: data.args }];
+          }
+
+          if (eventType === 'tool_result' && data.tool) {
+            toolCalls = toolCalls.map((tc, i) =>
+              i === toolCalls.length - 1
+                ? { ...tc, result: { success: data.success, data: data.data, error: data.error } }
+                : tc
+            );
+          }
+
+          if (eventType === 'complete') {
+            if (data.answer) fullContent = data.answer;
+            if (data.thinking) thinking = data.thinking;
+            if (data.toolCalls) {
+              toolCalls = data.toolCalls.map((tc: any) => ({
+                name: tc.tool,
+                arguments: tc.args,
+                result: { success: tc.success, data: tc.data, error: tc.error },
+              }));
+            }
+          }
+
+          // Update the assistant message
+          setMessages(prev => {
+            const updated = [...prev];
+            const last = updated[updated.length - 1];
+            if (last.role === 'assistant') {
+              updated[updated.length - 1] = {
+                ...last,
+                content: fullContent,
+                thinking: thinking || undefined,
+                toolCalls: toolCalls.length > 0 ? [...toolCalls] : undefined,
+                agentId,
+                tokensUsed: tokensUsed || undefined,
+              };
+            }
+            return updated;
+          });
+        } catch {}
+      };
+
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
         buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
 
-        for (const line of lines) {
-          if (line.startsWith('event: ')) {
-            const eventType = line.slice(7).trim();
-            continue;
+        // Process complete SSE messages (separated by blank lines)
+        while (true) {
+          const msgEnd = buffer.indexOf('\n\n');
+          if (msgEnd === -1) break;
+
+          const rawMessage = buffer.substring(0, msgEnd);
+          buffer = buffer.substring(msgEnd + 2);
+
+          let eventType = 'message';
+          let dataStr = '';
+
+          for (const line of rawMessage.split('\n')) {
+            if (line.startsWith('event: ')) {
+              eventType = line.slice(7).trim();
+            } else if (line.startsWith('data: ')) {
+              dataStr = line.slice(6);
+            }
           }
-          if (line.startsWith('data: ')) {
-            try {
-              const data = JSON.parse(line.slice(6));
-              // Handle SSE events by looking at the data shape
-              if (data.agentId) agentId = data.agentId;
-              if (data.tokensUsed) tokensUsed = data.tokensUsed;
 
-              if (data.thinking) {
-                thinking = data.thinking;
-              }
-
-              if (data.content || data.chunk) {
-                fullContent += (data.content || data.chunk || '');
-              }
-
-              if (data.tool_call) {
-                toolCalls = [...toolCalls, { name: data.tool_call.name, arguments: data.tool_call.arguments }];
-              }
-
-              if (data.tool_result) {
-                toolCalls = toolCalls.map((tc, i) =>
-                  i === toolCalls.length - 1
-                    ? { ...tc, result: { success: data.tool_result.success, data: data.tool_result.data, error: data.tool_result.error } }
-                    : tc
-                );
-              }
-
-              if (data.answer) {
-                fullContent = data.answer;
-              }
-
-              // Update the assistant message
-              setMessages(prev => {
-                const updated = [...prev];
-                const last = updated[updated.length - 1];
-                if (last.role === 'assistant') {
-                  updated[updated.length - 1] = {
-                    ...last,
-                    content: fullContent,
-                    thinking: thinking || undefined,
-                    toolCalls: toolCalls.length > 0 ? [...toolCalls] : undefined,
-                    agentId,
-                    tokensUsed: tokensUsed || undefined,
-                  };
-                }
-                return updated;
-              });
-            } catch {}
+          if (dataStr) {
+            processMessage(eventType, dataStr);
           }
         }
+      }
+
+      // Flush remaining buffer
+      if (buffer.trim()) {
+        let eventType = 'message';
+        let dataStr = '';
+        for (const line of buffer.split('\n')) {
+          if (line.startsWith('event: ')) eventType = line.slice(7).trim();
+          else if (line.startsWith('data: ')) dataStr = line.slice(6);
+        }
+        if (dataStr) processMessage(eventType, dataStr);
       }
 
       // Finalize

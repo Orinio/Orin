@@ -157,8 +157,7 @@ export default function Navigation() {
 
   const navLinks = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutGrid },
-    { href: '/dashboard/ai-agents', label: 'AI Agents', icon: Sparkles },
-    { href: '/dashboard/ai-chat', label: 'AI Chat', icon: MessageCircle },
+    { href: '/dashboard/ai-chat', label: 'AI Chat', icon: Sparkles },
     { href: '/opportunities', label: 'Opportunities', icon: Briefcase },
     { href: '/dashboard/sources/new', label: 'Add Source', icon: PlusCircle },
     { href: '/integrations', label: 'Integrations', icon: Cloud },

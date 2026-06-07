@@ -7,7 +7,6 @@ import {
   verifyCertificate,
   analyzeScreenshot 
 } from '../lib/ai/services/vision.service.js';
-import { authMiddleware } from '../middleware/auth.js';
 import { supabase } from '../lib/supabase.js';
 
 export const visionRouter = Router();
@@ -15,7 +14,7 @@ export const visionRouter = Router();
 /**
  * POST /ai/vision/analyze - Analyze an image
  */
-visionRouter.post('/analyze', authMiddleware, async (req, res) => {
+visionRouter.post('/analyze', async (req, res) => {
   try {
     if (!isNvidiaConfigured()) {
       res.status(503).json({ error: { code: 'AI_NOT_CONFIGURED', message: 'AI service not available' } });
@@ -48,7 +47,7 @@ visionRouter.post('/analyze', authMiddleware, async (req, res) => {
 /**
  * POST /ai/vision/certificate/extract - Extract certificate information
  */
-visionRouter.post('/certificate/extract', authMiddleware, async (req, res) => {
+visionRouter.post('/certificate/extract', async (req, res) => {
   try {
     if (!isNvidiaConfigured()) {
       res.status(503).json({ error: { code: 'AI_NOT_CONFIGURED', message: 'AI service not available' } });
@@ -77,7 +76,7 @@ visionRouter.post('/certificate/extract', authMiddleware, async (req, res) => {
 /**
  * POST /ai/vision/certificate/verify - Verify a certificate
  */
-visionRouter.post('/certificate/verify', authMiddleware, async (req, res) => {
+visionRouter.post('/certificate/verify', async (req, res) => {
   try {
     if (!isNvidiaConfigured()) {
       res.status(503).json({ error: { code: 'AI_NOT_CONFIGURED', message: 'AI service not available' } });
@@ -97,13 +96,22 @@ visionRouter.post('/certificate/verify', authMiddleware, async (req, res) => {
     if (proofId) {
       const userId = (req as any).user?.id;
       if (userId) {
+        const { data: existingProof } = await supabase
+          .from('proof_cards')
+          .select('metadata')
+          .eq('id', proofId)
+          .eq('user_id', userId)
+          .single();
+
         await supabase
           .from('proof_cards')
           .update({
             verification_status: result.verified ? 'verified' : 'rejected',
             verified_at: result.verified ? new Date().toISOString() : null,
             metadata: {
+              ...((existingProof as any)?.metadata || {}),
               verification: {
+                ...(((existingProof as any)?.metadata as any)?.verification || {}),
                 verified: result.verified,
                 confidence: result.confidence,
                 certificateInfo: result.certificateInfo,
@@ -136,7 +144,7 @@ visionRouter.post('/certificate/verify', authMiddleware, async (req, res) => {
 /**
  * POST /ai/vision/screenshot - Analyze a screenshot for proof
  */
-visionRouter.post('/screenshot', authMiddleware, async (req, res) => {
+visionRouter.post('/screenshot', async (req, res) => {
   try {
     if (!isNvidiaConfigured()) {
       res.status(503).json({ error: { code: 'AI_NOT_CONFIGURED', message: 'AI service not available' } });

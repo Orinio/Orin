@@ -388,7 +388,7 @@ aiRouter.post('/learning-path', async (req, res) => {
     const userId = (req as any).user?.id;
     if (!userId) { res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } }); return; }
 
-    const rateLimitResult = await checkAIRateLimit(supabase, userId, 'ai-match-opportunities');
+    const rateLimitResult = await checkAIRateLimit(supabase, userId, 'ai-learning-path');
     if (!rateLimitResult.allowed) {
       res.status(429).json({ error: { code: 'RATE_LIMITED', message: rateLimitResult.reason } });
       return;

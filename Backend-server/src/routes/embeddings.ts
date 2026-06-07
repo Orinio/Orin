@@ -6,14 +6,12 @@ import {
   generateEmbeddings, 
   cosineSimilarity 
 } from '../lib/ai/services/embedding.service.js';
-import { authMiddleware } from '../middleware/auth.js';
-
 export const embeddingRouter = Router();
 
 /**
  * POST /ai/embeddings/generate - Generate embedding for text
  */
-embeddingRouter.post('/generate', authMiddleware, async (req, res) => {
+embeddingRouter.post('/generate', async (req, res) => {
   try {
     if (!isNvidiaConfigured()) {
       res.status(503).json({ error: { code: 'AI_NOT_CONFIGURED', message: 'AI service not available' } });
@@ -46,7 +44,7 @@ embeddingRouter.post('/generate', authMiddleware, async (req, res) => {
 /**
  * POST /ai/embeddings/batch - Generate embeddings for multiple texts
  */
-embeddingRouter.post('/batch', authMiddleware, async (req, res) => {
+embeddingRouter.post('/batch', async (req, res) => {
   try {
     if (!isNvidiaConfigured()) {
       res.status(503).json({ error: { code: 'AI_NOT_CONFIGURED', message: 'AI service not available' } });
@@ -84,7 +82,7 @@ embeddingRouter.post('/batch', authMiddleware, async (req, res) => {
 /**
  * POST /ai/embeddings/similarity - Calculate similarity between texts
  */
-embeddingRouter.post('/similarity', authMiddleware, async (req, res) => {
+embeddingRouter.post('/similarity', async (req, res) => {
   try {
     if (!isNvidiaConfigured()) {
       res.status(503).json({ error: { code: 'AI_NOT_CONFIGURED', message: 'AI service not available' } });
@@ -121,7 +119,7 @@ embeddingRouter.post('/similarity', authMiddleware, async (req, res) => {
 /**
  * POST /ai/embeddings/skills/extract - Extract skills and generate embeddings
  */
-embeddingRouter.post('/skills/extract', authMiddleware, async (req, res) => {
+embeddingRouter.post('/skills/extract', async (req, res) => {
   try {
     if (!isNvidiaConfigured()) {
       res.status(503).json({ error: { code: 'AI_NOT_CONFIGURED', message: 'AI service not available' } });

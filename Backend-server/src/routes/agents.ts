@@ -9,8 +9,6 @@ import { isNvidiaConfigured } from '../lib/ai/core/nvidia.js';
 import { createOrchestrator, AGENTS } from '../lib/ai/orchestrator/agent-orchestrator.js';
 import { createMemoryManager } from '../lib/ai/memory/memory-manager.js';
 import { getAllTools, getToolsByCategory } from '../lib/ai/core/tool-registry.js';
-import { authMiddleware } from '../middleware/auth.js';
-
 export const agentRouter = Router();
 
 // ============================================================
@@ -20,7 +18,7 @@ export const agentRouter = Router();
 /**
  * GET /ai/agents - List all available agents
  */
-agentRouter.get('/agents', authMiddleware, async (_req, res) => {
+agentRouter.get('/agents', async (_req, res) => {
   try {
     const agents = Object.values(AGENTS).map(agent => ({
       id: agent.id,
@@ -41,7 +39,7 @@ agentRouter.get('/agents', authMiddleware, async (_req, res) => {
 /**
  * GET /ai/agents/:id - Get agent details
  */
-agentRouter.get('/agents/:id', authMiddleware, async (req, res) => {
+agentRouter.get('/agents/:id', async (req, res) => {
   try {
     const agent = AGENTS[req.params.id as string];
     if (!agent) {
@@ -76,7 +74,7 @@ agentRouter.get('/agents/:id', authMiddleware, async (req, res) => {
  * POST /ai/agents/chat - Run the chat agent
  * (Must be before /agents/:id to avoid matching "chat" as :id)
  */
-agentRouter.post('/agents/chat', authMiddleware, async (req, res) => {
+agentRouter.post('/agents/chat', async (req, res) => {
   try {
     if (!isNvidiaConfigured()) {
       res.status(503).json({ error: { code: 'AI_NOT_CONFIGURED', message: 'AI service not available' } });
@@ -108,7 +106,7 @@ agentRouter.post('/agents/chat', authMiddleware, async (req, res) => {
  * POST /ai/agents/chat/stream - Stream chat responses
  * (Must be before /agents/:id to avoid matching "chat" as :id)
  */
-agentRouter.post('/agents/chat/stream', authMiddleware, async (req, res) => {
+agentRouter.post('/agents/chat/stream', async (req, res) => {
   try {
     if (!isNvidiaConfigured()) {
       res.status(503).json({ error: { code: 'AI_NOT_CONFIGURED', message: 'AI service not available' } });
@@ -157,7 +155,7 @@ agentRouter.post('/agents/chat/stream', authMiddleware, async (req, res) => {
 /**
  * POST /ai/agents/:id/run - Run a single agent
  */
-agentRouter.post('/agents/:id/run', authMiddleware, async (req, res) => {
+agentRouter.post('/agents/:id/run', async (req, res) => {
   try {
     if (!isNvidiaConfigured()) {
       res.status(503).json({ error: { code: 'AI_NOT_CONFIGURED', message: 'AI service not available' } });
@@ -192,7 +190,7 @@ agentRouter.post('/agents/:id/run', authMiddleware, async (req, res) => {
 /**
  * POST /ai/workflows/career-analysis - Run career analysis workflow
  */
-agentRouter.post('/workflows/career-analysis', authMiddleware, async (req, res) => {
+agentRouter.post('/workflows/career-analysis', async (req, res) => {
   try {
     if (!isNvidiaConfigured()) {
       res.status(503).json({ error: { code: 'AI_NOT_CONFIGURED', message: 'AI service not available' } });
@@ -226,7 +224,7 @@ agentRouter.post('/workflows/career-analysis', authMiddleware, async (req, res) 
 /**
  * POST /ai/workflows/verify-proof - Run proof verification workflow
  */
-agentRouter.post('/workflows/verify-proof', authMiddleware, async (req, res) => {
+agentRouter.post('/workflows/verify-proof', async (req, res) => {
   try {
     if (!isNvidiaConfigured()) {
       res.status(503).json({ error: { code: 'AI_NOT_CONFIGURED', message: 'AI service not available' } });
@@ -263,7 +261,7 @@ agentRouter.post('/workflows/verify-proof', authMiddleware, async (req, res) => 
 /**
  * GET /ai/tools - List all available tools
  */
-agentRouter.get('/tools', authMiddleware, async (_req, res) => {
+agentRouter.get('/tools', async (_req, res) => {
   try {
     const tools = getAllTools().map(tool => ({
       name: tool.name,
@@ -282,7 +280,7 @@ agentRouter.get('/tools', authMiddleware, async (_req, res) => {
 /**
  * GET /ai/tools/:category - Get tools by category
  */
-agentRouter.get('/tools/:category', authMiddleware, async (req, res) => {
+agentRouter.get('/tools/:category', async (req, res) => {
   try {
     const tools = getToolsByCategory(req.params.category as any).map(tool => ({
       name: tool.name,
@@ -305,7 +303,7 @@ agentRouter.get('/tools/:category', authMiddleware, async (req, res) => {
 /**
  * POST /ai/memory/save - Save to memory
  */
-agentRouter.post('/memory/save', authMiddleware, async (req, res) => {
+agentRouter.post('/memory/save', async (req, res) => {
   try {
     const userId = (req as any).user?.id;
     if (!userId) {
@@ -344,7 +342,7 @@ agentRouter.post('/memory/save', authMiddleware, async (req, res) => {
 /**
  * GET /ai/memory/search - Search memories
  */
-agentRouter.get('/memory/search', authMiddleware, async (req, res) => {
+agentRouter.get('/memory/search', async (req, res) => {
   try {
     const userId = (req as any).user?.id;
     if (!userId) {
@@ -366,7 +364,7 @@ agentRouter.get('/memory/search', authMiddleware, async (req, res) => {
 /**
  * GET /ai/memory/preferences - Get user preferences
  */
-agentRouter.get('/memory/preferences', authMiddleware, async (req, res) => {
+agentRouter.get('/memory/preferences', async (req, res) => {
   try {
     const userId = (req as any).user?.id;
     if (!userId) {
@@ -387,7 +385,7 @@ agentRouter.get('/memory/preferences', authMiddleware, async (req, res) => {
 /**
  * GET /ai/memory/skills - Get user skills from memory
  */
-agentRouter.get('/memory/skills', authMiddleware, async (req, res) => {
+agentRouter.get('/memory/skills', async (req, res) => {
   try {
     const userId = (req as any).user?.id;
     if (!userId) {
@@ -408,7 +406,7 @@ agentRouter.get('/memory/skills', authMiddleware, async (req, res) => {
 /**
  * GET /ai/memory/goals - Get user goals
  */
-agentRouter.get('/memory/goals', authMiddleware, async (req, res) => {
+agentRouter.get('/memory/goals', async (req, res) => {
   try {
     const userId = (req as any).user?.id;
     if (!userId) {

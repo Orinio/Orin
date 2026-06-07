@@ -9,14 +9,12 @@ import {
   sanitizeResponse,
   fullSafetyCheck
 } from '../lib/ai/services/safety.service.js';
-import { authMiddleware } from '../middleware/auth.js';
-
 export const safetyRouter = Router();
 
 /**
  * POST /ai/safety/check - Check content safety
  */
-safetyRouter.post('/check', authMiddleware, async (req, res) => {
+safetyRouter.post('/check', async (req, res) => {
   try {
     if (!isNvidiaConfigured()) {
       res.status(503).json({ error: { code: 'AI_NOT_CONFIGURED', message: 'AI service not available' } });
@@ -45,7 +43,7 @@ safetyRouter.post('/check', authMiddleware, async (req, res) => {
 /**
  * POST /ai/safety/pii - Detect PII in text
  */
-safetyRouter.post('/pii', authMiddleware, async (req, res) => {
+safetyRouter.post('/pii', async (req, res) => {
   try {
     if (!isNvidiaConfigured()) {
       res.status(503).json({ error: { code: 'AI_NOT_CONFIGURED', message: 'AI service not available' } });
@@ -74,7 +72,7 @@ safetyRouter.post('/pii', authMiddleware, async (req, res) => {
 /**
  * POST /ai/safety/topic - Check if content is on-topic
  */
-safetyRouter.post('/topic', authMiddleware, async (req, res) => {
+safetyRouter.post('/topic', async (req, res) => {
   try {
     if (!isNvidiaConfigured()) {
       res.status(503).json({ error: { code: 'AI_NOT_CONFIGURED', message: 'AI service not available' } });
@@ -103,7 +101,7 @@ safetyRouter.post('/topic', authMiddleware, async (req, res) => {
 /**
  * POST /ai/safety/sanitize - Sanitize text
  */
-safetyRouter.post('/sanitize', authMiddleware, async (req, res) => {
+safetyRouter.post('/sanitize', async (req, res) => {
   try {
     const { text, type } = req.body;
 
@@ -133,7 +131,7 @@ safetyRouter.post('/sanitize', authMiddleware, async (req, res) => {
 /**
  * POST /ai/safety/full-check - Full safety pipeline
  */
-safetyRouter.post('/full-check', authMiddleware, async (req, res) => {
+safetyRouter.post('/full-check', async (req, res) => {
   try {
     if (!isNvidiaConfigured()) {
       res.status(503).json({ error: { code: 'AI_NOT_CONFIGURED', message: 'AI service not available' } });

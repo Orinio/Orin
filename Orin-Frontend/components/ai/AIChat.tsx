@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useChat } from '@/hooks/use-ai';
 
 interface Message {
@@ -21,6 +21,19 @@ export function AIChat({ initialMessage, onMessageSent, onResponseReceived }: AI
   const [input, setInput] = useState('');
   const { sendMessage, isLoading, error } = useChat();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const isNearBottom = useCallback(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return true;
+    return container.scrollHeight - container.scrollTop - container.clientHeight < 150;
+  }, []);
+
+  const scrollToBottom = useCallback((force = false) => {
+    if (force || isNearBottom()) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }
+  }, [isNearBottom]);
 
   useEffect(() => {
     if (initialMessage) {
@@ -33,11 +46,9 @@ export function AIChat({ initialMessage, onMessageSent, onResponseReceived }: AI
   }, [initialMessage]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-    }, 50);
+    const timer = setTimeout(() => scrollToBottom(), 50);
     return () => clearTimeout(timer);
-  }, [messages]);
+  }, [messages, scrollToBottom]);
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
@@ -45,7 +56,6 @@ export function AIChat({ initialMessage, onMessageSent, onResponseReceived }: AI
     const userMessage = input.trim();
     setInput('');
 
-    // Add user message
     setMessages(prev => [...prev, {
       role: 'user',
       content: userMessage,
@@ -54,7 +64,6 @@ export function AIChat({ initialMessage, onMessageSent, onResponseReceived }: AI
 
     onMessageSent?.(userMessage);
 
-    // Get AI response
     const result = await sendMessage(userMessage);
 
     if (result) {
@@ -79,11 +88,11 @@ export function AIChat({ initialMessage, onMessageSent, onResponseReceived }: AI
   return (
     <div className="flex flex-col h-full border rounded-lg bg-white">
       {/* Messages Container */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4">
         {messages.length === 0 && (
-          <div className="text-center text-gray-500 py-8">
-            <p className="text-lg font-medium">Orin AI Assistant</p>
-            <p className="text-sm">Ask me anything about your career, skills, or portfolio.</p>
+          <div className="text-center text-gray-500 py-6 sm:py-8">
+            <p className="text-base sm:text-lg font-medium">Orin AI Assistant</p>
+            <p className="text-xs sm:text-sm">Ask me anything about your career, skills, or portfolio.</p>
           </div>
         )}
 
@@ -93,17 +102,16 @@ export function AIChat({ initialMessage, onMessageSent, onResponseReceived }: AI
             className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             <div
-              className={`max-w-[80%] rounded-lg p-3 ${
+              className={`max-w-[85%] sm:max-w-[80%] rounded-lg px-3 py-2.5 sm:p-3 ${
                 message.role === 'user'
                   ? 'bg-blue-500 text-white'
                   : 'bg-gray-100 text-gray-900'
               }`}
             >
-              <p className="whitespace-pre-wrap">{message.content}</p>
+              <p className="whitespace-pre-wrap text-xs sm:text-sm">{message.content}</p>
               
-              {/* Show tool calls if any */}
               {message.toolCalls && message.toolCalls.length > 0 && (
-                <div className="mt-2 text-xs opacity-75">
+                <div className="mt-2 text-[10px] sm:text-xs opacity-75">
                   <p>Used {message.toolCalls.length} tool(s):</p>
                   <ul className="list-disc list-inside">
                     {message.toolCalls.map((tc, i) => (
@@ -113,7 +121,7 @@ export function AIChat({ initialMessage, onMessageSent, onResponseReceived }: AI
                 </div>
               )}
 
-              <p className={`text-xs mt-1 ${message.role === 'user' ? 'text-blue-100' : 'text-gray-500'}`}>
+              <p className={`text-[10px] sm:text-xs mt-1 ${message.role === 'user' ? 'text-blue-100' : 'text-gray-500'}`}>
                 {message.timestamp.toLocaleTimeString()}
               </p>
             </div>
@@ -122,11 +130,11 @@ export function AIChat({ initialMessage, onMessageSent, onResponseReceived }: AI
 
         {isLoading && (
           <div className="flex justify-start">
-            <div className="bg-gray-100 rounded-lg p-3">
+            <div className="bg-gray-100 rounded-lg px-3 py-2.5 sm:p-3">
               <div className="flex space-x-1">
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
               </div>
             </div>
           </div>
@@ -134,7 +142,7 @@ export function AIChat({ initialMessage, onMessageSent, onResponseReceived }: AI
 
         {error && (
           <div className="flex justify-center">
-            <div className="bg-red-100 text-red-700 rounded-lg p-3 text-sm">
+            <div className="bg-red-100 text-red-700 rounded-lg px-3 py-2.5 sm:p-3 text-xs sm:text-sm">
               {error}
             </div>
           </div>
@@ -144,23 +152,23 @@ export function AIChat({ initialMessage, onMessageSent, onResponseReceived }: AI
       </div>
 
       {/* Input Container */}
-      <div className="border-t p-4">
-        <div className="flex space-x-2">
+      <div className="border-t p-3 sm:p-4">
+        <div className="flex gap-2 items-end">
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="Ask about your career, skills, or portfolio..."
-            className="flex-1 resize-none border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            rows={2}
+            placeholder="Ask about your career..."
+            className="flex-1 resize-none border rounded-lg px-3 py-2 sm:p-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 max-h-[100px]"
+            rows={1}
             disabled={isLoading}
           />
           <button
             onClick={handleSend}
             disabled={isLoading || !input.trim()}
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-3 py-2 sm:px-4 sm:py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm flex-shrink-0"
           >
-            {isLoading ? 'Sending...' : 'Send'}
+            {isLoading ? '...' : 'Send'}
           </button>
         </div>
       </div>

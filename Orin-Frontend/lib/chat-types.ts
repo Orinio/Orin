@@ -198,3 +198,63 @@ export const PLANS: PlanDefinition[] = [
     },
   },
 ];
+
+export type UsageMetric =
+  | 'ai_messages'
+  | 'proof_cards'
+  | 'integrations'
+  | 'portfolio_scores'
+  | 'opportunity_matches'
+  | 'cover_letters';
+
+export interface UsageLimits {
+  ai_messages: number;
+  proof_cards: number;
+  integrations: number;
+  portfolio_scores: number;
+  opportunity_matches: number;
+  cover_letters: number;
+}
+
+export const PLAN_LIMITS: Record<SubscriptionPlanId, UsageLimits> = {
+  free: {
+    ai_messages: 50,
+    proof_cards: 5,
+    integrations: 0,
+    portfolio_scores: 0,
+    opportunity_matches: 3,
+    cover_letters: 1,
+  },
+  pro: {
+    ai_messages: Infinity,
+    proof_cards: Infinity,
+    integrations: 5,
+    portfolio_scores: Infinity,
+    opportunity_matches: Infinity,
+    cover_letters: Infinity,
+  },
+  team: {
+    ai_messages: Infinity,
+    proof_cards: Infinity,
+    integrations: 5,
+    portfolio_scores: Infinity,
+    opportunity_matches: Infinity,
+    cover_letters: Infinity,
+  },
+};
+
+export const USAGE_LABELS: Record<UsageMetric, { name: string; noun: string; period: string }> = {
+  ai_messages: { name: 'AI coach messages', noun: 'message', period: 'month' },
+  proof_cards: { name: 'Proof cards', noun: 'proof', period: 'lifetime' },
+  integrations: { name: 'Cloud connectors', noun: 'connector', period: 'lifetime' },
+  portfolio_scores: { name: 'Portfolio scores', noun: 'score', period: 'month' },
+  opportunity_matches: { name: 'Opportunity matches', noun: 'match', period: 'month' },
+  cover_letters: { name: 'AI cover letters', noun: 'letter', period: 'month' },
+};
+
+export interface UsageRecord {
+  metric: UsageMetric;
+  count: number;
+  periodStart: string;
+  resetAt?: string;
+}

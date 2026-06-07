@@ -182,6 +182,8 @@ export function AgentChat({ initialAgent = 'chat', onMessageSent }: AgentChatPro
     }
   };
 
+  const showLimitState = messages.length === 0;
+
   const handleSelectConversation = useCallback(
     async (c: ChatConversation) => {
       const full = await chatStore.get(c.id, userId, tier);

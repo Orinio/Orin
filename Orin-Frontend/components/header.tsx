@@ -6,16 +6,15 @@ import { Menu, X, ChevronDown } from 'lucide-react';
 import Logo from '@/components/Logo';
 
 const mainLinks = [
-  { name: 'Features', href: '/#features' },
-  { name: 'How it works', href: '/#how' },
-  { name: 'Pricing', href: '/#pricing' },
+  { name: 'Features', href: '/features' },
+  { name: 'Pricing', href: '/pricing' },
   { name: 'FAQ', href: '/faq' },
 ];
 
 const resourceLinks = [
-  { name: 'Documentation', href: '/docs', description: 'Integrate and build' },
+  { name: 'Documentation', href: '/docs', description: 'Guides and API references' },
   { name: 'Blog', href: '/blog', description: 'Latest news and updates' },
-  { name: 'Careers', href: '/careers', description: 'Join our growing team' },
+  { name: 'Status', href: '/status', description: 'System health dashboard' },
   { name: 'Contact', href: '/contact', description: 'Get in touch with us' },
 ];
 
@@ -25,7 +24,6 @@ export default function Navbar() {
 
   const closeMenu = () => setIsOpen(false);
 
-  // Lock body scroll when mobile menu open
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -53,10 +51,8 @@ export default function Navbar() {
       }`}
     >
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-        {/* BRAND / LOGO */}
         <Logo variant="full" size="lg" priority />
 
-        {/* DESKTOP NAVIGATION */}
         <nav className="hidden md:flex items-center gap-1 text-sm font-semibold">
           {mainLinks.map((link) => (
             <Link
@@ -68,7 +64,6 @@ export default function Navbar() {
             </Link>
           ))}
 
-          {/* RESOURCES DROPDOWN */}
           <div className="relative group">
             <button
               type="button"
@@ -79,7 +74,6 @@ export default function Navbar() {
               <ChevronDown className="w-4 h-4 transition-transform duration-200 group-hover:rotate-180" />
             </button>
 
-            {/* Dropdown Panel */}
             <div
               className="absolute top-full right-0 mt-2 w-64 rounded-2xl shadow-xl ring-1 ring-slate-200/80 bg-white py-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible focus-within:opacity-100 focus-within:visible transition-all duration-200 translate-y-1 group-hover:translate-y-0"
               role="menu"
@@ -99,7 +93,6 @@ export default function Navbar() {
           </div>
         </nav>
 
-        {/* ACTION BUTTONS (desktop) */}
         <div className="hidden md:flex items-center gap-2">
           <Link
             href="/signin"
@@ -115,7 +108,6 @@ export default function Navbar() {
           </Link>
         </div>
 
-        {/* MOBILE MENU TRIGGER */}
         <button
           type="button"
           className="md:hidden p-2 -mr-2 rounded-xl text-slate-700 hover:bg-slate-100 transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900"
@@ -127,7 +119,6 @@ export default function Navbar() {
         </button>
       </div>
 
-      {/* MOBILE EXPANSION PANEL */}
       <div
         className={`md:hidden fixed inset-x-0 top-[60px] bottom-0 overflow-y-auto transition-all duration-300 ease-out bg-white ${
           isOpen ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'

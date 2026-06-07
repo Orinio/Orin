@@ -3,6 +3,10 @@
 import { useState } from 'react';
 import { AgentDashboard } from '@/components/ai/AgentDashboard';
 import { AgentChat } from '@/components/ai/AgentChat';
+import { BoundedAgentChat } from '@/components/ai/BoundedAgentChat';
+import { usePlan } from '@/lib/plan-context';
+import { useUsage } from '@/lib/use-usage';
+import { UpgradePrompt } from '@/components/UpgradePrompt';
 import { CareerAnalysisWorkflow } from '@/components/ai/WorkflowVisualization';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { MessageSquare, BarChart3, GitBranch, Sparkles } from 'lucide-react';
@@ -19,6 +23,9 @@ export default function AIAgentsPage() {
 
 function AIAgentsContent() {
   const [activeTab, setActiveTab] = useState<Tab>('chat');
+  const { isFree, isPro } = usePlan();
+  const usage = useUsage();
+  const aiInfo = usage.get('ai_messages');
 
   const tabs = [
     { id: 'chat' as const, label: 'Chat', icon: MessageSquare, desc: 'Talk to specialized agents' },
@@ -28,6 +35,12 @@ function AIAgentsContent() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-5rem)]">
+      {isFree && activeTab === 'chat' && !aiInfo.isExhausted && aiInfo.percent < 60 && (
+        <div className="mb-4">
+          <UpgradePrompt variant="inline" metric="ai_messages" reason="feature" compact />
+        </div>
+      )}
+
       {/* Header */}
       <header className="mb-5">
         <div className="flex items-center gap-3 mb-1">
@@ -36,7 +49,19 @@ function AIAgentsContent() {
           </div>
           <div>
             <h1 className="text-xl font-bold" style={{ color: 'var(--color-ink)' }}>AI Agents</h1>
-            <p className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>Your specialized AI team for career development</p>
+            <p className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
+              Your specialized AI team for career development
+              {isFree && !aiInfo.isUnlimited && (
+                <span className="ml-2 px-1.5 py-0.5 rounded text-[10px] font-semibold" style={{ backgroundColor: 'var(--color-bloom)15', color: 'var(--color-bloom)' }}>
+                  Free · {aiInfo.used} / {aiInfo.limit}
+                </span>
+              )}
+              {isPro && (
+                <span className="ml-2 px-1.5 py-0.5 rounded text-[10px] font-semibold" style={{ backgroundColor: 'var(--color-bloom)15', color: 'var(--color-bloom)' }}>
+                  Pro · unlimited
+                </span>
+              )}
+            </p>
           </div>
         </div>
       </header>
@@ -68,7 +93,7 @@ function AIAgentsContent() {
       <div className="flex-1 overflow-hidden">
         {activeTab === 'chat' && (
           <div className="h-full">
-            <AgentChat />
+            <BoundedAgentChat />
           </div>
         )}
         {activeTab === 'dashboard' && (

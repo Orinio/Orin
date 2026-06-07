@@ -50,39 +50,60 @@ export class MemoryManager {
   // Conversation Memory
   // ------------------------------------------------------------
   
-  async saveConversation(sessionId: string, messages: Array<{ role: string; content: string }>): Promise<void> {
+  async saveConversation(agentId: string, messages: Array<{ role: string; content: string }>): Promise<void> {
     try {
-      const { error } = await supabase
+      // Find existing conversation for this user+agent, or insert new
+      const { data: existing } = await supabase
         .from('ai_conversations')
-        .upsert({
-          user_id: this.userId,
-          session_id: sessionId,
-          messages: messages.map(m => ({ ...m, timestamp: new Date().toISOString() })),
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'user_id,session_id' });
+        .select('id')
+        .eq('user_id', this.userId)
+        .eq('agent_id', agentId)
+        .limit(1)
+        .maybeSingle();
 
-      if (error) throw error;
+      const now = new Date().toISOString();
+
+      if (existing) {
+        const { error } = await supabase
+          .from('ai_conversations')
+          .update({
+            messages: messages.map(m => ({ ...m, timestamp: now })),
+            updated_at: now
+          })
+          .eq('id', existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('ai_conversations')
+          .insert({
+            user_id: this.userId,
+            agent_id: agentId,
+            messages: messages.map(m => ({ ...m, timestamp: now })),
+            metadata: {},
+          });
+        if (error) throw error;
+      }
     } catch (error) {
       logger.error({ error, userId: this.userId }, 'Failed to save conversation');
     }
   }
 
-  async getConversation(sessionId: string): Promise<ConversationMemory | null> {
+  async getConversation(agentId: string): Promise<ConversationMemory | null> {
     try {
       const { data, error } = await supabase
         .from('ai_conversations')
         .select('*')
         .eq('user_id', this.userId)
-        .eq('session_id', sessionId)
-        .single();
+        .eq('agent_id', agentId)
+        .limit(1)
+        .maybeSingle();
 
       if (error || !data) return null;
 
       return {
-        sessionId: data.session_id,
+        sessionId: data.agent_id,
         messages: data.messages || [],
-        summary: data.summary,
-        topics: data.topics || []
+        topics: []
       };
     } catch (error) {
       logger.error({ error, userId: this.userId }, 'Failed to get conversation');
@@ -102,10 +123,9 @@ export class MemoryManager {
       if (error) throw error;
 
       return (data || []).map(d => ({
-        sessionId: d.session_id,
+        sessionId: d.agent_id,
         messages: d.messages || [],
-        summary: d.summary,
-        topics: d.topics || []
+        topics: []
       }));
     } catch (error) {
       logger.error({ error, userId: this.userId }, 'Failed to get recent conversations');
@@ -119,13 +139,19 @@ export class MemoryManager {
 
   async savePreferences(preferences: Partial<UserPreferences>): Promise<void> {
     try {
+      // Map our interface fields to actual DB columns
+      const updateData: Record<string, any> = {
+        user_id: this.userId,
+        updated_at: new Date().toISOString()
+      };
+      if (preferences.learningStyle) updateData.learning_style = preferences.learningStyle;
+      if (preferences.communicationTone) updateData.communication_tone = preferences.communicationTone;
+      if (preferences.interests) updateData.interests = preferences.interests;
+      if (preferences.goals) updateData.career_goals = preferences.goals;
+
       const { error } = await supabase
         .from('ai_user_preferences')
-        .upsert({
-          user_id: this.userId,
-          ...preferences,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'user_id' });
+        .upsert(updateData, { onConflict: 'user_id' });
 
       if (error) throw error;
     } catch (error) {
@@ -148,8 +174,8 @@ export class MemoryManager {
         learningStyle: data.learning_style || 'hands-on',
         communicationTone: data.communication_tone || 'casual',
         interests: data.interests || [],
-        goals: data.goals || [],
-        preferredResources: data.preferred_resources || []
+        goals: data.career_goals || [],
+        preferredResources: []
       };
     } catch (error) {
       logger.error({ error, userId: this.userId }, 'Failed to get preferences');
@@ -163,17 +189,41 @@ export class MemoryManager {
 
   async saveSkill(skill: string, level: 'beginner' | 'intermediate' | 'advanced' | 'expert', source?: string): Promise<void> {
     try {
-      const { error } = await supabase
+      // Find existing skill memory or insert new
+      const { data: existing } = await supabase
         .from('ai_skill_memory')
-        .upsert({
-          user_id: this.userId,
-          skill: skill.toLowerCase(),
-          level,
-          source,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'user_id,skill' });
+        .select('id')
+        .eq('user_id', this.userId)
+        .eq('skill', skill.toLowerCase())
+        .limit(1)
+        .maybeSingle();
 
-      if (error) throw error;
+      const confidence = level === 'expert' ? 1.0 : level === 'advanced' ? 0.8 : level === 'intermediate' ? 0.5 : 0.3;
+
+      if (existing) {
+        const { error } = await supabase
+          .from('ai_skill_memory')
+          .update({
+            level,
+            confidence,
+            source,
+            last_assessed: new Date().toISOString()
+          })
+          .eq('id', existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('ai_skill_memory')
+          .insert({
+            user_id: this.userId,
+            skill: skill.toLowerCase(),
+            level,
+            confidence,
+            source,
+            last_assessed: new Date().toISOString()
+          });
+        if (error) throw error;
+      }
     } catch (error) {
       logger.error({ error, userId: this.userId }, 'Failed to save skill');
     }
@@ -205,17 +255,35 @@ export class MemoryManager {
 
   async saveLearningProgress(skill: string, progress: number, notes?: string): Promise<void> {
     try {
-      const { error } = await supabase
+      // Find existing learning progress or insert new
+      const { data: existing } = await supabase
         .from('ai_learning_progress')
-        .upsert({
-          user_id: this.userId,
-          skill,
-          progress,
-          notes,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'user_id,skill' });
+        .select('id')
+        .eq('user_id', this.userId)
+        .eq('skill', skill)
+        .limit(1)
+        .maybeSingle();
 
-      if (error) throw error;
+      if (existing) {
+        const { error } = await supabase
+          .from('ai_learning_progress')
+          .update({
+            progress,
+            last_activity: new Date().toISOString()
+          })
+          .eq('id', existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('ai_learning_progress')
+          .insert({
+            user_id: this.userId,
+            skill,
+            progress,
+            milestones: notes ? [{ note: notes, timestamp: new Date().toISOString() }] : []
+          });
+        if (error) throw error;
+      }
     } catch (error) {
       logger.error({ error, userId: this.userId }, 'Failed to save learning progress');
     }
@@ -233,7 +301,7 @@ export class MemoryManager {
       return (data || []).map(d => ({
         skill: d.skill,
         progress: d.progress,
-        notes: d.notes
+        notes: d.milestones?.[0]?.note || undefined
       }));
     } catch (error) {
       logger.error({ error, userId: this.userId }, 'Failed to get learning progress');

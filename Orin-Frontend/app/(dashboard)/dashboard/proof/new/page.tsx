@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   ArrowLeft,
@@ -19,6 +19,11 @@ import {
   Loader2,
 } from 'lucide-react';
 import type { ProofSourceType } from '@/lib/types';
+import { useUsage } from '@/lib/use-usage';
+import { usePlan } from '@/lib/plan-context';
+import { useAuth } from '@/lib/auth-context';
+import { LimitReached, UpgradePrompt } from '@/components/UpgradePrompt';
+import { supabase } from '@/lib/supabase';
 
 interface Step {
   id: number;
@@ -63,9 +68,13 @@ const inputClass = "w-full rounded-xl border bg-white px-4 py-3 text-sm transiti
 
 export default function NewProofPage() {
   const router = useRouter();
+  const usage = useUsage();
+  const { isFree } = usePlan();
+  const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [liveCount, setLiveCount] = useState<number | null>(null);
 
   const [sourceType, setSourceType] = useState<ProofSourceType>('github');
   const [title, setTitle] = useState('');
@@ -78,6 +87,26 @@ export default function NewProofPage() {
 
   const selectedSource = sourceTypes.find((s) => s.value === sourceType);
   const suggestedForType = suggestedSkills[sourceType];
+
+  const proofInfo = usage.get('proof_cards');
+  const used = (liveCount ?? proofInfo.used);
+  const isAtLimit = !proofInfo.isUnlimited && used >= proofInfo.limit;
+
+  useEffect(() => {
+    if (!user || !supabase) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { count } = await supabase
+          .from('proof_cards')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .is('deleted_at', null);
+        if (!cancelled) setLiveCount(count ?? 0);
+      } catch {}
+    })();
+    return () => { cancelled = true; };
+  }, [user]);
 
   const canProceed = () => {
     switch (currentStep) {
@@ -96,6 +125,10 @@ export default function NewProofPage() {
   const handleAddCustomSkill = () => { if (customSkill.trim()) { addSkill(customSkill.trim()); setCustomSkill(''); } };
 
   const handleSubmit = async () => {
+    if (isAtLimit) {
+      setError('You\'ve reached the free plan limit of 5 proof cards. Upgrade to Pro for unlimited cards.');
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
@@ -106,6 +139,8 @@ export default function NewProofPage() {
       });
       if (!res.ok) { const data = await res.json(); throw new Error(data.error || 'Failed to create proof card'); }
       const proofData = await res.json();
+      usage.record('proof_cards');
+      setLiveCount((c) => (c == null ? c : c + 1));
       if (autoVerify && sourceUrl && (sourceType === 'github' || sourceType === 'certificate' || sourceType === 'kaggle')) {
         setVerifying(true);
         try {
@@ -125,19 +160,49 @@ export default function NewProofPage() {
     } catch (e) { setError(e instanceof Error ? e.message : 'Something went wrong'); } finally { setSubmitting(false); }
   };
 
+  if (isAtLimit) {
+    return (
+      <div className="mx-auto max-w-2xl space-y-8">
+        <header className="animate-fadeInUp">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-semibold" style={{ color: 'var(--color-ink)', fontFamily: 'var(--font-heading)' }}>New Proof Card</h1>
+              <p className="mt-1 text-sm" style={{ color: 'var(--color-text-tertiary)' }}>Free plan limit reached</p>
+            </div>
+            <button type="button" onClick={() => router.push('/dashboard')} className="btn-outline px-4 py-2 text-sm font-medium">
+              Back
+            </button>
+          </div>
+        </header>
+        <LimitReached metric="proof_cards" limitInfo={{ ...proofInfo, used, limit: proofInfo.limit }} action="create proof cards" />
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-2xl space-y-8">
       <header className="animate-fadeInUp">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-semibold" style={{ color: 'var(--color-ink)', fontFamily: 'var(--font-heading)' }}>New Proof Card</h1>
-            <p className="mt-1 text-sm" style={{ color: 'var(--color-text-tertiary)' }}>Step {currentStep} of {steps.length}</p>
+            <p className="mt-1 text-sm" style={{ color: 'var(--color-text-tertiary)' }}>Step {currentStep} of {steps.length} · {used} of {proofInfo.limit} used</p>
           </div>
           <button type="button" onClick={() => router.push('/dashboard')} className="btn-outline px-4 py-2 text-sm font-medium">
             Cancel
           </button>
         </div>
       </header>
+
+      {/* Usage meter for free users */}
+      {isFree && !proofInfo.isUnlimited && proofInfo.percent >= 60 && (
+        <UpgradePrompt
+          variant="inline"
+          metric="proof_cards"
+          limitInfo={{ ...proofInfo, used }}
+          reason="limit"
+          compact
+        />
+      )}
 
       {/* Step indicator */}
       <div className="flex items-center gap-2 animate-fadeInUp" style={{ animationDelay: '50ms' }}>

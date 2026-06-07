@@ -3,21 +3,19 @@ import Logo from '@/components/Logo';
 
 const footerLinks = {
   Product: [
-    { name: 'Features', href: '/#features' },
-    { name: 'Pricing', href: '/#pricing' },
-    { name: 'How it works', href: '/#how' },
-    { name: 'Changelog', href: '/changelog' },
+    { name: 'Features', href: '/features' },
+    { name: 'Pricing', href: '/pricing' },
+    { name: 'Documentation', href: '/docs' },
+    { name: 'Status', href: '/status' },
   ],
   Resources: [
-    { name: 'Documentation', href: '/docs' },
     { name: 'Blog', href: '/blog' },
     { name: 'FAQ', href: '/faq' },
-    { name: 'Help Center', href: '/help' },
+    { name: 'Contact', href: '/contact' },
   ],
   Company: [
     { name: 'About', href: '/about' },
     { name: 'Careers', href: '/careers' },
-    { name: 'Contact', href: '/contact' },
     { name: 'Legal', href: '/legal' },
   ],
 };
@@ -27,13 +25,11 @@ export default function Footer() {
 
   return (
     <footer className="relative overflow-hidden" style={{ backgroundColor: 'var(--color-ink)' }}>
-      {/* Subtle gradient overlay */}
       <div className="pointer-events-none absolute inset-0 opacity-30" style={{
         background: 'radial-gradient(ellipse 80% 50% at 50% -20%, rgba(11,171,119,0.15), transparent)',
       }} />
 
       <div className="relative z-10 mx-auto max-w-7xl px-6 pt-20 sm:pt-24 pb-10">
-        {/* Pre-footer CTA */}
         <div className="mb-16 pb-16 flex flex-col items-start gap-8 lg:flex-row lg:items-center lg:justify-between" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
           <div className="max-w-xl">
             <h2 className="text-4xl font-bold leading-[1.1] tracking-tight md:text-5xl">
@@ -62,9 +58,7 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Main Footer Columns */}
         <div className="mb-16 grid grid-cols-2 gap-8 md:grid-cols-4 lg:grid-cols-6 md:gap-12 lg:gap-8">
-          {/* Brand Column */}
           <div className="col-span-2 flex flex-col items-start md:col-span-4 lg:col-span-3">
             <div className="mb-6 flex items-center gap-3">
               <Logo variant="mark" size="lg" href={undefined} />
@@ -75,7 +69,6 @@ export default function Footer() {
               Turn scattered work into verified career proof. Built for the next generation of builders, creators, and students.
             </p>
 
-            {/* Status pill */}
             <Link
               href="/status"
               className="inline-flex items-center gap-3 rounded-full px-4 py-2 transition-colors duration-200 hover:bg-white/5"
@@ -95,7 +88,6 @@ export default function Footer() {
             </Link>
           </div>
 
-          {/* Link Columns */}
           {Object.entries(footerLinks).map(([category, links]) => (
             <div key={category} className="lg:col-span-1">
               <h3 className="mb-4 text-xs font-bold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.3)' }}>
@@ -118,7 +110,6 @@ export default function Footer() {
           ))}
         </div>
 
-        {/* Bottom Bar */}
         <div className="flex flex-col items-center justify-between gap-6 pt-8 sm:flex-row" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
           <p className="text-sm" style={{ color: 'rgba(255,255,255,0.3)' }}>
             &copy; {currentYear} ORIN Inc. All rights reserved.

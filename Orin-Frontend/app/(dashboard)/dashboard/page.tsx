@@ -9,6 +9,7 @@ import { mapDbProofToProof, mapDbOpportunityToOpportunity, mapDbCoachNoteToCoach
 import type { Database } from "@/lib/supabase";
 import ProofCard from "@/components/ProofCard";
 import CoachNote from "@/components/CoachNote";
+import { PlanCard } from "@/components/PlanCard";
 import type { Proof, Opportunity, CoachNote as CoachNoteType, User } from "@/lib/types";
 
 export default function DashboardPage() {
@@ -269,6 +270,11 @@ export default function DashboardPage() {
                 ))}
               </div>
             )}
+          </div>
+
+          {/* Plan card */}
+          <div className="animate-fadeInUp" style={{ animationDelay: '230ms' }}>
+            <PlanCard />
           </div>
 
           {/* Proof by Type */}

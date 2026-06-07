@@ -1,5 +1,523 @@
 [
     {
+        "table": "ai_conversations",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "id",
+                "default": "gen_random_uuid()",
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "user_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "text",
+                "column": "agent_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "jsonb",
+                "column": "messages",
+                "default": "'[]'::jsonb",
+                "nullable": "NO"
+            },
+            {
+                "type": "jsonb",
+                "column": "metadata",
+                "default": "'{}'::jsonb",
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "created_at",
+                "default": "now()",
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "updated_at",
+                "default": "now()",
+                "nullable": "YES"
+            }
+        ],
+        "indexes": [
+            {
+                "definition": "CREATE INDEX idx_ai_conversations_user_agent ON public.ai_conversations USING btree (user_id, agent_id)",
+                "index_name": "idx_ai_conversations_user_agent"
+            },
+            {
+                "definition": "CREATE UNIQUE INDEX ai_conversations_pkey ON public.ai_conversations USING btree (id)",
+                "index_name": "ai_conversations_pkey"
+            },
+            {
+                "definition": "CREATE INDEX idx_ai_conversations_created ON public.ai_conversations USING btree (created_at DESC)",
+                "index_name": "idx_ai_conversations_created"
+            }
+        ],
+        "foreign_keys": [
+        ],
+        "rls_policies": [
+            {
+                "qual": null,
+                "roles": [
+                    "public"
+                ],
+                "command": "INSERT",
+                "with_check": "(auth.uid() = user_id)",
+                "policy_name": "Users can insert own conversations"
+            },
+            {
+                "qual": "(auth.uid() = user_id)",
+                "roles": [
+                    "public"
+                ],
+                "command": "SELECT",
+                "with_check": null,
+                "policy_name": "Users can view own conversations"
+            },
+            {
+                "qual": "(auth.uid() = user_id)",
+                "roles": [
+                    "public"
+                ],
+                "command": "UPDATE",
+                "with_check": null,
+                "policy_name": "Users can update own conversations"
+            },
+            {
+                "qual": "(auth.uid() = user_id)",
+                "roles": [
+                    "public"
+                ],
+                "command": "DELETE",
+                "with_check": null,
+                "policy_name": "Users can delete own conversations"
+            }
+        ]
+    },
+    {
+        "table": "ai_facts",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "id",
+                "default": "gen_random_uuid()",
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "user_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "text",
+                "column": "fact",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "text",
+                "column": "category",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "numeric",
+                "column": "importance",
+                "default": "0.5",
+                "nullable": "YES"
+            },
+            {
+                "type": "jsonb",
+                "column": "metadata",
+                "default": "'{}'::jsonb",
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "created_at",
+                "default": "now()",
+                "nullable": "YES"
+            }
+        ],
+        "indexes": [
+            {
+                "definition": "CREATE INDEX idx_ai_facts_user ON public.ai_facts USING btree (user_id)",
+                "index_name": "idx_ai_facts_user"
+            },
+            {
+                "definition": "CREATE INDEX idx_ai_facts_category ON public.ai_facts USING btree (category)",
+                "index_name": "idx_ai_facts_category"
+            },
+            {
+                "definition": "CREATE UNIQUE INDEX ai_facts_pkey ON public.ai_facts USING btree (id)",
+                "index_name": "ai_facts_pkey"
+            }
+        ],
+        "foreign_keys": [
+        ],
+        "rls_policies": [
+            {
+                "qual": null,
+                "roles": [
+                    "public"
+                ],
+                "command": "INSERT",
+                "with_check": "(auth.uid() = user_id)",
+                "policy_name": "Users can insert own facts"
+            },
+            {
+                "qual": "(auth.uid() = user_id)",
+                "roles": [
+                    "public"
+                ],
+                "command": "SELECT",
+                "with_check": null,
+                "policy_name": "Users can view own facts"
+            },
+            {
+                "qual": "(auth.uid() = user_id)",
+                "roles": [
+                    "public"
+                ],
+                "command": "DELETE",
+                "with_check": null,
+                "policy_name": "Users can delete own facts"
+            },
+            {
+                "qual": "(auth.uid() = user_id)",
+                "roles": [
+                    "public"
+                ],
+                "command": "UPDATE",
+                "with_check": null,
+                "policy_name": "Users can update own facts"
+            }
+        ]
+    },
+    {
+        "table": "ai_goals",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "id",
+                "default": "gen_random_uuid()",
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "user_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "text",
+                "column": "goal",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "text",
+                "column": "description",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "deadline",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "status",
+                "default": "'active'::text",
+                "nullable": "YES"
+            },
+            {
+                "type": "numeric",
+                "column": "progress",
+                "default": "0",
+                "nullable": "YES"
+            },
+            {
+                "type": "jsonb",
+                "column": "metadata",
+                "default": "'{}'::jsonb",
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "created_at",
+                "default": "now()",
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "updated_at",
+                "default": "now()",
+                "nullable": "YES"
+            }
+        ],
+        "indexes": [
+            {
+                "definition": "CREATE UNIQUE INDEX ai_goals_pkey ON public.ai_goals USING btree (id)",
+                "index_name": "ai_goals_pkey"
+            },
+            {
+                "definition": "CREATE INDEX idx_ai_goals_user_status ON public.ai_goals USING btree (user_id, status)",
+                "index_name": "idx_ai_goals_user_status"
+            }
+        ],
+        "foreign_keys": [
+        ],
+        "rls_policies": [
+            {
+                "qual": "(auth.uid() = user_id)",
+                "roles": [
+                    "public"
+                ],
+                "command": "DELETE",
+                "with_check": null,
+                "policy_name": "Users can delete own goals"
+            },
+            {
+                "qual": "(auth.uid() = user_id)",
+                "roles": [
+                    "public"
+                ],
+                "command": "UPDATE",
+                "with_check": null,
+                "policy_name": "Users can update own goals"
+            },
+            {
+                "qual": null,
+                "roles": [
+                    "public"
+                ],
+                "command": "INSERT",
+                "with_check": "(auth.uid() = user_id)",
+                "policy_name": "Users can insert own goals"
+            },
+            {
+                "qual": "(auth.uid() = user_id)",
+                "roles": [
+                    "public"
+                ],
+                "command": "SELECT",
+                "with_check": null,
+                "policy_name": "Users can view own goals"
+            }
+        ]
+    },
+    {
+        "table": "ai_learning_progress",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "id",
+                "default": "gen_random_uuid()",
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "user_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "text",
+                "column": "skill",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "numeric",
+                "column": "progress",
+                "default": "0",
+                "nullable": "YES"
+            },
+            {
+                "type": "jsonb",
+                "column": "milestones",
+                "default": "'[]'::jsonb",
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "started_at",
+                "default": "now()",
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "last_activity",
+                "default": "now()",
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "created_at",
+                "default": "now()",
+                "nullable": "YES"
+            }
+        ],
+        "indexes": [
+            {
+                "definition": "CREATE INDEX idx_ai_learning_progress_user ON public.ai_learning_progress USING btree (user_id)",
+                "index_name": "idx_ai_learning_progress_user"
+            },
+            {
+                "definition": "CREATE UNIQUE INDEX ai_learning_progress_pkey ON public.ai_learning_progress USING btree (id)",
+                "index_name": "ai_learning_progress_pkey"
+            }
+        ],
+        "foreign_keys": [
+        ],
+        "rls_policies": [
+            {
+                "qual": "(auth.uid() = user_id)",
+                "roles": [
+                    "public"
+                ],
+                "command": "SELECT",
+                "with_check": null,
+                "policy_name": "Users can view own learning progress"
+            },
+            {
+                "qual": "(auth.uid() = user_id)",
+                "roles": [
+                    "public"
+                ],
+                "command": "UPDATE",
+                "with_check": null,
+                "policy_name": "Users can update own learning progress"
+            },
+            {
+                "qual": null,
+                "roles": [
+                    "public"
+                ],
+                "command": "INSERT",
+                "with_check": "(auth.uid() = user_id)",
+                "policy_name": "Users can insert own learning progress"
+            }
+        ]
+    },
+    {
+        "table": "ai_skill_memory",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "id",
+                "default": "gen_random_uuid()",
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "user_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "text",
+                "column": "skill",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "text",
+                "column": "level",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "numeric",
+                "column": "confidence",
+                "default": "0.5",
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "source",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "last_assessed",
+                "default": "now()",
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "created_at",
+                "default": "now()",
+                "nullable": "YES"
+            }
+        ],
+        "indexes": [
+            {
+                "definition": "CREATE INDEX idx_ai_skill_memory_user ON public.ai_skill_memory USING btree (user_id)",
+                "index_name": "idx_ai_skill_memory_user"
+            },
+            {
+                "definition": "CREATE UNIQUE INDEX ai_skill_memory_pkey ON public.ai_skill_memory USING btree (id)",
+                "index_name": "ai_skill_memory_pkey"
+            },
+            {
+                "definition": "CREATE UNIQUE INDEX ai_skill_memory_user_id_skill_key ON public.ai_skill_memory USING btree (user_id, skill)",
+                "index_name": "ai_skill_memory_user_id_skill_key"
+            }
+        ],
+        "foreign_keys": [
+        ],
+        "rls_policies": [
+            {
+                "qual": "(auth.uid() = user_id)",
+                "roles": [
+                    "public"
+                ],
+                "command": "SELECT",
+                "with_check": null,
+                "policy_name": "Users can view own skills"
+            },
+            {
+                "qual": "(auth.uid() = user_id)",
+                "roles": [
+                    "public"
+                ],
+                "command": "DELETE",
+                "with_check": null,
+                "policy_name": "Users can delete own skills"
+            },
+            {
+                "qual": "(auth.uid() = user_id)",
+                "roles": [
+                    "public"
+                ],
+                "command": "UPDATE",
+                "with_check": null,
+                "policy_name": "Users can update own skills"
+            },
+            {
+                "qual": null,
+                "roles": [
+                    "public"
+                ],
+                "command": "INSERT",
+                "with_check": "(auth.uid() = user_id)",
+                "policy_name": "Users can insert own skills"
+            }
+        ]
+    },
+    {
         "table": "ai_usage_log",
         "columns": [
             {
@@ -35,16 +553,16 @@
         ],
         "indexes": [
             {
+                "definition": "CREATE INDEX idx_ai_usage_log_user_endpoint ON public.ai_usage_log USING btree (user_id, endpoint, created_at DESC)",
+                "index_name": "idx_ai_usage_log_user_endpoint"
+            },
+            {
                 "definition": "CREATE UNIQUE INDEX ai_usage_log_pkey ON public.ai_usage_log USING btree (id)",
                 "index_name": "ai_usage_log_pkey"
             },
             {
                 "definition": "CREATE INDEX idx_ai_usage_log_user_recent ON public.ai_usage_log USING btree (user_id, created_at DESC)",
                 "index_name": "idx_ai_usage_log_user_recent"
-            },
-            {
-                "definition": "CREATE INDEX idx_ai_usage_log_user_endpoint ON public.ai_usage_log USING btree (user_id, endpoint, created_at DESC)",
-                "index_name": "idx_ai_usage_log_user_endpoint"
             }
         ],
         "foreign_keys": [
@@ -73,6 +591,112 @@
                 "command": "INSERT",
                 "with_check": "true",
                 "policy_name": "Service role can insert AI usage"
+            }
+        ]
+    },
+    {
+        "table": "ai_user_preferences",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "id",
+                "default": "gen_random_uuid()",
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "user_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "text",
+                "column": "learning_style",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "text",
+                "column": "communication_tone",
+                "default": "'professional'::text",
+                "nullable": "YES"
+            },
+            {
+                "type": "ARRAY",
+                "column": "interests",
+                "default": "'{}'::text[]",
+                "nullable": "YES"
+            },
+            {
+                "type": "ARRAY",
+                "column": "career_goals",
+                "default": "'{}'::text[]",
+                "nullable": "YES"
+            },
+            {
+                "type": "ARRAY",
+                "column": "target_roles",
+                "default": "'{}'::text[]",
+                "nullable": "YES"
+            },
+            {
+                "type": "jsonb",
+                "column": "metadata",
+                "default": "'{}'::jsonb",
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "created_at",
+                "default": "now()",
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "updated_at",
+                "default": "now()",
+                "nullable": "YES"
+            }
+        ],
+        "indexes": [
+            {
+                "definition": "CREATE UNIQUE INDEX ai_user_preferences_pkey ON public.ai_user_preferences USING btree (id)",
+                "index_name": "ai_user_preferences_pkey"
+            },
+            {
+                "definition": "CREATE UNIQUE INDEX ai_user_preferences_user_id_key ON public.ai_user_preferences USING btree (user_id)",
+                "index_name": "ai_user_preferences_user_id_key"
+            }
+        ],
+        "foreign_keys": [
+        ],
+        "rls_policies": [
+            {
+                "qual": "(auth.uid() = user_id)",
+                "roles": [
+                    "public"
+                ],
+                "command": "UPDATE",
+                "with_check": null,
+                "policy_name": "Users can update own preferences"
+            },
+            {
+                "qual": "(auth.uid() = user_id)",
+                "roles": [
+                    "public"
+                ],
+                "command": "SELECT",
+                "with_check": null,
+                "policy_name": "Users can view own preferences"
+            },
+            {
+                "qual": null,
+                "roles": [
+                    "public"
+                ],
+                "command": "INSERT",
+                "with_check": "(auth.uid() = user_id)",
+                "policy_name": "Users can insert own preferences"
             }
         ]
     },
@@ -154,6 +778,14 @@
         ],
         "indexes": [
             {
+                "definition": "CREATE INDEX idx_audit_log_brin ON public.audit_log USING brin (created_at) WITH (pages_per_range='32')",
+                "index_name": "idx_audit_log_brin"
+            },
+            {
+                "definition": "CREATE INDEX idx_audit_log_actor_role ON public.audit_log USING btree (actor_role, created_at DESC)",
+                "index_name": "idx_audit_log_actor_role"
+            },
+            {
                 "definition": "CREATE INDEX idx_audit_log_action ON public.audit_log USING btree (action)",
                 "index_name": "idx_audit_log_action"
             },
@@ -168,14 +800,6 @@
             {
                 "definition": "CREATE INDEX idx_audit_log_actor ON public.audit_log USING btree (actor_id, created_at DESC)",
                 "index_name": "idx_audit_log_actor"
-            },
-            {
-                "definition": "CREATE INDEX idx_audit_log_brin ON public.audit_log USING brin (created_at) WITH (pages_per_range='32')",
-                "index_name": "idx_audit_log_brin"
-            },
-            {
-                "definition": "CREATE INDEX idx_audit_log_actor_role ON public.audit_log USING btree (actor_role, created_at DESC)",
-                "index_name": "idx_audit_log_actor_role"
             },
             {
                 "definition": "CREATE UNIQUE INDEX audit_log_pkey ON public.audit_log USING btree (id)",
@@ -283,6 +907,14 @@
         ],
         "indexes": [
             {
+                "definition": "CREATE INDEX idx_coach_notes_expires_at ON public.coach_notes USING btree (expires_at) WHERE ((expires_at IS NOT NULL) AND (deleted_at IS NULL))",
+                "index_name": "idx_coach_notes_expires_at"
+            },
+            {
+                "definition": "CREATE UNIQUE INDEX coach_notes_pkey ON public.coach_notes USING btree (id)",
+                "index_name": "coach_notes_pkey"
+            },
+            {
                 "definition": "CREATE INDEX idx_coach_notes_user_id ON public.coach_notes USING btree (user_id)",
                 "index_name": "idx_coach_notes_user_id"
             },
@@ -297,14 +929,6 @@
             {
                 "definition": "CREATE INDEX idx_coach_notes_priority ON public.coach_notes USING btree (user_id, priority DESC, created_at DESC) WHERE (deleted_at IS NULL)",
                 "index_name": "idx_coach_notes_priority"
-            },
-            {
-                "definition": "CREATE INDEX idx_coach_notes_expires_at ON public.coach_notes USING btree (expires_at) WHERE ((expires_at IS NOT NULL) AND (deleted_at IS NULL))",
-                "index_name": "idx_coach_notes_expires_at"
-            },
-            {
-                "definition": "CREATE UNIQUE INDEX coach_notes_pkey ON public.coach_notes USING btree (id)",
-                "index_name": "coach_notes_pkey"
             }
         ],
         "foreign_keys": [
@@ -324,15 +948,6 @@
                 "command": "UPDATE",
                 "with_check": "(user_id = current_user_id())",
                 "policy_name": "coach_notes_update_self"
-            },
-            {
-                "qual": "is_admin_or_mod()",
-                "roles": [
-                    "public"
-                ],
-                "command": "ALL",
-                "with_check": "is_admin_or_mod()",
-                "policy_name": "coach_notes_admin_all"
             },
             {
                 "qual": "((user_id = current_user_id()) AND (deleted_at IS NULL))",
@@ -360,6 +975,15 @@
                 "command": "DELETE",
                 "with_check": null,
                 "policy_name": "coach_notes_delete_self"
+            },
+            {
+                "qual": "is_admin_or_mod()",
+                "roles": [
+                    "public"
+                ],
+                "command": "ALL",
+                "with_check": "is_admin_or_mod()",
+                "policy_name": "coach_notes_admin_all"
             }
         ]
     },
@@ -453,12 +1077,8 @@
         ],
         "indexes": [
             {
-                "definition": "CREATE UNIQUE INDEX contact_messages_pkey ON public.contact_messages USING btree (id)",
-                "index_name": "contact_messages_pkey"
-            },
-            {
-                "definition": "CREATE INDEX idx_contact_messages_created ON public.contact_messages USING btree (created_at DESC)",
-                "index_name": "idx_contact_messages_created"
+                "definition": "CREATE INDEX idx_contact_messages_email ON public.contact_messages USING btree (email)",
+                "index_name": "idx_contact_messages_email"
             },
             {
                 "definition": "CREATE INDEX idx_contact_messages_assigned ON public.contact_messages USING btree (assigned_to) WHERE (assigned_to IS NOT NULL)",
@@ -469,12 +1089,16 @@
                 "index_name": "idx_contact_messages_user_id"
             },
             {
-                "definition": "CREATE INDEX idx_contact_messages_email ON public.contact_messages USING btree (email)",
-                "index_name": "idx_contact_messages_email"
+                "definition": "CREATE INDEX idx_contact_messages_created ON public.contact_messages USING btree (created_at DESC)",
+                "index_name": "idx_contact_messages_created"
             },
             {
                 "definition": "CREATE INDEX idx_contact_messages_status ON public.contact_messages USING btree (status)",
                 "index_name": "idx_contact_messages_status"
+            },
+            {
+                "definition": "CREATE UNIQUE INDEX contact_messages_pkey ON public.contact_messages USING btree (id)",
+                "index_name": "contact_messages_pkey"
             }
         ],
         "foreign_keys": [
@@ -506,9 +1130,9 @@
                 "roles": [
                     "public"
                 ],
-                "command": "SELECT",
+                "command": "DELETE",
                 "with_check": null,
-                "policy_name": "contact_messages_select_admin"
+                "policy_name": "contact_messages_delete_admin"
             },
             {
                 "qual": null,
@@ -524,9 +1148,9 @@
                 "roles": [
                     "public"
                 ],
-                "command": "DELETE",
+                "command": "SELECT",
                 "with_check": null,
-                "policy_name": "contact_messages_delete_admin"
+                "policy_name": "contact_messages_select_admin"
             }
         ]
     },
@@ -610,15 +1234,6 @@
         ],
         "rls_policies": [
             {
-                "qual": "(user_id = current_user_id())",
-                "roles": [
-                    "public"
-                ],
-                "command": "ALL",
-                "with_check": "(user_id = current_user_id())",
-                "policy_name": "notification_preferences_owner_all"
-            },
-            {
                 "qual": "is_admin_or_mod()",
                 "roles": [
                     "public"
@@ -626,6 +1241,15 @@
                 "command": "ALL",
                 "with_check": "is_admin_or_mod()",
                 "policy_name": "notification_preferences_admin_all"
+            },
+            {
+                "qual": "(user_id = current_user_id())",
+                "roles": [
+                    "public"
+                ],
+                "command": "ALL",
+                "with_check": "(user_id = current_user_id())",
+                "policy_name": "notification_preferences_owner_all"
             }
         ]
     },
@@ -701,6 +1325,10 @@
         ],
         "indexes": [
             {
+                "definition": "CREATE INDEX idx_notifications_read_at ON public.notifications USING btree (user_id, read_at) WHERE (read_at IS NOT NULL)",
+                "index_name": "idx_notifications_read_at"
+            },
+            {
                 "definition": "CREATE UNIQUE INDEX notifications_pkey ON public.notifications USING btree (id)",
                 "index_name": "notifications_pkey"
             },
@@ -709,20 +1337,16 @@
                 "index_name": "idx_notifications_user_id"
             },
             {
-                "definition": "CREATE INDEX idx_notifications_deleted_at ON public.notifications USING btree (deleted_at) WHERE (deleted_at IS NOT NULL)",
-                "index_name": "idx_notifications_deleted_at"
-            },
-            {
-                "definition": "CREATE INDEX idx_notifications_read_at ON public.notifications USING btree (user_id, read_at) WHERE (read_at IS NOT NULL)",
-                "index_name": "idx_notifications_read_at"
+                "definition": "CREATE INDEX idx_notifications_user_unread ON public.notifications USING btree (user_id) WHERE ((read_at IS NULL) AND (deleted_at IS NULL))",
+                "index_name": "idx_notifications_user_unread"
             },
             {
                 "definition": "CREATE INDEX idx_notifications_type ON public.notifications USING btree (type)",
                 "index_name": "idx_notifications_type"
             },
             {
-                "definition": "CREATE INDEX idx_notifications_user_unread ON public.notifications USING btree (user_id) WHERE ((read_at IS NULL) AND (deleted_at IS NULL))",
-                "index_name": "idx_notifications_user_unread"
+                "definition": "CREATE INDEX idx_notifications_deleted_at ON public.notifications USING btree (deleted_at) WHERE (deleted_at IS NOT NULL)",
+                "index_name": "idx_notifications_deleted_at"
             }
         ],
         "foreign_keys": [
@@ -735,15 +1359,6 @@
         ],
         "rls_policies": [
             {
-                "qual": "is_admin_or_mod()",
-                "roles": [
-                    "public"
-                ],
-                "command": "ALL",
-                "with_check": "is_admin_or_mod()",
-                "policy_name": "notifications_admin_all"
-            },
-            {
                 "qual": "(user_id = current_user_id())",
                 "roles": [
                     "public"
@@ -751,6 +1366,15 @@
                 "command": "ALL",
                 "with_check": "(user_id = current_user_id())",
                 "policy_name": "notifications_owner_all"
+            },
+            {
+                "qual": "is_admin_or_mod()",
+                "roles": [
+                    "public"
+                ],
+                "command": "ALL",
+                "with_check": "is_admin_or_mod()",
+                "policy_name": "notifications_admin_all"
             }
         ]
     },
@@ -904,40 +1528,12 @@
         ],
         "indexes": [
             {
-                "definition": "CREATE INDEX idx_opportunities_type ON public.opportunities USING btree (type)",
-                "index_name": "idx_opportunities_type"
-            },
-            {
-                "definition": "CREATE INDEX idx_opportunities_deleted_at ON public.opportunities USING btree (deleted_at) WHERE (deleted_at IS NOT NULL)",
-                "index_name": "idx_opportunities_deleted_at"
-            },
-            {
-                "definition": "CREATE INDEX idx_opportunities_salary_range ON public.opportunities USING btree (salary_min, salary_max) WHERE (salary_min IS NOT NULL)",
-                "index_name": "idx_opportunities_salary_range"
-            },
-            {
                 "definition": "CREATE INDEX idx_opportunities_remote ON public.opportunities USING btree (is_remote) WHERE (is_remote = true)",
                 "index_name": "idx_opportunities_remote"
             },
             {
-                "definition": "CREATE INDEX idx_opportunities_match ON public.opportunities USING btree (match_percentage DESC)",
-                "index_name": "idx_opportunities_match"
-            },
-            {
-                "definition": "CREATE INDEX idx_opportunities_created_at ON public.opportunities USING btree (created_at DESC)",
-                "index_name": "idx_opportunities_created_at"
-            },
-            {
-                "definition": "CREATE INDEX idx_opportunities_nice_to_have ON public.opportunities USING gin (nice_to_have)",
-                "index_name": "idx_opportunities_nice_to_have"
-            },
-            {
-                "definition": "CREATE INDEX idx_opportunities_active ON public.opportunities USING btree (is_active, apply_deadline)",
-                "index_name": "idx_opportunities_active"
-            },
-            {
-                "definition": "CREATE INDEX idx_opportunities_required_skills ON public.opportunities USING gin (required_skills)",
-                "index_name": "idx_opportunities_required_skills"
+                "definition": "CREATE INDEX idx_opportunities_type ON public.opportunities USING btree (type)",
+                "index_name": "idx_opportunities_type"
             },
             {
                 "definition": "CREATE UNIQUE INDEX opportunities_pkey ON public.opportunities USING btree (id)",
@@ -954,6 +1550,34 @@
             {
                 "definition": "CREATE INDEX idx_opportunities_title ON public.opportunities USING gin (title gin_trgm_ops)",
                 "index_name": "idx_opportunities_title"
+            },
+            {
+                "definition": "CREATE INDEX idx_opportunities_deleted_at ON public.opportunities USING btree (deleted_at) WHERE (deleted_at IS NOT NULL)",
+                "index_name": "idx_opportunities_deleted_at"
+            },
+            {
+                "definition": "CREATE INDEX idx_opportunities_salary_range ON public.opportunities USING btree (salary_min, salary_max) WHERE (salary_min IS NOT NULL)",
+                "index_name": "idx_opportunities_salary_range"
+            },
+            {
+                "definition": "CREATE INDEX idx_opportunities_match ON public.opportunities USING btree (match_percentage DESC)",
+                "index_name": "idx_opportunities_match"
+            },
+            {
+                "definition": "CREATE INDEX idx_opportunities_created_at ON public.opportunities USING btree (created_at DESC)",
+                "index_name": "idx_opportunities_created_at"
+            },
+            {
+                "definition": "CREATE INDEX idx_opportunities_active ON public.opportunities USING btree (is_active, apply_deadline)",
+                "index_name": "idx_opportunities_active"
+            },
+            {
+                "definition": "CREATE INDEX idx_opportunities_nice_to_have ON public.opportunities USING gin (nice_to_have)",
+                "index_name": "idx_opportunities_nice_to_have"
+            },
+            {
+                "definition": "CREATE INDEX idx_opportunities_required_skills ON public.opportunities USING gin (required_skills)",
+                "index_name": "idx_opportunities_required_skills"
             }
         ],
         "foreign_keys": [
@@ -1302,64 +1926,64 @@
         ],
         "indexes": [
             {
-                "definition": "CREATE INDEX idx_proof_cards_skills_user_added ON public.proof_cards USING gin (skills_user_added)",
-                "index_name": "idx_proof_cards_skills_user_added"
-            },
-            {
-                "definition": "CREATE UNIQUE INDEX proof_cards_pkey ON public.proof_cards USING btree (id)",
-                "index_name": "proof_cards_pkey"
-            },
-            {
-                "definition": "CREATE INDEX idx_proof_cards_user_id ON public.proof_cards USING btree (user_id)",
-                "index_name": "idx_proof_cards_user_id"
-            },
-            {
-                "definition": "CREATE INDEX idx_proof_cards_verification ON public.proof_cards USING btree (verification_status)",
-                "index_name": "idx_proof_cards_verification"
-            },
-            {
-                "definition": "CREATE INDEX idx_proof_cards_visibility ON public.proof_cards USING btree (visibility)",
-                "index_name": "idx_proof_cards_visibility"
-            },
-            {
-                "definition": "CREATE INDEX idx_proof_cards_user_status ON public.proof_cards USING btree (user_id, verification_status)",
-                "index_name": "idx_proof_cards_user_status"
-            },
-            {
-                "definition": "CREATE INDEX idx_proof_cards_user_created ON public.proof_cards USING btree (user_id, created_at DESC)",
-                "index_name": "idx_proof_cards_user_created"
+                "definition": "CREATE INDEX idx_proof_cards_sort ON public.proof_cards USING btree (user_id, sort_order, created_at DESC)",
+                "index_name": "idx_proof_cards_sort"
             },
             {
                 "definition": "CREATE INDEX idx_proof_cards_user_updated ON public.proof_cards USING btree (user_id, updated_at DESC)",
                 "index_name": "idx_proof_cards_user_updated"
             },
             {
-                "definition": "CREATE INDEX idx_proof_cards_sort ON public.proof_cards USING btree (user_id, sort_order, created_at DESC)",
-                "index_name": "idx_proof_cards_sort"
+                "definition": "CREATE INDEX idx_proof_cards_user_created ON public.proof_cards USING btree (user_id, created_at DESC)",
+                "index_name": "idx_proof_cards_user_created"
+            },
+            {
+                "definition": "CREATE INDEX idx_proof_cards_user_status ON public.proof_cards USING btree (user_id, verification_status)",
+                "index_name": "idx_proof_cards_user_status"
+            },
+            {
+                "definition": "CREATE INDEX idx_proof_cards_visibility ON public.proof_cards USING btree (visibility)",
+                "index_name": "idx_proof_cards_visibility"
+            },
+            {
+                "definition": "CREATE INDEX idx_proof_cards_verification ON public.proof_cards USING btree (verification_status)",
+                "index_name": "idx_proof_cards_verification"
+            },
+            {
+                "definition": "CREATE INDEX idx_proof_cards_user_id ON public.proof_cards USING btree (user_id)",
+                "index_name": "idx_proof_cards_user_id"
             },
             {
                 "definition": "CREATE INDEX idx_proof_cards_skills_extracted ON public.proof_cards USING gin (skills_extracted)",
                 "index_name": "idx_proof_cards_skills_extracted"
             },
             {
-                "definition": "CREATE INDEX idx_proof_cards_title_trgm ON public.proof_cards USING gin (title gin_trgm_ops)",
-                "index_name": "idx_proof_cards_title_trgm"
+                "definition": "CREATE UNIQUE INDEX proof_cards_pkey ON public.proof_cards USING btree (id)",
+                "index_name": "proof_cards_pkey"
             },
             {
-                "definition": "CREATE INDEX idx_proof_cards_source_type ON public.proof_cards USING btree (source_type)",
-                "index_name": "idx_proof_cards_source_type"
-            },
-            {
-                "definition": "CREATE INDEX idx_proof_cards_active ON public.proof_cards USING btree (user_id) WHERE (deleted_at IS NULL)",
-                "index_name": "idx_proof_cards_active"
+                "definition": "CREATE INDEX idx_proof_cards_deleted_at ON public.proof_cards USING btree (deleted_at) WHERE (deleted_at IS NOT NULL)",
+                "index_name": "idx_proof_cards_deleted_at"
             },
             {
                 "definition": "CREATE INDEX idx_proof_cards_public_verified ON public.proof_cards USING btree (user_id) WHERE ((visibility = 'public'::visibility_status) AND (verification_status = 'verified'::verification_status) AND (deleted_at IS NULL))",
                 "index_name": "idx_proof_cards_public_verified"
             },
             {
-                "definition": "CREATE INDEX idx_proof_cards_deleted_at ON public.proof_cards USING btree (deleted_at) WHERE (deleted_at IS NOT NULL)",
-                "index_name": "idx_proof_cards_deleted_at"
+                "definition": "CREATE INDEX idx_proof_cards_active ON public.proof_cards USING btree (user_id) WHERE (deleted_at IS NULL)",
+                "index_name": "idx_proof_cards_active"
+            },
+            {
+                "definition": "CREATE INDEX idx_proof_cards_source_type ON public.proof_cards USING btree (source_type)",
+                "index_name": "idx_proof_cards_source_type"
+            },
+            {
+                "definition": "CREATE INDEX idx_proof_cards_title_trgm ON public.proof_cards USING gin (title gin_trgm_ops)",
+                "index_name": "idx_proof_cards_title_trgm"
+            },
+            {
+                "definition": "CREATE INDEX idx_proof_cards_skills_user_added ON public.proof_cards USING gin (skills_user_added)",
+                "index_name": "idx_proof_cards_skills_user_added"
             }
         ],
         "foreign_keys": [
@@ -1371,15 +1995,6 @@
             }
         ],
         "rls_policies": [
-            {
-                "qual": null,
-                "roles": [
-                    "public"
-                ],
-                "command": "INSERT",
-                "with_check": "(user_id = current_user_id())",
-                "policy_name": "proof_cards_insert_owner"
-            },
             {
                 "qual": "((user_id = current_user_id()) AND (deleted_at IS NULL))",
                 "roles": [
@@ -1424,6 +2039,15 @@
                 "command": "UPDATE",
                 "with_check": "(user_id = current_user_id())",
                 "policy_name": "proof_cards_update_owner"
+            },
+            {
+                "qual": null,
+                "roles": [
+                    "public"
+                ],
+                "command": "INSERT",
+                "with_check": "(user_id = current_user_id())",
+                "policy_name": "proof_cards_insert_owner"
             }
         ]
     },
@@ -1517,32 +2141,32 @@
         ],
         "indexes": [
             {
+                "definition": "CREATE INDEX idx_proof_shares_email ON public.proof_shares USING btree (recipient_email)",
+                "index_name": "idx_proof_shares_email"
+            },
+            {
                 "definition": "CREATE UNIQUE INDEX idx_proof_shares_active_proof_email ON public.proof_shares USING btree (proof_id, recipient_email) WHERE (deleted_at IS NULL)",
                 "index_name": "idx_proof_shares_active_proof_email"
-            },
-            {
-                "definition": "CREATE UNIQUE INDEX proof_shares_token_key ON public.proof_shares USING btree (token)",
-                "index_name": "proof_shares_token_key"
-            },
-            {
-                "definition": "CREATE UNIQUE INDEX proof_shares_pkey ON public.proof_shares USING btree (id)",
-                "index_name": "proof_shares_pkey"
             },
             {
                 "definition": "CREATE INDEX idx_proof_shares_token ON public.proof_shares USING btree (token) WHERE (token IS NOT NULL)",
                 "index_name": "idx_proof_shares_token"
             },
             {
+                "definition": "CREATE INDEX idx_proof_shares_owner ON public.proof_shares USING btree (owner_id)",
+                "index_name": "idx_proof_shares_owner"
+            },
+            {
                 "definition": "CREATE INDEX idx_proof_shares_expires ON public.proof_shares USING btree (expires_at) WHERE (expires_at IS NOT NULL)",
                 "index_name": "idx_proof_shares_expires"
             },
             {
-                "definition": "CREATE INDEX idx_proof_shares_email ON public.proof_shares USING btree (recipient_email)",
-                "index_name": "idx_proof_shares_email"
+                "definition": "CREATE UNIQUE INDEX proof_shares_pkey ON public.proof_shares USING btree (id)",
+                "index_name": "proof_shares_pkey"
             },
             {
-                "definition": "CREATE INDEX idx_proof_shares_owner ON public.proof_shares USING btree (owner_id)",
-                "index_name": "idx_proof_shares_owner"
+                "definition": "CREATE UNIQUE INDEX proof_shares_token_key ON public.proof_shares USING btree (token)",
+                "index_name": "proof_shares_token_key"
             }
         ],
         "foreign_keys": [
@@ -1561,15 +2185,6 @@
         ],
         "rls_policies": [
             {
-                "qual": "(owner_id = current_user_id())",
-                "roles": [
-                    "public"
-                ],
-                "command": "ALL",
-                "with_check": "(owner_id = current_user_id())",
-                "policy_name": "proof_shares_owner_all"
-            },
-            {
                 "qual": "is_admin_or_mod()",
                 "roles": [
                     "public"
@@ -1577,6 +2192,15 @@
                 "command": "ALL",
                 "with_check": "is_admin_or_mod()",
                 "policy_name": "proof_shares_admin_all"
+            },
+            {
+                "qual": "(owner_id = current_user_id())",
+                "roles": [
+                    "public"
+                ],
+                "command": "ALL",
+                "with_check": "(owner_id = current_user_id())",
+                "policy_name": "proof_shares_owner_all"
             }
         ]
     },
@@ -1652,6 +2276,14 @@
         ],
         "indexes": [
             {
+                "definition": "CREATE UNIQUE INDEX proof_sources_pkey ON public.proof_sources USING btree (id)",
+                "index_name": "proof_sources_pkey"
+            },
+            {
+                "definition": "CREATE INDEX idx_proof_sources_user_id ON public.proof_sources USING btree (user_id)",
+                "index_name": "idx_proof_sources_user_id"
+            },
+            {
                 "definition": "CREATE INDEX idx_proof_sources_user_type ON public.proof_sources USING btree (user_id, source_type)",
                 "index_name": "idx_proof_sources_user_type"
             },
@@ -1660,16 +2292,8 @@
                 "index_name": "idx_proof_sources_active"
             },
             {
-                "definition": "CREATE UNIQUE INDEX proof_sources_pkey ON public.proof_sources USING btree (id)",
-                "index_name": "proof_sources_pkey"
-            },
-            {
                 "definition": "CREATE INDEX idx_proof_sources_connected ON public.proof_sources USING btree (user_id, is_connected) WHERE (deleted_at IS NULL)",
                 "index_name": "idx_proof_sources_connected"
-            },
-            {
-                "definition": "CREATE INDEX idx_proof_sources_user_id ON public.proof_sources USING btree (user_id)",
-                "index_name": "idx_proof_sources_user_id"
             }
         ],
         "foreign_keys": [
@@ -1691,24 +2315,6 @@
                 "policy_name": "proof_sources_insert_owner"
             },
             {
-                "qual": "(user_id = current_user_id())",
-                "roles": [
-                    "public"
-                ],
-                "command": "DELETE",
-                "with_check": null,
-                "policy_name": "proof_sources_delete_owner"
-            },
-            {
-                "qual": "is_admin_or_mod()",
-                "roles": [
-                    "public"
-                ],
-                "command": "ALL",
-                "with_check": "is_admin_or_mod()",
-                "policy_name": "proof_sources_admin_all"
-            },
-            {
                 "qual": "((user_id = current_user_id()) AND (deleted_at IS NULL))",
                 "roles": [
                     "public"
@@ -1725,6 +2331,24 @@
                 "command": "SELECT",
                 "with_check": null,
                 "policy_name": "proof_sources_select_owner"
+            },
+            {
+                "qual": "is_admin_or_mod()",
+                "roles": [
+                    "public"
+                ],
+                "command": "ALL",
+                "with_check": "is_admin_or_mod()",
+                "policy_name": "proof_sources_admin_all"
+            },
+            {
+                "qual": "(user_id = current_user_id())",
+                "roles": [
+                    "public"
+                ],
+                "command": "DELETE",
+                "with_check": null,
+                "policy_name": "proof_sources_delete_owner"
             }
         ]
     },
@@ -1782,20 +2406,20 @@
         ],
         "indexes": [
             {
-                "definition": "CREATE INDEX idx_proof_views_owner ON ONLY public.proof_views USING btree (owner_id, viewed_at DESC)",
-                "index_name": "idx_proof_views_owner"
-            },
-            {
-                "definition": "CREATE INDEX idx_proof_views_proof_id ON ONLY public.proof_views USING btree (proof_id, viewed_at DESC)",
-                "index_name": "idx_proof_views_proof_id"
+                "definition": "CREATE INDEX idx_proof_views_viewer ON ONLY public.proof_views USING btree (viewer_user_id)",
+                "index_name": "idx_proof_views_viewer"
             },
             {
                 "definition": "CREATE UNIQUE INDEX proof_views_pkey ON ONLY public.proof_views USING btree (id, viewed_at)",
                 "index_name": "proof_views_pkey"
             },
             {
-                "definition": "CREATE INDEX idx_proof_views_viewer ON ONLY public.proof_views USING btree (viewer_user_id)",
-                "index_name": "idx_proof_views_viewer"
+                "definition": "CREATE INDEX idx_proof_views_proof_id ON ONLY public.proof_views USING btree (proof_id, viewed_at DESC)",
+                "index_name": "idx_proof_views_proof_id"
+            },
+            {
+                "definition": "CREATE INDEX idx_proof_views_owner ON ONLY public.proof_views USING btree (owner_id, viewed_at DESC)",
+                "index_name": "idx_proof_views_owner"
             }
         ],
         "foreign_keys": [
@@ -1884,20 +2508,20 @@
         ],
         "indexes": [
             {
-                "definition": "CREATE INDEX proof_views_2025_06_owner_id_viewed_at_idx ON public.proof_views_2025_06 USING btree (owner_id, viewed_at DESC)",
-                "index_name": "proof_views_2025_06_owner_id_viewed_at_idx"
-            },
-            {
-                "definition": "CREATE INDEX proof_views_2025_06_proof_id_viewed_at_idx ON public.proof_views_2025_06 USING btree (proof_id, viewed_at DESC)",
-                "index_name": "proof_views_2025_06_proof_id_viewed_at_idx"
-            },
-            {
                 "definition": "CREATE UNIQUE INDEX proof_views_2025_06_pkey ON public.proof_views_2025_06 USING btree (id, viewed_at)",
                 "index_name": "proof_views_2025_06_pkey"
             },
             {
                 "definition": "CREATE INDEX proof_views_2025_06_viewer_user_id_idx ON public.proof_views_2025_06 USING btree (viewer_user_id)",
                 "index_name": "proof_views_2025_06_viewer_user_id_idx"
+            },
+            {
+                "definition": "CREATE INDEX proof_views_2025_06_owner_id_viewed_at_idx ON public.proof_views_2025_06 USING btree (owner_id, viewed_at DESC)",
+                "index_name": "proof_views_2025_06_owner_id_viewed_at_idx"
+            },
+            {
+                "definition": "CREATE INDEX proof_views_2025_06_proof_id_viewed_at_idx ON public.proof_views_2025_06 USING btree (proof_id, viewed_at DESC)",
+                "index_name": "proof_views_2025_06_proof_id_viewed_at_idx"
             }
         ],
         "foreign_keys": [
@@ -1959,20 +2583,20 @@
         ],
         "indexes": [
             {
-                "definition": "CREATE INDEX proof_views_2025_07_viewer_user_id_idx ON public.proof_views_2025_07 USING btree (viewer_user_id)",
-                "index_name": "proof_views_2025_07_viewer_user_id_idx"
-            },
-            {
                 "definition": "CREATE UNIQUE INDEX proof_views_2025_07_pkey ON public.proof_views_2025_07 USING btree (id, viewed_at)",
                 "index_name": "proof_views_2025_07_pkey"
             },
             {
-                "definition": "CREATE INDEX proof_views_2025_07_proof_id_viewed_at_idx ON public.proof_views_2025_07 USING btree (proof_id, viewed_at DESC)",
-                "index_name": "proof_views_2025_07_proof_id_viewed_at_idx"
+                "definition": "CREATE INDEX proof_views_2025_07_viewer_user_id_idx ON public.proof_views_2025_07 USING btree (viewer_user_id)",
+                "index_name": "proof_views_2025_07_viewer_user_id_idx"
             },
             {
                 "definition": "CREATE INDEX proof_views_2025_07_owner_id_viewed_at_idx ON public.proof_views_2025_07 USING btree (owner_id, viewed_at DESC)",
                 "index_name": "proof_views_2025_07_owner_id_viewed_at_idx"
+            },
+            {
+                "definition": "CREATE INDEX proof_views_2025_07_proof_id_viewed_at_idx ON public.proof_views_2025_07 USING btree (proof_id, viewed_at DESC)",
+                "index_name": "proof_views_2025_07_proof_id_viewed_at_idx"
             }
         ],
         "foreign_keys": [
@@ -2034,20 +2658,20 @@
         ],
         "indexes": [
             {
-                "definition": "CREATE INDEX proof_views_2025_08_viewer_user_id_idx ON public.proof_views_2025_08 USING btree (viewer_user_id)",
-                "index_name": "proof_views_2025_08_viewer_user_id_idx"
-            },
-            {
-                "definition": "CREATE INDEX proof_views_2025_08_proof_id_viewed_at_idx ON public.proof_views_2025_08 USING btree (proof_id, viewed_at DESC)",
-                "index_name": "proof_views_2025_08_proof_id_viewed_at_idx"
-            },
-            {
                 "definition": "CREATE UNIQUE INDEX proof_views_2025_08_pkey ON public.proof_views_2025_08 USING btree (id, viewed_at)",
                 "index_name": "proof_views_2025_08_pkey"
             },
             {
+                "definition": "CREATE INDEX proof_views_2025_08_viewer_user_id_idx ON public.proof_views_2025_08 USING btree (viewer_user_id)",
+                "index_name": "proof_views_2025_08_viewer_user_id_idx"
+            },
+            {
                 "definition": "CREATE INDEX proof_views_2025_08_owner_id_viewed_at_idx ON public.proof_views_2025_08 USING btree (owner_id, viewed_at DESC)",
                 "index_name": "proof_views_2025_08_owner_id_viewed_at_idx"
+            },
+            {
+                "definition": "CREATE INDEX proof_views_2025_08_proof_id_viewed_at_idx ON public.proof_views_2025_08 USING btree (proof_id, viewed_at DESC)",
+                "index_name": "proof_views_2025_08_proof_id_viewed_at_idx"
             }
         ],
         "foreign_keys": [
@@ -2109,20 +2733,20 @@
         ],
         "indexes": [
             {
-                "definition": "CREATE UNIQUE INDEX proof_views_2025_09_pkey ON public.proof_views_2025_09 USING btree (id, viewed_at)",
-                "index_name": "proof_views_2025_09_pkey"
+                "definition": "CREATE INDEX proof_views_2025_09_proof_id_viewed_at_idx ON public.proof_views_2025_09 USING btree (proof_id, viewed_at DESC)",
+                "index_name": "proof_views_2025_09_proof_id_viewed_at_idx"
             },
             {
                 "definition": "CREATE INDEX proof_views_2025_09_viewer_user_id_idx ON public.proof_views_2025_09 USING btree (viewer_user_id)",
                 "index_name": "proof_views_2025_09_viewer_user_id_idx"
             },
             {
-                "definition": "CREATE INDEX proof_views_2025_09_owner_id_viewed_at_idx ON public.proof_views_2025_09 USING btree (owner_id, viewed_at DESC)",
-                "index_name": "proof_views_2025_09_owner_id_viewed_at_idx"
+                "definition": "CREATE UNIQUE INDEX proof_views_2025_09_pkey ON public.proof_views_2025_09 USING btree (id, viewed_at)",
+                "index_name": "proof_views_2025_09_pkey"
             },
             {
-                "definition": "CREATE INDEX proof_views_2025_09_proof_id_viewed_at_idx ON public.proof_views_2025_09 USING btree (proof_id, viewed_at DESC)",
-                "index_name": "proof_views_2025_09_proof_id_viewed_at_idx"
+                "definition": "CREATE INDEX proof_views_2025_09_owner_id_viewed_at_idx ON public.proof_views_2025_09 USING btree (owner_id, viewed_at DESC)",
+                "index_name": "proof_views_2025_09_owner_id_viewed_at_idx"
             }
         ],
         "foreign_keys": [
@@ -2259,20 +2883,20 @@
         ],
         "indexes": [
             {
-                "definition": "CREATE UNIQUE INDEX proof_views_2025_11_pkey ON public.proof_views_2025_11 USING btree (id, viewed_at)",
-                "index_name": "proof_views_2025_11_pkey"
-            },
-            {
                 "definition": "CREATE INDEX proof_views_2025_11_viewer_user_id_idx ON public.proof_views_2025_11 USING btree (viewer_user_id)",
                 "index_name": "proof_views_2025_11_viewer_user_id_idx"
             },
             {
-                "definition": "CREATE INDEX proof_views_2025_11_owner_id_viewed_at_idx ON public.proof_views_2025_11 USING btree (owner_id, viewed_at DESC)",
-                "index_name": "proof_views_2025_11_owner_id_viewed_at_idx"
+                "definition": "CREATE UNIQUE INDEX proof_views_2025_11_pkey ON public.proof_views_2025_11 USING btree (id, viewed_at)",
+                "index_name": "proof_views_2025_11_pkey"
             },
             {
                 "definition": "CREATE INDEX proof_views_2025_11_proof_id_viewed_at_idx ON public.proof_views_2025_11 USING btree (proof_id, viewed_at DESC)",
                 "index_name": "proof_views_2025_11_proof_id_viewed_at_idx"
+            },
+            {
+                "definition": "CREATE INDEX proof_views_2025_11_owner_id_viewed_at_idx ON public.proof_views_2025_11 USING btree (owner_id, viewed_at DESC)",
+                "index_name": "proof_views_2025_11_owner_id_viewed_at_idx"
             }
         ],
         "foreign_keys": [
@@ -2334,20 +2958,20 @@
         ],
         "indexes": [
             {
-                "definition": "CREATE INDEX proof_views_2025_12_proof_id_viewed_at_idx ON public.proof_views_2025_12 USING btree (proof_id, viewed_at DESC)",
-                "index_name": "proof_views_2025_12_proof_id_viewed_at_idx"
+                "definition": "CREATE INDEX proof_views_2025_12_owner_id_viewed_at_idx ON public.proof_views_2025_12 USING btree (owner_id, viewed_at DESC)",
+                "index_name": "proof_views_2025_12_owner_id_viewed_at_idx"
             },
             {
                 "definition": "CREATE INDEX proof_views_2025_12_viewer_user_id_idx ON public.proof_views_2025_12 USING btree (viewer_user_id)",
                 "index_name": "proof_views_2025_12_viewer_user_id_idx"
             },
             {
-                "definition": "CREATE INDEX proof_views_2025_12_owner_id_viewed_at_idx ON public.proof_views_2025_12 USING btree (owner_id, viewed_at DESC)",
-                "index_name": "proof_views_2025_12_owner_id_viewed_at_idx"
-            },
-            {
                 "definition": "CREATE UNIQUE INDEX proof_views_2025_12_pkey ON public.proof_views_2025_12 USING btree (id, viewed_at)",
                 "index_name": "proof_views_2025_12_pkey"
+            },
+            {
+                "definition": "CREATE INDEX proof_views_2025_12_proof_id_viewed_at_idx ON public.proof_views_2025_12 USING btree (proof_id, viewed_at DESC)",
+                "index_name": "proof_views_2025_12_proof_id_viewed_at_idx"
             }
         ],
         "foreign_keys": [
@@ -2409,20 +3033,20 @@
         ],
         "indexes": [
             {
-                "definition": "CREATE UNIQUE INDEX proof_views_2026_01_pkey ON public.proof_views_2026_01 USING btree (id, viewed_at)",
-                "index_name": "proof_views_2026_01_pkey"
+                "definition": "CREATE INDEX proof_views_2026_01_owner_id_viewed_at_idx ON public.proof_views_2026_01 USING btree (owner_id, viewed_at DESC)",
+                "index_name": "proof_views_2026_01_owner_id_viewed_at_idx"
             },
             {
-                "definition": "CREATE INDEX proof_views_2026_01_proof_id_viewed_at_idx ON public.proof_views_2026_01 USING btree (proof_id, viewed_at DESC)",
-                "index_name": "proof_views_2026_01_proof_id_viewed_at_idx"
+                "definition": "CREATE UNIQUE INDEX proof_views_2026_01_pkey ON public.proof_views_2026_01 USING btree (id, viewed_at)",
+                "index_name": "proof_views_2026_01_pkey"
             },
             {
                 "definition": "CREATE INDEX proof_views_2026_01_viewer_user_id_idx ON public.proof_views_2026_01 USING btree (viewer_user_id)",
                 "index_name": "proof_views_2026_01_viewer_user_id_idx"
             },
             {
-                "definition": "CREATE INDEX proof_views_2026_01_owner_id_viewed_at_idx ON public.proof_views_2026_01 USING btree (owner_id, viewed_at DESC)",
-                "index_name": "proof_views_2026_01_owner_id_viewed_at_idx"
+                "definition": "CREATE INDEX proof_views_2026_01_proof_id_viewed_at_idx ON public.proof_views_2026_01 USING btree (proof_id, viewed_at DESC)",
+                "index_name": "proof_views_2026_01_proof_id_viewed_at_idx"
             }
         ],
         "foreign_keys": [
@@ -2492,12 +3116,12 @@
                 "index_name": "proof_views_2026_02_viewer_user_id_idx"
             },
             {
-                "definition": "CREATE UNIQUE INDEX proof_views_2026_02_pkey ON public.proof_views_2026_02 USING btree (id, viewed_at)",
-                "index_name": "proof_views_2026_02_pkey"
-            },
-            {
                 "definition": "CREATE INDEX proof_views_2026_02_owner_id_viewed_at_idx ON public.proof_views_2026_02 USING btree (owner_id, viewed_at DESC)",
                 "index_name": "proof_views_2026_02_owner_id_viewed_at_idx"
+            },
+            {
+                "definition": "CREATE UNIQUE INDEX proof_views_2026_02_pkey ON public.proof_views_2026_02 USING btree (id, viewed_at)",
+                "index_name": "proof_views_2026_02_pkey"
             }
         ],
         "foreign_keys": [
@@ -2559,20 +3183,20 @@
         ],
         "indexes": [
             {
-                "definition": "CREATE INDEX proof_views_2026_03_owner_id_viewed_at_idx ON public.proof_views_2026_03 USING btree (owner_id, viewed_at DESC)",
-                "index_name": "proof_views_2026_03_owner_id_viewed_at_idx"
-            },
-            {
                 "definition": "CREATE UNIQUE INDEX proof_views_2026_03_pkey ON public.proof_views_2026_03 USING btree (id, viewed_at)",
                 "index_name": "proof_views_2026_03_pkey"
             },
             {
-                "definition": "CREATE INDEX proof_views_2026_03_proof_id_viewed_at_idx ON public.proof_views_2026_03 USING btree (proof_id, viewed_at DESC)",
-                "index_name": "proof_views_2026_03_proof_id_viewed_at_idx"
-            },
-            {
                 "definition": "CREATE INDEX proof_views_2026_03_viewer_user_id_idx ON public.proof_views_2026_03 USING btree (viewer_user_id)",
                 "index_name": "proof_views_2026_03_viewer_user_id_idx"
+            },
+            {
+                "definition": "CREATE INDEX proof_views_2026_03_owner_id_viewed_at_idx ON public.proof_views_2026_03 USING btree (owner_id, viewed_at DESC)",
+                "index_name": "proof_views_2026_03_owner_id_viewed_at_idx"
+            },
+            {
+                "definition": "CREATE INDEX proof_views_2026_03_proof_id_viewed_at_idx ON public.proof_views_2026_03 USING btree (proof_id, viewed_at DESC)",
+                "index_name": "proof_views_2026_03_proof_id_viewed_at_idx"
             }
         ],
         "foreign_keys": [
@@ -2634,10 +3258,6 @@
         ],
         "indexes": [
             {
-                "definition": "CREATE UNIQUE INDEX proof_views_2026_04_pkey ON public.proof_views_2026_04 USING btree (id, viewed_at)",
-                "index_name": "proof_views_2026_04_pkey"
-            },
-            {
                 "definition": "CREATE INDEX proof_views_2026_04_viewer_user_id_idx ON public.proof_views_2026_04 USING btree (viewer_user_id)",
                 "index_name": "proof_views_2026_04_viewer_user_id_idx"
             },
@@ -2648,6 +3268,10 @@
             {
                 "definition": "CREATE INDEX proof_views_2026_04_proof_id_viewed_at_idx ON public.proof_views_2026_04 USING btree (proof_id, viewed_at DESC)",
                 "index_name": "proof_views_2026_04_proof_id_viewed_at_idx"
+            },
+            {
+                "definition": "CREATE UNIQUE INDEX proof_views_2026_04_pkey ON public.proof_views_2026_04 USING btree (id, viewed_at)",
+                "index_name": "proof_views_2026_04_pkey"
             }
         ],
         "foreign_keys": [
@@ -2709,16 +3333,16 @@
         ],
         "indexes": [
             {
+                "definition": "CREATE INDEX proof_views_2026_05_owner_id_viewed_at_idx ON public.proof_views_2026_05 USING btree (owner_id, viewed_at DESC)",
+                "index_name": "proof_views_2026_05_owner_id_viewed_at_idx"
+            },
+            {
                 "definition": "CREATE UNIQUE INDEX proof_views_2026_05_pkey ON public.proof_views_2026_05 USING btree (id, viewed_at)",
                 "index_name": "proof_views_2026_05_pkey"
             },
             {
                 "definition": "CREATE INDEX proof_views_2026_05_viewer_user_id_idx ON public.proof_views_2026_05 USING btree (viewer_user_id)",
                 "index_name": "proof_views_2026_05_viewer_user_id_idx"
-            },
-            {
-                "definition": "CREATE INDEX proof_views_2026_05_owner_id_viewed_at_idx ON public.proof_views_2026_05 USING btree (owner_id, viewed_at DESC)",
-                "index_name": "proof_views_2026_05_owner_id_viewed_at_idx"
             },
             {
                 "definition": "CREATE INDEX proof_views_2026_05_proof_id_viewed_at_idx ON public.proof_views_2026_05 USING btree (proof_id, viewed_at DESC)",
@@ -2788,12 +3412,12 @@
                 "index_name": "proof_views_2026_06_viewer_user_id_idx"
             },
             {
-                "definition": "CREATE INDEX proof_views_2026_06_owner_id_viewed_at_idx ON public.proof_views_2026_06 USING btree (owner_id, viewed_at DESC)",
-                "index_name": "proof_views_2026_06_owner_id_viewed_at_idx"
-            },
-            {
                 "definition": "CREATE INDEX proof_views_2026_06_proof_id_viewed_at_idx ON public.proof_views_2026_06 USING btree (proof_id, viewed_at DESC)",
                 "index_name": "proof_views_2026_06_proof_id_viewed_at_idx"
+            },
+            {
+                "definition": "CREATE INDEX proof_views_2026_06_owner_id_viewed_at_idx ON public.proof_views_2026_06 USING btree (owner_id, viewed_at DESC)",
+                "index_name": "proof_views_2026_06_owner_id_viewed_at_idx"
             },
             {
                 "definition": "CREATE UNIQUE INDEX proof_views_2026_06_pkey ON public.proof_views_2026_06 USING btree (id, viewed_at)",
@@ -2859,20 +3483,20 @@
         ],
         "indexes": [
             {
-                "definition": "CREATE INDEX proof_views_2026_07_proof_id_viewed_at_idx ON public.proof_views_2026_07 USING btree (proof_id, viewed_at DESC)",
-                "index_name": "proof_views_2026_07_proof_id_viewed_at_idx"
+                "definition": "CREATE UNIQUE INDEX proof_views_2026_07_pkey ON public.proof_views_2026_07 USING btree (id, viewed_at)",
+                "index_name": "proof_views_2026_07_pkey"
             },
             {
                 "definition": "CREATE INDEX proof_views_2026_07_viewer_user_id_idx ON public.proof_views_2026_07 USING btree (viewer_user_id)",
                 "index_name": "proof_views_2026_07_viewer_user_id_idx"
             },
             {
-                "definition": "CREATE UNIQUE INDEX proof_views_2026_07_pkey ON public.proof_views_2026_07 USING btree (id, viewed_at)",
-                "index_name": "proof_views_2026_07_pkey"
-            },
-            {
                 "definition": "CREATE INDEX proof_views_2026_07_owner_id_viewed_at_idx ON public.proof_views_2026_07 USING btree (owner_id, viewed_at DESC)",
                 "index_name": "proof_views_2026_07_owner_id_viewed_at_idx"
+            },
+            {
+                "definition": "CREATE INDEX proof_views_2026_07_proof_id_viewed_at_idx ON public.proof_views_2026_07 USING btree (proof_id, viewed_at DESC)",
+                "index_name": "proof_views_2026_07_proof_id_viewed_at_idx"
             }
         ],
         "foreign_keys": [
@@ -2938,16 +3562,16 @@
                 "index_name": "proof_views_2026_08_proof_id_viewed_at_idx"
             },
             {
+                "definition": "CREATE INDEX proof_views_2026_08_owner_id_viewed_at_idx ON public.proof_views_2026_08 USING btree (owner_id, viewed_at DESC)",
+                "index_name": "proof_views_2026_08_owner_id_viewed_at_idx"
+            },
+            {
                 "definition": "CREATE INDEX proof_views_2026_08_viewer_user_id_idx ON public.proof_views_2026_08 USING btree (viewer_user_id)",
                 "index_name": "proof_views_2026_08_viewer_user_id_idx"
             },
             {
                 "definition": "CREATE UNIQUE INDEX proof_views_2026_08_pkey ON public.proof_views_2026_08 USING btree (id, viewed_at)",
                 "index_name": "proof_views_2026_08_pkey"
-            },
-            {
-                "definition": "CREATE INDEX proof_views_2026_08_owner_id_viewed_at_idx ON public.proof_views_2026_08 USING btree (owner_id, viewed_at DESC)",
-                "index_name": "proof_views_2026_08_owner_id_viewed_at_idx"
             }
         ],
         "foreign_keys": [
@@ -3013,16 +3637,16 @@
                 "index_name": "proof_views_2026_09_viewer_user_id_idx"
             },
             {
-                "definition": "CREATE UNIQUE INDEX proof_views_2026_09_pkey ON public.proof_views_2026_09 USING btree (id, viewed_at)",
-                "index_name": "proof_views_2026_09_pkey"
-            },
-            {
                 "definition": "CREATE INDEX proof_views_2026_09_proof_id_viewed_at_idx ON public.proof_views_2026_09 USING btree (proof_id, viewed_at DESC)",
                 "index_name": "proof_views_2026_09_proof_id_viewed_at_idx"
             },
             {
                 "definition": "CREATE INDEX proof_views_2026_09_owner_id_viewed_at_idx ON public.proof_views_2026_09 USING btree (owner_id, viewed_at DESC)",
                 "index_name": "proof_views_2026_09_owner_id_viewed_at_idx"
+            },
+            {
+                "definition": "CREATE UNIQUE INDEX proof_views_2026_09_pkey ON public.proof_views_2026_09 USING btree (id, viewed_at)",
+                "index_name": "proof_views_2026_09_pkey"
             }
         ],
         "foreign_keys": [
@@ -3135,12 +3759,12 @@
         ],
         "indexes": [
             {
-                "definition": "CREATE UNIQUE INDEX saved_searches_pkey ON public.saved_searches USING btree (id)",
-                "index_name": "saved_searches_pkey"
-            },
-            {
                 "definition": "CREATE INDEX idx_saved_searches_user ON public.saved_searches USING btree (user_id)",
                 "index_name": "idx_saved_searches_user"
+            },
+            {
+                "definition": "CREATE UNIQUE INDEX saved_searches_pkey ON public.saved_searches USING btree (id)",
+                "index_name": "saved_searches_pkey"
             }
         ],
         "foreign_keys": [
@@ -3262,8 +3886,8 @@
         ],
         "indexes": [
             {
-                "definition": "CREATE INDEX idx_subscriptions_period_end ON public.subscriptions USING btree (current_period_end) WHERE (current_period_end IS NOT NULL)",
-                "index_name": "idx_subscriptions_period_end"
+                "definition": "CREATE INDEX idx_subscriptions_trial_end ON public.subscriptions USING btree (trial_ends_at) WHERE (trial_ends_at IS NOT NULL)",
+                "index_name": "idx_subscriptions_trial_end"
             },
             {
                 "definition": "CREATE UNIQUE INDEX subscriptions_pkey ON public.subscriptions USING btree (id)",
@@ -3294,8 +3918,8 @@
                 "index_name": "idx_subscriptions_stripe_cust"
             },
             {
-                "definition": "CREATE INDEX idx_subscriptions_trial_end ON public.subscriptions USING btree (trial_ends_at) WHERE (trial_ends_at IS NOT NULL)",
-                "index_name": "idx_subscriptions_trial_end"
+                "definition": "CREATE INDEX idx_subscriptions_period_end ON public.subscriptions USING btree (current_period_end) WHERE (current_period_end IS NOT NULL)",
+                "index_name": "idx_subscriptions_period_end"
             }
         ],
         "foreign_keys": [
@@ -3308,6 +3932,15 @@
         ],
         "rls_policies": [
             {
+                "qual": "is_admin_or_mod()",
+                "roles": [
+                    "public"
+                ],
+                "command": "ALL",
+                "with_check": "is_admin_or_mod()",
+                "policy_name": "subscriptions_admin_all"
+            },
+            {
                 "qual": "(user_id = current_user_id())",
                 "roles": [
                     "public"
@@ -3315,15 +3948,6 @@
                 "command": "SELECT",
                 "with_check": null,
                 "policy_name": "subscriptions_owner_select"
-            },
-            {
-                "qual": "(user_id = current_user_id())",
-                "roles": [
-                    "public"
-                ],
-                "command": "UPDATE",
-                "with_check": "(user_id = current_user_id())",
-                "policy_name": "subscriptions_owner_update"
             },
             {
                 "qual": null,
@@ -3335,13 +3959,13 @@
                 "policy_name": "subscriptions_owner_insert"
             },
             {
-                "qual": "is_admin_or_mod()",
+                "qual": "(user_id = current_user_id())",
                 "roles": [
                     "public"
                 ],
-                "command": "ALL",
-                "with_check": "is_admin_or_mod()",
-                "policy_name": "subscriptions_admin_all"
+                "command": "UPDATE",
+                "with_check": "(user_id = current_user_id())",
+                "policy_name": "subscriptions_owner_update"
             }
         ]
     },
@@ -3512,28 +4136,28 @@
         ],
         "indexes": [
             {
-                "definition": "CREATE INDEX idx_user_integrations_status ON public.user_integrations USING btree (status)",
-                "index_name": "idx_user_integrations_status"
+                "definition": "CREATE INDEX idx_user_integrations_external ON public.user_integrations USING btree (provider, external_user_id) WHERE (external_user_id IS NOT NULL)",
+                "index_name": "idx_user_integrations_external"
             },
             {
                 "definition": "CREATE INDEX idx_user_integrations_provider ON public.user_integrations USING btree (user_id, provider) WHERE (deleted_at IS NULL)",
                 "index_name": "idx_user_integrations_provider"
             },
             {
-                "definition": "CREATE INDEX idx_user_integrations_external ON public.user_integrations USING btree (provider, external_user_id) WHERE (external_user_id IS NOT NULL)",
-                "index_name": "idx_user_integrations_external"
+                "definition": "CREATE INDEX idx_user_integrations_status ON public.user_integrations USING btree (status)",
+                "index_name": "idx_user_integrations_status"
             },
             {
-                "definition": "CREATE UNIQUE INDEX user_integrations_pkey ON public.user_integrations USING btree (id)",
-                "index_name": "user_integrations_pkey"
+                "definition": "CREATE INDEX idx_user_integrations_user ON public.user_integrations USING btree (user_id)",
+                "index_name": "idx_user_integrations_user"
             },
             {
                 "definition": "CREATE UNIQUE INDEX user_integrations_uq_provider ON public.user_integrations USING btree (user_id, provider)",
                 "index_name": "user_integrations_uq_provider"
             },
             {
-                "definition": "CREATE INDEX idx_user_integrations_user ON public.user_integrations USING btree (user_id)",
-                "index_name": "idx_user_integrations_user"
+                "definition": "CREATE UNIQUE INDEX user_integrations_pkey ON public.user_integrations USING btree (id)",
+                "index_name": "user_integrations_pkey"
             }
         ],
         "foreign_keys": [
@@ -3546,15 +4170,6 @@
         ],
         "rls_policies": [
             {
-                "qual": "is_admin_or_mod()",
-                "roles": [
-                    "public"
-                ],
-                "command": "ALL",
-                "with_check": "is_admin_or_mod()",
-                "policy_name": "user_integrations_admin_all"
-            },
-            {
                 "qual": "(user_id = current_user_id())",
                 "roles": [
                     "public"
@@ -3562,6 +4177,15 @@
                 "command": "ALL",
                 "with_check": "(user_id = current_user_id())",
                 "policy_name": "user_integrations_owner_all"
+            },
+            {
+                "qual": "is_admin_or_mod()",
+                "roles": [
+                    "public"
+                ],
+                "command": "ALL",
+                "with_check": "is_admin_or_mod()",
+                "policy_name": "user_integrations_admin_all"
             }
         ]
     },
@@ -3631,28 +4255,28 @@
         ],
         "indexes": [
             {
-                "definition": "CREATE INDEX idx_user_opportunities_applied ON public.user_opportunities USING btree (applied_at) WHERE (applied_at IS NOT NULL)",
-                "index_name": "idx_user_opportunities_applied"
-            },
-            {
-                "definition": "CREATE INDEX idx_user_opportunities_user ON public.user_opportunities USING btree (user_id, status)",
-                "index_name": "idx_user_opportunities_user"
+                "definition": "CREATE UNIQUE INDEX user_opportunities_pkey ON public.user_opportunities USING btree (id)",
+                "index_name": "user_opportunities_pkey"
             },
             {
                 "definition": "CREATE UNIQUE INDEX user_opportunities_uq_pair ON public.user_opportunities USING btree (user_id, opportunity_id)",
                 "index_name": "user_opportunities_uq_pair"
             },
             {
-                "definition": "CREATE INDEX idx_user_opportunities_opp ON public.user_opportunities USING btree (opportunity_id)",
-                "index_name": "idx_user_opportunities_opp"
-            },
-            {
-                "definition": "CREATE UNIQUE INDEX user_opportunities_pkey ON public.user_opportunities USING btree (id)",
-                "index_name": "user_opportunities_pkey"
+                "definition": "CREATE INDEX idx_user_opportunities_user ON public.user_opportunities USING btree (user_id, status)",
+                "index_name": "idx_user_opportunities_user"
             },
             {
                 "definition": "CREATE INDEX idx_user_opportunities_status ON public.user_opportunities USING btree (status)",
                 "index_name": "idx_user_opportunities_status"
+            },
+            {
+                "definition": "CREATE INDEX idx_user_opportunities_opp ON public.user_opportunities USING btree (opportunity_id)",
+                "index_name": "idx_user_opportunities_opp"
+            },
+            {
+                "definition": "CREATE INDEX idx_user_opportunities_applied ON public.user_opportunities USING btree (applied_at) WHERE (applied_at IS NOT NULL)",
+                "index_name": "idx_user_opportunities_applied"
             }
         ],
         "foreign_keys": [
@@ -3671,15 +4295,6 @@
         ],
         "rls_policies": [
             {
-                "qual": "is_admin_or_mod()",
-                "roles": [
-                    "public"
-                ],
-                "command": "ALL",
-                "with_check": "is_admin_or_mod()",
-                "policy_name": "user_opportunities_admin_all"
-            },
-            {
                 "qual": "(user_id = current_user_id())",
                 "roles": [
                     "public"
@@ -3687,6 +4302,15 @@
                 "command": "ALL",
                 "with_check": "(user_id = current_user_id())",
                 "policy_name": "user_opportunities_owner_all"
+            },
+            {
+                "qual": "is_admin_or_mod()",
+                "roles": [
+                    "public"
+                ],
+                "command": "ALL",
+                "with_check": "is_admin_or_mod()",
+                "policy_name": "user_opportunities_admin_all"
             }
         ]
     },
@@ -3983,12 +4607,24 @@
         ],
         "indexes": [
             {
-                "definition": "CREATE INDEX idx_users_full_name_trgm ON public.users USING gin (full_name gin_trgm_ops)",
-                "index_name": "idx_users_full_name_trgm"
+                "definition": "CREATE UNIQUE INDEX users_pkey ON public.users USING btree (id)",
+                "index_name": "users_pkey"
             },
             {
                 "definition": "CREATE INDEX idx_users_college_trgm ON public.users USING gin (college gin_trgm_ops)",
                 "index_name": "idx_users_college_trgm"
+            },
+            {
+                "definition": "CREATE INDEX idx_users_deleted_at ON public.users USING btree (deleted_at) WHERE (deleted_at IS NOT NULL)",
+                "index_name": "idx_users_deleted_at"
+            },
+            {
+                "definition": "CREATE INDEX idx_users_full_name_trgm ON public.users USING gin (full_name gin_trgm_ops)",
+                "index_name": "idx_users_full_name_trgm"
+            },
+            {
+                "definition": "CREATE INDEX idx_users_email ON public.users USING btree (email)",
+                "index_name": "idx_users_email"
             },
             {
                 "definition": "CREATE INDEX idx_users_role ON public.users USING btree (role)",
@@ -3999,44 +4635,32 @@
                 "index_name": "idx_users_status"
             },
             {
-                "definition": "CREATE INDEX idx_users_deleted_at ON public.users USING btree (deleted_at) WHERE (deleted_at IS NOT NULL)",
-                "index_name": "idx_users_deleted_at"
+                "definition": "CREATE INDEX idx_users_created_at ON public.users USING btree (created_at DESC)",
+                "index_name": "idx_users_created_at"
             },
             {
                 "definition": "CREATE INDEX idx_users_active_public ON public.users USING btree (username) WHERE ((is_profile_public = true) AND (account_status = 'active'::account_status) AND (deleted_at IS NULL))",
                 "index_name": "idx_users_active_public"
             },
             {
-                "definition": "CREATE INDEX idx_users_created_at ON public.users USING btree (created_at DESC)",
-                "index_name": "idx_users_created_at"
-            },
-            {
-                "definition": "CREATE UNIQUE INDEX users_pkey ON public.users USING btree (id)",
-                "index_name": "users_pkey"
-            },
-            {
-                "definition": "CREATE UNIQUE INDEX users_auth_user_id_key ON public.users USING btree (auth_user_id)",
-                "index_name": "users_auth_user_id_key"
-            },
-            {
-                "definition": "CREATE UNIQUE INDEX users_email_key ON public.users USING btree (email)",
-                "index_name": "users_email_key"
-            },
-            {
-                "definition": "CREATE UNIQUE INDEX users_username_key ON public.users USING btree (username)",
-                "index_name": "users_username_key"
+                "definition": "CREATE INDEX idx_users_username ON public.users USING btree (username)",
+                "index_name": "idx_users_username"
             },
             {
                 "definition": "CREATE INDEX idx_users_auth_user_id ON public.users USING btree (auth_user_id)",
                 "index_name": "idx_users_auth_user_id"
             },
             {
-                "definition": "CREATE INDEX idx_users_username ON public.users USING btree (username)",
-                "index_name": "idx_users_username"
+                "definition": "CREATE UNIQUE INDEX users_username_key ON public.users USING btree (username)",
+                "index_name": "users_username_key"
             },
             {
-                "definition": "CREATE INDEX idx_users_email ON public.users USING btree (email)",
-                "index_name": "idx_users_email"
+                "definition": "CREATE UNIQUE INDEX users_email_key ON public.users USING btree (email)",
+                "index_name": "users_email_key"
+            },
+            {
+                "definition": "CREATE UNIQUE INDEX users_auth_user_id_key ON public.users USING btree (auth_user_id)",
+                "index_name": "users_auth_user_id_key"
             }
         ],
         "foreign_keys": [
@@ -4052,22 +4676,13 @@
                 "policy_name": "users_select_public"
             },
             {
-                "qual": "is_admin_or_mod()",
-                "roles": [
-                    "public"
-                ],
-                "command": "ALL",
-                "with_check": "is_admin_or_mod()",
-                "policy_name": "users_admin_all"
-            },
-            {
                 "qual": "(auth_user_id = auth.uid())",
                 "roles": [
                     "public"
                 ],
-                "command": "DELETE",
+                "command": "SELECT",
                 "with_check": null,
-                "policy_name": "users_delete_self"
+                "policy_name": "users_select_self"
             },
             {
                 "qual": "(auth_user_id = auth.uid())",
@@ -4079,6 +4694,24 @@
                 "policy_name": "users_update_self"
             },
             {
+                "qual": "(auth_user_id = auth.uid())",
+                "roles": [
+                    "public"
+                ],
+                "command": "DELETE",
+                "with_check": null,
+                "policy_name": "users_delete_self"
+            },
+            {
+                "qual": "is_admin_or_mod()",
+                "roles": [
+                    "public"
+                ],
+                "command": "ALL",
+                "with_check": "is_admin_or_mod()",
+                "policy_name": "users_admin_all"
+            },
+            {
                 "qual": null,
                 "roles": [
                     "public"
@@ -4086,15 +4719,6 @@
                 "command": "INSERT",
                 "with_check": "(auth_user_id = auth.uid())",
                 "policy_name": "users_insert_self"
-            },
-            {
-                "qual": "(auth_user_id = auth.uid())",
-                "roles": [
-                    "public"
-                ],
-                "command": "SELECT",
-                "with_check": null,
-                "policy_name": "users_select_self"
             }
         ]
     }

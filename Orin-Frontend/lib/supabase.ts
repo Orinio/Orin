@@ -30,6 +30,7 @@ export type Database = {
           last_login_at: string | null;
           registration_ip: string | null;
           registration_ua: string | null;
+          onboarded: boolean;
           created_at: string;
           updated_at: string;
           deleted_at: string | null;
@@ -59,6 +60,7 @@ export type Database = {
           last_login_at?: string | null;
           registration_ip?: string | null;
           registration_ua?: string | null;
+          onboarded?: boolean;
           created_at?: string;
           updated_at?: string;
           deleted_at?: string | null;
@@ -88,6 +90,7 @@ export type Database = {
           last_login_at?: string | null;
           registration_ip?: string | null;
           registration_ua?: string | null;
+          onboarded?: boolean;
           created_at?: string;
           updated_at?: string;
           deleted_at?: string | null;
@@ -176,6 +179,7 @@ export type Database = {
           id: string;
           title: string;
           company: string;
+          company_logo_url: string | null;
           type: 'internship' | 'job' | 'scholarship' | 'mentorship' | 'hackathon' | 'research' | 'other';
           required_skills: string[];
           nice_to_have: string[];
@@ -201,6 +205,7 @@ export type Database = {
           id?: string;
           title: string;
           company: string;
+          company_logo_url?: string | null;
           type?: 'internship' | 'job' | 'scholarship' | 'mentorship' | 'hackathon' | 'research' | 'other';
           required_skills?: string[];
           nice_to_have?: string[];
@@ -226,6 +231,7 @@ export type Database = {
           id?: string;
           title?: string;
           company?: string;
+          company_logo_url?: string | null;
           type?: 'internship' | 'job' | 'scholarship' | 'mentorship' | 'hackathon' | 'research' | 'other';
           required_skills?: string[];
           nice_to_have?: string[];
@@ -642,10 +648,11 @@ export type Database = {
           user_id: string;
           weekly_summary: boolean;
           recruiter_views: boolean;
-          verification_status: boolean;
-          opportunity_match: boolean;
+          verification_changes: boolean;
+          opportunity_matches: boolean;
           coach_tips: boolean;
           product_updates: boolean;
+          digest_frequency: string;
           updated_at: string;
           created_at: string;
         };
@@ -653,10 +660,11 @@ export type Database = {
           user_id: string;
           weekly_summary?: boolean;
           recruiter_views?: boolean;
-          verification_status?: boolean;
-          opportunity_match?: boolean;
+          verification_changes?: boolean;
+          opportunity_matches?: boolean;
           coach_tips?: boolean;
           product_updates?: boolean;
+          digest_frequency?: string;
           updated_at?: string;
           created_at?: string;
         };
@@ -664,10 +672,11 @@ export type Database = {
           user_id?: string;
           weekly_summary?: boolean;
           recruiter_views?: boolean;
-          verification_status?: boolean;
-          opportunity_match?: boolean;
+          verification_changes?: boolean;
+          opportunity_matches?: boolean;
           coach_tips?: boolean;
           product_updates?: boolean;
+          digest_frequency?: string;
           updated_at?: string;
           created_at?: string;
         };
@@ -752,6 +761,7 @@ export type Database = {
           current_period_start: string | null;
           current_period_end: string | null;
           cancel_at_period_end: boolean;
+          trial_ends_at: string | null;
           stripe_customer_id: string | null;
           stripe_subscription_id: string | null;
           metadata: Record<string, unknown>;
@@ -767,6 +777,7 @@ export type Database = {
           current_period_start?: string | null;
           current_period_end?: string | null;
           cancel_at_period_end?: boolean;
+          trial_ends_at?: string | null;
           stripe_customer_id?: string | null;
           stripe_subscription_id?: string | null;
           metadata?: Record<string, unknown>;
@@ -782,6 +793,7 @@ export type Database = {
           current_period_start?: string | null;
           current_period_end?: string | null;
           cancel_at_period_end?: boolean;
+          trial_ends_at?: string | null;
           stripe_customer_id?: string | null;
           stripe_subscription_id?: string | null;
           metadata?: Record<string, unknown>;

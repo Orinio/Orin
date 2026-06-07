@@ -479,7 +479,8 @@ registerTool({
           college: data.college,
           year: data.year,
           bio: data.bio,
-          skills: data.skills || [],
+          headline: data.headline,
+          location: data.location,
           createdAt: data.created_at
         }
       };
@@ -580,26 +581,45 @@ registerTool({
     type: 'object',
     properties: {
       userId: { type: 'string', description: 'User ID' },
-      sessionId: { type: 'string', description: 'Session ID' },
+      agentId: { type: 'string', description: 'Agent ID (e.g. chat, coach)' },
       messages: { type: 'string', description: 'JSON array of messages' }
     },
-    required: ['userId', 'sessionId', 'messages']
+    required: ['userId', 'agentId', 'messages']
   },
   execute: async (args, context) => {
     try {
       const userId = args.userId || context?.userId;
+      const agentId = args.agentId;
       const messages = JSON.parse(args.messages);
 
-      const { error } = await supabase
+      // Find existing conversation for this user+agent
+      const { data: existing } = await supabase
         .from('ai_conversations')
-        .upsert({
-          user_id: userId,
-          session_id: args.sessionId,
-          messages: messages,
-          updated_at: new Date().toISOString()
-        });
+        .select('id')
+        .eq('user_id', userId)
+        .eq('agent_id', agentId)
+        .limit(1)
+        .maybeSingle();
 
-      if (error) throw error;
+      const now = new Date().toISOString();
+
+      if (existing) {
+        const { error } = await supabase
+          .from('ai_conversations')
+          .update({ messages, updated_at: now })
+          .eq('id', existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('ai_conversations')
+          .insert({
+            user_id: userId,
+            agent_id: agentId,
+            messages,
+            metadata: {},
+          });
+        if (error) throw error;
+      }
 
       return { success: true, data: { saved: true } };
     } catch (error) {
@@ -787,7 +807,7 @@ registerTool({
     type: 'object',
     properties: {
       userId: { type: 'string', description: 'User ID' },
-      sessionId: { type: 'string', description: 'Session ID' },
+      agentId: { type: 'string', description: 'Agent ID (e.g. chat, coach)' },
       limit: { type: 'number', description: 'Number of messages (default 20)' }
     },
     required: ['userId']
@@ -802,8 +822,8 @@ registerTool({
         .select('*')
         .eq('user_id', userId);
 
-      if (args.sessionId) {
-        query = query.eq('session_id', args.sessionId);
+      if (args.agentId) {
+        query = query.eq('agent_id', args.agentId);
       }
 
       const { data, error } = await query

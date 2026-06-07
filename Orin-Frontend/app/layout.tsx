@@ -22,7 +22,12 @@ export const metadata: Metadata = {
   description:
     "Transform your scattered work into verified career proof. AI coach, proof cards, and real opportunities.",
   icons: {
-    icon: '/favicon.png',
+    icon: [
+      { url: '/favicon.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon.png', sizes: '192x192', type: 'image/png' },
+      { url: '/logo.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: '/logo.png',
   },
   openGraph: {
     title: "ORIN - Turn Work Into Career Proof",

@@ -47,7 +47,7 @@ export function useCreateProof() {
   return useMutation({
     mutationFn: async (proof: {
       title: string;
-      source_type: string;
+      source_type: 'github' | 'kaggle' | 'certificate' | 'hackathon' | 'project' | 'blog' | 'demo' | 'other';
       source_url?: string;
       description?: string;
       skills_extracted?: string[];

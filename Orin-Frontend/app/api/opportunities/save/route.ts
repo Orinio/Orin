@@ -10,8 +10,8 @@ export async function POST(request: NextRequest) {
   if (!supabase) {
     return NextResponse.json({ error: 'Supabase not configured' }, { status: 500 });
   }
-const { data: { session } } = await supabase.auth.getSession();
-  if (!session) {
+const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -36,7 +36,7 @@ const { data: { session } } = await supabase.auth.getSession();
   const { data: userData } = await supabase
     .from('users')
     .select('id')
-    .eq('auth_user_id', session.user.id)
+    .eq('auth_user_id', user.id)
     .single();
 
   if (!userData) {

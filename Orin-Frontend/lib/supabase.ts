@@ -820,7 +820,7 @@ export type Database = {
           actor_id: string | null;
           actor_role: 'user' | 'admin' | 'moderator' | null;
           action: string;
-          entity_type: string | null;
+          entity_type: string;
           entity_id: string | null;
           old_data: Record<string, unknown> | null;
           new_data: Record<string, unknown> | null;
@@ -834,7 +834,7 @@ export type Database = {
           actor_id?: string | null;
           actor_role?: 'user' | 'admin' | 'moderator' | null;
           action: string;
-          entity_type?: string | null;
+          entity_type: string;
           entity_id?: string | null;
           old_data?: Record<string, unknown> | null;
           new_data?: Record<string, unknown> | null;
@@ -848,7 +848,7 @@ export type Database = {
           actor_id?: string | null;
           actor_role?: 'user' | 'admin' | 'moderator' | null;
           action?: string;
-          entity_type?: string | null;
+          entity_type?: string;
           entity_id?: string | null;
           old_data?: Record<string, unknown> | null;
           new_data?: Record<string, unknown> | null;

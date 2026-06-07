@@ -135,7 +135,7 @@ export default function NewProofPage() {
       const res = await fetch('/api/proofs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ source_type: sourceType, title: title.trim(), source_url: sourceUrl || undefined, description: description || undefined, skills }),
+        body: JSON.stringify({ source_type: sourceType, title: title.trim(), source_url: sourceUrl || undefined, description: description || undefined, skills_extracted: skills }),
       });
       if (!res.ok) { const data = await res.json(); throw new Error(data.error || 'Failed to create proof card'); }
       const proofData = await res.json();
@@ -151,7 +151,7 @@ export default function NewProofPage() {
             await fetch('/api/ai/verify', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-              body: JSON.stringify({ action: 'verify', proofId: proofData.id, proofUrl: sourceUrl, sourceType }),
+              body: JSON.stringify({ action: 'verify', proofId: proofData.proof.id, proofUrl: sourceUrl, sourceType }),
             });
           }
         } catch (verifyErr) { console.warn('Auto-verification failed:', verifyErr); } finally { setVerifying(false); }

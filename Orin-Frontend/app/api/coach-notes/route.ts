@@ -6,5 +6,5 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  return forwardToBackend(req, '/coach/notes');
+  return forwardToBackend(req, '/coach/generate');
 }

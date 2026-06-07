@@ -102,7 +102,7 @@ export default function SettingsPage() {
     verificationStatus: false,
     opportunityMatch: true,
     coachTips: false,
-    productUpdates: false,
+    productUpdates: true,
   });
   const [notifSaving, setNotifSaving] = useState(false);
 
@@ -152,7 +152,7 @@ export default function SettingsPage() {
           productUpdates: notifData.product_updates,
         });
       }
-      const { data: subData } = await supabase.from('subscriptions').select('plan, status').eq('user_id', userData?.id || '').maybeSingle();
+      const { data: subData } = await supabase.from('subscriptions').select('plan, status').eq('user_id', userData?.id || '').is('deleted_at', null).maybeSingle();
       if (subData) setSubscription({ plan: subData.plan, status: subData.status });
       setLoading(false);
     };

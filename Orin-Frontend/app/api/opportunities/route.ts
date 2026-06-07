@@ -1,6 +1,7 @@
 ﻿import { NextRequest, NextResponse } from 'next/server';
 import { getServerSupabase } from '@/lib/supabase-server';
 import type { Database } from '@/lib/supabase';
+import { mapDbOpportunityToOpportunity } from '@/lib/utils';
 
 export async function GET(request: NextRequest) {
   const supabase = await getServerSupabase();
@@ -50,7 +51,7 @@ const { searchParams } = new URL(request.url);
   }
 
   return NextResponse.json({
-    opportunities,
+    opportunities: (opportunities || []).map(mapDbOpportunityToOpportunity),
     pagination: {
       page,
       limit,

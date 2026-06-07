@@ -84,12 +84,14 @@ export interface CoachNote {
   priority: number;
   expiresAt?: Date;
   createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface Opportunity {
   id: string;
   title: string;
   company: string;
+  companyLogoUrl?: string;
   type: OpportunityType;
   requiredSkills: string[];
   niceToHave: string[];
@@ -103,6 +105,7 @@ export interface Opportunity {
   salaryMax?: number;
   salaryCurrency?: string;
   source?: string;
+  sourceExternalId?: string;
   isActive: boolean;
   postedAt?: Date;
   metadata: Record<string, unknown>;
@@ -118,6 +121,7 @@ export interface UserOpportunity {
   matchScore?: number;
   notes?: string;
   appliedAt?: Date;
+  source?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -132,6 +136,7 @@ export interface Notification {
   payload: Record<string, unknown>;
   readAt?: Date;
   createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface NotificationPreferences {
@@ -142,6 +147,7 @@ export interface NotificationPreferences {
   opportunityMatch: boolean;
   coachTips: boolean;
   productUpdates: boolean;
+  digestFrequency: string;
 }
 
 export interface Subscription {

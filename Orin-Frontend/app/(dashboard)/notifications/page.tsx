@@ -92,10 +92,16 @@ export default function NotificationsPage() {
         if (!res.ok) throw new Error('Failed to fetch');
         const data = await res.json();
         const items: Notification[] = (data.notifications || []).map(
-          (n: Notification & { createdAt: string; readAt?: string }) => ({
-            ...n,
-            createdAt: new Date(n.createdAt),
-            readAt: n.readAt ? new Date(n.readAt) : undefined,
+          (n: Record<string, unknown>) => ({
+            id: n.id as string,
+            userId: n.user_id as string,
+            type: n.type as Notification['type'],
+            title: n.title as string,
+            body: (n.body as string) ?? undefined,
+            link: (n.link as string) ?? undefined,
+            payload: (n.payload as Record<string, unknown>) || {},
+            createdAt: new Date(n.created_at as string),
+            readAt: n.read_at ? new Date(n.read_at as string) : undefined,
           } as Notification)
         );
         setNotifications(items);

@@ -94,6 +94,7 @@ export function mapDbOpportunityToOpportunity(db: DbOpportunity): Opportunity {
     id: db.id,
     title: db.title,
     company: db.company,
+    companyLogoUrl: db.company_logo_url ?? undefined,
     type: db.type,
     requiredSkills: db.required_skills || [],
     niceToHave: db.nice_to_have || [],
@@ -107,6 +108,7 @@ export function mapDbOpportunityToOpportunity(db: DbOpportunity): Opportunity {
     salaryMax: db.salary_max ? Number(db.salary_max) : undefined,
     salaryCurrency: db.salary_currency ?? undefined,
     source: db.source ?? undefined,
+    sourceExternalId: db.source_external_id ?? undefined,
     isActive: db.is_active,
     postedAt: db.posted_at ? new Date(db.posted_at) : undefined,
     metadata: db.metadata || {},
@@ -126,6 +128,7 @@ export function mapDbCoachNoteToCoachNote(db: DbCoachNote): CoachNote {
     priority: db.priority,
     expiresAt: db.expires_at ? new Date(db.expires_at) : undefined,
     createdAt: new Date(db.created_at),
+    updatedAt: new Date(db.updated_at),
   };
 }
 
@@ -155,6 +158,7 @@ export function mapDbNotificationToNotification(db: DbNotification): Notificatio
     payload: db.payload || {},
     readAt: db.read_at ? new Date(db.read_at) : undefined,
     createdAt: new Date(db.created_at),
+    updatedAt: new Date(db.updated_at),
   };
 }
 
@@ -167,6 +171,7 @@ export function mapDbNotifPrefsToNotifPrefs(db: DbNotifPrefs): NotificationPrefe
     opportunityMatch: db.opportunity_matches,
     coachTips: db.coach_tips,
     productUpdates: db.product_updates,
+    digestFrequency: db.digest_frequency,
   };
 }
 

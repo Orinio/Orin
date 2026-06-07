@@ -36,6 +36,7 @@ export const coachNote: CoachNote = {
   actionUrl: "/dashboard/sources/new",
   priority: 0,
   createdAt: new Date(),
+  updatedAt: new Date(),
 };
 
 export const proofs: Proof[] = [

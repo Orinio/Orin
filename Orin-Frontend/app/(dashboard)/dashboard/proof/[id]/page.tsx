@@ -36,6 +36,7 @@ export default function ProofDetailPage() {
           .from('proof_cards')
           .select('*')
           .eq('id', id)
+          .is('deleted_at', null)
           .maybeSingle();
 
         if (error) throw new Error(error.message);

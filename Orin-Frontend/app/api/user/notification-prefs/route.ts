@@ -31,9 +31,9 @@ const userId = await resolvePublicUserId(supabase);
       preferences: {
         weekly_summary: true,
         recruiter_views: true,
-        verification_changes: true,
+        verification_changes: false,
         opportunity_matches: true,
-        coach_tips: true,
+        coach_tips: false,
         product_updates: true,
       },
     });

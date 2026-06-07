@@ -86,6 +86,7 @@ export default function Navigation() {
             payload: n.payload || {},
             readAt: n.read_at ? new Date(n.read_at) : undefined,
             createdAt: new Date(n.created_at),
+            updatedAt: new Date(n.updated_at),
           })),
         );
       }
@@ -110,6 +111,7 @@ export default function Navigation() {
               payload: (n.payload as Record<string, unknown>) || {},
               readAt: n.read_at ? new Date(n.read_at as string) : undefined,
               createdAt: new Date(n.created_at as string),
+              updatedAt: new Date(n.updated_at as string),
             },
             ...prev,
           ]);

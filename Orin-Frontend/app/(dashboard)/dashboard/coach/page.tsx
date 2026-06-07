@@ -88,7 +88,7 @@ function CoachContent() {
       if (!response.ok) { const data = await response.json(); throw new Error(data.error || 'Failed to generate note'); }
       const data = await response.json();
       if (data.note) {
-        const newNote: CoachNoteType = { id: data.note.id, userId: data.note.user_id, content: data.note.content, type: data.note.type, actionLabel: data.note.action_label, actionUrl: data.note.action_url, priority: data.note.priority, expiresAt: data.note.expires_at ? new Date(data.note.expires_at) : undefined, createdAt: new Date(data.note.created_at) };
+        const newNote: CoachNoteType = { id: data.note.id, userId: data.note.user_id, content: data.note.content, type: data.note.type, actionLabel: data.note.action_label, actionUrl: data.note.action_url, priority: data.note.priority, expiresAt: data.note.expires_at ? new Date(data.note.expires_at) : undefined, createdAt: new Date(data.note.created_at), updatedAt: new Date(data.note.updated_at || data.note.created_at) };
         setNotes((prev) => [newNote, ...prev]);
         setCurrentIndex(0);
       }

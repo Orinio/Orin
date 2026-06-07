@@ -56,7 +56,8 @@ const userId = await resolvePublicUserId(supabase);
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
   }
 
-  const { title, description, source_type, source_url, skills_extracted } = body;
+  const { title, description, source_type, source_url, skills_extracted, skills } = body as Record<string, unknown>;
+  const extractedSkills = (skills_extracted || skills) as string[] | undefined;
 
   if (!title || !source_type) {
     return NextResponse.json({ error: 'Title and source_type are required' }, { status: 400 });
@@ -75,7 +76,7 @@ const userId = await resolvePublicUserId(supabase);
       description: description || null,
       source_type: source_type as ProofInsert['source_type'],
       source_url: source_url || null,
-      skills_extracted: skills_extracted || [],
+      skills_extracted: extractedSkills || [],
       verification_status: 'pending',
     })
     .select()

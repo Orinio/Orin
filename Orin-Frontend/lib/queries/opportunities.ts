@@ -45,8 +45,7 @@ export function useUserOpportunities(userId: string | null) {
       const { data, error } = await supabase
         .from('user_opportunities')
         .select('opportunity_id, status')
-        .eq('user_id', userId)
-        .is('deleted_at', null);
+        .eq('user_id', userId);
 
       if (error) throw new Error(error.message);
       return data.reduce((acc, item) => {
@@ -80,6 +79,7 @@ export function useSaveOpportunity() {
           user_id: userData.id,
           opportunity_id: opportunityId,
           status,
+          updated_at: new Date().toISOString(),
         }, { onConflict: 'user_id,opportunity_id' });
 
       if (error) throw new Error(error.message);

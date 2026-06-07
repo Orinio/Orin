@@ -1,0 +1,1 @@
+{"version":3,"file":"connection-tracker.d.ts","sourceRoot":"","sources":["../../src/lib/connection-tracker.ts"],"names":[],"mappings":"AAEA;;;GAGG;AAEH,qBAAa,iBAAiB;IAC5B,OAAO,CAAC,WAAW,CAAkB;IAErC,KAAK,CAAC,MAAM,EAAE,OAAO,MAAM,EAAE,MAAM,GAAG,IAAI;IAO1C,IAAI,WAAW,IAAI,MAAM,CAExB;IAEK,KAAK,CAAC,SAAS,GAAE,MAAe,GAAG,OAAO,CAAC,IAAI,CAAC;CAmCvD;AAED,eAAO,MAAM,iBAAiB,mBAA0B,CAAC"}

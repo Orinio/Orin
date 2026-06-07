@@ -1,24 +1,27 @@
-import { useRef, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 
 export function useFormSubmit<T extends (...args: any[]) => Promise<any>>(
   submitFn: T
 ): [T, boolean] {
-  const isSubmitting = useRef(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const guardRef = useRef(false);
 
   const wrappedSubmit = useCallback(
     async (...args: Parameters<T>) => {
-      if (isSubmitting.current) return;
-      isSubmitting.current = true;
+      if (guardRef.current) return;
+      guardRef.current = true;
+      setIsSubmitting(true);
       try {
         return await submitFn(...args);
       } finally {
-        isSubmitting.current = false;
+        guardRef.current = false;
+        setIsSubmitting(false);
       }
     },
     [submitFn]
   ) as T;
 
-  return [wrappedSubmit, isSubmitting.current];
+  return [wrappedSubmit, isSubmitting];
 }
 
 export function useDebouncedCallback<T extends (...args: any[]) => any>(

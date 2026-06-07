@@ -2,7 +2,8 @@ import { Router } from 'express';
 import { supabase } from '../lib/supabase.js';
 import { logger } from '../lib/logger.js';
 import { getAgent } from '../lib/ai/agents/index.js';
-import { runAgent, runAgentStream } from '../lib/ai/core/agent-runner.js';
+import { runAgent } from '../lib/ai/core/agent-runner.js';
+import type { AgentMessage } from '../lib/ai/orchestrator/agent-orchestrator.js';
 import { analyzeSkills, identifySkillGaps, getSkillRecommendations, extractSkillsFromProofs } from '../lib/skills.js';
 import { checkAIRateLimit, logAIUsage } from '../lib/rate-limit.js';
 import { validateRequest, verifyRequestSchema, chatMessageSchema, chatStreamSchema, matchRequestSchema, safetyCheckSchema } from '../lib/validations.js';
@@ -258,7 +259,7 @@ aiRouter.post('/chat-stream', async (req, res) => {
       await orchestrator.runAgentStream(
         'chat',
         message,
-        { userId, conversationHistory: context.conversationHistory },
+        { userId, conversationHistory: context.conversationHistory as AgentMessage[] },
         (event, data) => sendEvent(event, data)
       );
 
@@ -270,7 +271,7 @@ aiRouter.post('/chat-stream', async (req, res) => {
       const orchestrator = createOrchestrator(userId);
       const result = await orchestrator.runAgent('chat', message, {
         userId,
-        conversationHistory: context.conversationHistory
+        conversationHistory: context.conversationHistory as AgentMessage[]
       });
 
       await logAIUsage(supabase, userId, 'ai-chat', result.tokensUsed);

@@ -6,7 +6,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from '../../logger.js';
 import { MODELS } from '../core/models.js';
-import { chatCompletion, chatCompletionStream, isNvidiaConfigured } from '../core/nvidia.js';
+import { chatCompletion, isNvidiaConfigured } from '../core/nvidia.js';
 import { createMemoryManager, type MemoryManager } from '../memory/memory-manager.js';
 import { getToolsByNames } from '../core/tool-registry.js';
 import { buildAgentContext as buildUserContext } from '../../context.js';
@@ -72,6 +72,7 @@ export interface Agent {
   temperature: number;
   maxTokens: number;
   maxIterations: number;
+  timeoutMs: number;
 }
 
 export interface AgentMessage {
@@ -150,7 +151,8 @@ Response format: JSON with "thinking" and "answer" fields.`,
     ],
     temperature: 0.7,
     maxTokens: 500,
-    maxIterations: 3
+    maxIterations: 3,
+    timeoutMs: 120000
   },
 
   // Skill Analyst - Extracts and analyzes skills
@@ -171,7 +173,8 @@ Response format: JSON with "thinking", "answer", and "skills" fields.`,
     tools: ['extract_skills', 'analyze_code', 'detect_language'],
     temperature: 0.3,
     maxTokens: 400,
-    maxIterations: 2
+    maxIterations: 2,
+    timeoutMs: 90000
   },
 
   // Opportunity Matcher - Matches skills to opportunities
@@ -192,7 +195,8 @@ Response format: JSON with "thinking", "answer", and "matches" fields.`,
     tools: ['fetch_opportunities', 'calculate_skill_match', 'extract_skills'],
     temperature: 0.3,
     maxTokens: 500,
-    maxIterations: 3
+    maxIterations: 3,
+    timeoutMs: 120000
   },
 
   // Learning Path Advisor - Creates personalized learning paths
@@ -213,7 +217,8 @@ Response format: JSON with "thinking", "answer", "steps", and "milestones" field
     tools: ['find_learning_resources', 'extract_skills', 'web_search', 'fetch_webpage'],
     temperature: 0.5,
     maxTokens: 800,
-    maxIterations: 3
+    maxIterations: 3,
+    timeoutMs: 120000
   },
 
   // Portfolio Scorer - Scores developer portfolios
@@ -235,7 +240,8 @@ Response format: JSON with "thinking", "answer", "score", "breakdown", and "grad
     tools: ['analyze_portfolio', 'extract_skills'],
     temperature: 0.3,
     maxTokens: 300,
-    maxIterations: 1
+    maxIterations: 1,
+    timeoutMs: 60000
   },
 
   // Verifier - Verifies proof sources
@@ -257,7 +263,8 @@ Response format: JSON with "thinking", "answer", and "verified" fields.`,
     tools: ['verify_github_repo', 'verify_github_user', 'verify_certificate', 'check_url_safety'],
     temperature: 0.3,
     maxTokens: 300,
-    maxIterations: 3
+    maxIterations: 3,
+    timeoutMs: 90000
   },
 
   // Chat - General conversation with full agentic capabilities
@@ -320,7 +327,8 @@ Response format: JSON with "thinking" and "answer" fields.`,
     ],
     temperature: 0.7,
     maxTokens: 600,
-    maxIterations: 5
+    maxIterations: 5,
+    timeoutMs: 180000
   },
 
   // Safety Guard - Content moderation
@@ -341,7 +349,8 @@ Consider content unsafe if it contains:
     tools: [],
     temperature: 0.1,
     maxTokens: 100,
-    maxIterations: 1
+    maxIterations: 1,
+    timeoutMs: 60000
   }
 };
 
@@ -542,6 +551,11 @@ export class AgentOrchestrator {
       systemPrompt += `\n\nAvailable tools:\n${toolDescriptions}`;
     }
 
+    // Truncate query if too long
+    const truncatedQuery = query.length > MAX_INPUT_LENGTH
+      ? query.substring(0, MAX_INPUT_LENGTH) + '... (truncated)'
+      : query;
+
     // Build messages array
     const messages: Array<{ role: string; content: string }> = [
       { role: 'system', content: systemPrompt }
@@ -554,7 +568,7 @@ export class AgentOrchestrator {
 
     // Add user query with context
     const profileInfo = context.userId ? `\nUser ID: ${context.userId}` : '';
-    messages.push({ role: 'user', content: `${profileInfo}\n\nUser Query: ${query}` });
+    messages.push({ role: 'user', content: `${profileInfo}\n\nUser Query: ${truncatedQuery}` });
 
     // Tool calling loop with streaming
     let iterations = 0;
@@ -563,11 +577,6 @@ export class AgentOrchestrator {
     let thinking = '';
     const toolCalls: AgentResult['toolCalls'] = [];
     const agentStartTime = Date.now();
-
-    // Truncate query if too long
-    const truncatedQuery = query.length > MAX_INPUT_LENGTH
-      ? query.substring(0, MAX_INPUT_LENGTH) + '... (truncated)'
-      : query;
 
     while (iterations < agent.maxIterations) {
       iterations++;

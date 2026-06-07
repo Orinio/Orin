@@ -840,13 +840,6 @@ function AIChatContent() {
               disabled={loading}
             />
             <form onSubmit={handleSubmit} className="flex gap-2 items-end rounded-2xl px-3 py-2" style={{ border: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface)', boxShadow: 'var(--shadow-sm)' }}>
-              {/* Attach button inside input */}
-              <FileUpload
-                files={[]}
-                onFilesAdd={handleFilesAdd}
-                onFileRemove={() => {}}
-                disabled={loading}
-              />
               <textarea
                 ref={inputRef}
                 value={input}

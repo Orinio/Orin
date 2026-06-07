@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
+import { getServerSupabase } from '@/lib/supabase-server';
 import ProofCard from '@/components/ProofCard';
 import ProfileSuggestions from '@/components/ProfileSuggestions';
 import { mapDbUserToUser, mapDbProofToProof, getProofTypeColor } from '@/lib/utils';
@@ -17,39 +17,39 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
   let proofs: Proof[] = [];
   let allSkills: string[] = [];
 
-  if (supabase) {
-    try {
-      const { data: userData, error: userError } = await supabase
-        .from('users')
+  const supabase = await getServerSupabase();
+  
+  try {
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('username', username)
+      .is('deleted_at', null)
+      .maybeSingle();
+
+    if (userError) throw new Error(userError.message);
+
+    if (userData) {
+      user = mapDbUserToUser(userData);
+
+      const { data: proofsData } = await supabase
+        .from('proof_cards')
         .select('*')
-        .eq('username', username)
+        .eq('user_id', userData.id)
+        .eq('visibility', 'public')
+        .eq('verification_status', 'verified')
         .is('deleted_at', null)
-        .maybeSingle();
+        .order('created_at', { ascending: false });
 
-      if (userError) throw new Error(userError.message);
-
-      if (userData) {
-        user = mapDbUserToUser(userData);
-
-        const { data: proofsData } = await supabase
-          .from('proof_cards')
-          .select('*')
-          .eq('user_id', userData.id)
-          .eq('visibility', 'public')
-          .eq('verification_status', 'verified')
-          .is('deleted_at', null)
-          .order('created_at', { ascending: false });
-
-        if (proofsData) {
-          proofs = proofsData.map(mapDbProofToProof);
-          allSkills = Array.from(
-            new Set(proofsData.flatMap((s) => s.skills_extracted || []))
-          );
-        }
+      if (proofsData) {
+        proofs = proofsData.map(mapDbProofToProof);
+        allSkills = Array.from(
+          new Set(proofsData.flatMap((s) => s.skills_extracted || []))
+        );
       }
-    } catch (e) {
-      console.warn("Error fetching public profile, falling back to mock.", e);
     }
+  } catch (e) {
+    console.warn("Error fetching public profile, falling back to mock.", e);
   }
 
   if (!user) notFound();

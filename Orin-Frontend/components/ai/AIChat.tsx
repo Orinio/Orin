@@ -86,12 +86,15 @@ export function AIChat({ initialMessage, onMessageSent, onResponseReceived }: AI
   };
 
   return (
-    <div className="flex flex-col h-full border rounded-lg bg-white">
+    <div className="flex flex-col h-full border rounded-lg" style={{ 
+      borderColor: 'var(--color-neutral-border)',
+      backgroundColor: 'var(--color-neutral-surface)'
+    }}>
       {/* Messages Container */}
       <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4">
         {messages.length === 0 && (
-          <div className="text-center text-gray-500 py-6 sm:py-8">
-            <p className="text-base sm:text-lg font-medium">Orin AI Assistant</p>
+          <div className="text-center py-6 sm:py-8" style={{ color: 'var(--color-neutral-text-secondary)' }}>
+            <p className="text-base sm:text-lg font-medium" style={{ color: 'var(--color-neutral-text)' }}>Orin AI Assistant</p>
             <p className="text-xs sm:text-sm">Ask me anything about your career, skills, or portfolio.</p>
           </div>
         )}
@@ -104,9 +107,17 @@ export function AIChat({ initialMessage, onMessageSent, onResponseReceived }: AI
             <div
               className={`max-w-[85%] sm:max-w-[80%] rounded-lg px-3 py-2.5 sm:p-3 ${
                 message.role === 'user'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-100 text-gray-900'
+                  ? 'text-white'
+                  : ''
               }`}
+              style={{ 
+                backgroundColor: message.role === 'user' 
+                  ? 'var(--color-primary-emerald)' 
+                  : 'var(--color-neutral-surface-alt)',
+                color: message.role === 'user' 
+                  ? 'white' 
+                  : 'var(--color-neutral-text)'
+              }}
             >
               <p className="whitespace-pre-wrap text-xs sm:text-sm">{message.content}</p>
               
@@ -121,7 +132,8 @@ export function AIChat({ initialMessage, onMessageSent, onResponseReceived }: AI
                 </div>
               )}
 
-              <p className={`text-[10px] sm:text-xs mt-1 ${message.role === 'user' ? 'text-blue-100' : 'text-gray-500'}`}>
+              <p className={`text-[10px] sm:text-xs mt-1 ${message.role === 'user' ? 'opacity-75' : ''}`}
+                 style={{ color: message.role === 'user' ? 'white' : 'var(--color-neutral-text-secondary)' }}>
                 {message.timestamp.toLocaleTimeString()}
               </p>
             </div>
@@ -130,11 +142,11 @@ export function AIChat({ initialMessage, onMessageSent, onResponseReceived }: AI
 
         {isLoading && (
           <div className="flex justify-start">
-            <div className="bg-gray-100 rounded-lg px-3 py-2.5 sm:p-3">
+            <div className="rounded-lg px-3 py-2.5 sm:p-3" style={{ backgroundColor: 'var(--color-neutral-surface-alt)' }}>
               <div className="flex space-x-1">
-                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full animate-bounce" style={{ backgroundColor: 'var(--color-neutral-text-secondary)', animationDelay: '0ms' }} />
+                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full animate-bounce" style={{ backgroundColor: 'var(--color-neutral-text-secondary)', animationDelay: '150ms' }} />
+                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full animate-bounce" style={{ backgroundColor: 'var(--color-neutral-text-secondary)', animationDelay: '300ms' }} />
               </div>
             </div>
           </div>
@@ -142,7 +154,11 @@ export function AIChat({ initialMessage, onMessageSent, onResponseReceived }: AI
 
         {error && (
           <div className="flex justify-center">
-            <div className="bg-red-100 text-red-700 rounded-lg px-3 py-2.5 sm:p-3 text-xs sm:text-sm">
+            <div className="rounded-lg px-3 py-2.5 sm:p-3 text-xs sm:text-sm" 
+                 style={{ 
+                   backgroundColor: 'var(--color-accent-danger-light)',
+                   color: 'var(--color-accent-danger)'
+                 }}>
               {error}
             </div>
           </div>
@@ -152,21 +168,29 @@ export function AIChat({ initialMessage, onMessageSent, onResponseReceived }: AI
       </div>
 
       {/* Input Container */}
-      <div className="border-t p-3 sm:p-4">
+      <div className="border-t p-3 sm:p-4" style={{ borderColor: 'var(--color-neutral-border)' }}>
         <div className="flex gap-2 items-end">
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyPress={handleKeyPress}
+            onKeyDown={handleKeyPress}
             placeholder="Ask about your career..."
-            className="flex-1 resize-none border rounded-lg px-3 py-2 sm:p-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 max-h-[100px]"
+            className="flex-1 resize-none border rounded-lg px-3 py-2 sm:p-2 text-xs sm:text-sm focus:outline-none focus:ring-2 max-h-[100px]"
+            style={{ 
+              borderColor: 'var(--color-neutral-border)',
+              backgroundColor: 'var(--color-neutral-surface)',
+              color: 'var(--color-neutral-text)'
+            }}
             rows={1}
             disabled={isLoading}
           />
           <button
             onClick={handleSend}
             disabled={isLoading || !input.trim()}
-            className="px-3 py-2 sm:px-4 sm:py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm flex-shrink-0"
+            className="px-3 py-2 sm:px-4 sm:py-2 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm flex-shrink-0 font-semibold transition-colors"
+            style={{ 
+              backgroundColor: 'var(--color-primary-emerald)',
+            }}
           >
             {isLoading ? '...' : 'Send'}
           </button>

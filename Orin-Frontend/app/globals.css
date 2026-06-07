@@ -2,7 +2,7 @@
 @import "../styles/variables.css";
 
 @theme inline {
-  --font-sans: var(--font-sans);
+  --font-sans: var(--font-body);
   --font-serif: var(--font-serif);
   --color-ink: #000000;
   --color-paper: #F7F7F2;
@@ -14,6 +14,8 @@
   --color-text-secondary: #0F172A;
   --color-surface: #FFFFFF;
   --color-surface-dim: #F1F5F9;
+  --color-border: #E2E8F0;
+  --color-border-strong: #CBD5E1;
   --color-border-light: #E2E8F0;
 }
 

@@ -4,7 +4,6 @@ const config: Config = {
   content: [
     "./app/**/*.{js,ts,jsx,tsx}",
     "./components/**/*.{js,ts,jsx,tsx}",
-    "./landing page code folder/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
     extend: {

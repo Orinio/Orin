@@ -22,7 +22,7 @@ import { useAuth } from '@/lib/auth-context';
 import { usePlan } from '@/lib/plan-context';
 import { api } from '@/lib/api-client';
 import { CLOUD_PROVIDERS, type CloudProvider, type UserIntegration } from '@/lib/chat-types';
-import Navigation from '@/components/Navigation';
+
 
 const ICON_MAP: Record<string, any> = { Cloud, HardDrive, Github, FileText };
 
@@ -211,21 +211,16 @@ export default function IntegrationsPage() {
 
   if (!user) {
     return (
-      <>
-        <Navigation />
-        <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center">
-          <Loader2 className="w-6 h-6 animate-spin" style={{ color: 'var(--color-bloom)' }} />
-        </div>
-      </>
+      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin" style={{ color: 'var(--color-bloom)' }} />
+      </div>
     );
   }
 
   const connectedCount = integrations.filter(i => i.status === 'connected').length;
 
   return (
-    <>
-      <Navigation />
-      <main id="main-content" className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <main id="main-content" className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <div className="flex items-center gap-2 mb-2">
             <h1 className="text-3xl sm:text-4xl font-bold tracking-tight" style={{ color: 'var(--color-ink)' }}>
@@ -464,7 +459,6 @@ export default function IntegrationsPage() {
           </div>
         </div>
       </main>
-    </>
   );
 }
 

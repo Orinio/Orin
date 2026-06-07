@@ -15,6 +15,7 @@ const navLinks = [
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
@@ -31,7 +32,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const handleLogout = async () => {
     await fetch('/api/admin-dev/auth/logout', { method: 'POST' });
     setAuthenticated(false);
-    window.location.href = '/admin-dev';
+    router.push('/admin-dev');
   };
 
   if (checking) {

@@ -2,6 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 
 const SectionSkeleton = ({ height = 'py-24', bg = 'var(--color-paper)' }: { height?: string; bg?: string }) => (
@@ -31,16 +32,18 @@ const Pricing = dynamic(() => import('@/components/home/Pricing'), {
 });
 
 export default function Home() {
+  const router = useRouter();
+  
   useEffect(() => {
     const checkUser = async () => {
       if (!supabase) return;
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        window.location.href = '/dashboard';
+        router.push('/dashboard');
       }
     };
     checkUser();
-  }, []);
+  }, [router]);
 
   return (
     <>

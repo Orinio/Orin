@@ -34,8 +34,8 @@ export default function SignupPage() {
 
   useEffect(() => {
     if (!initialized) return;
-    if (user) window.location.href = '/dashboard';
-  }, [user, initialized]);
+    if (user) router.push('/dashboard');
+  }, [user, initialized, router]);
 
   const passwordStrength = password ? evaluatePasswordStrength(password) : null;
 

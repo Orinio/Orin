@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   Check,
   X,
@@ -17,11 +18,12 @@ import { useAuth } from '@/lib/auth-context';
 import { usePlan } from '@/lib/plan-context';
 import { api } from '@/lib/api-client';
 import { PLANS } from '@/lib/chat-types';
-import Navigation from '@/components/Navigation';
+
 
 type BillingCycle = 'monthly' | 'yearly';
 
 export default function PricingPage() {
+  const router = useRouter();
   const { user } = useAuth();
   const { plan, setLocalPlan } = usePlan();
   const [cycle, setCycle] = useState<BillingCycle>('monthly');
@@ -37,7 +39,7 @@ export default function PricingPage() {
       return;
     }
     if (!user) {
-      window.location.href = `/signup?next=/pricing&plan=${planId}`;
+      router.push(`/signup?next=/pricing&plan=${planId}`);
       return;
     }
     setLoadingPlan(planId);
@@ -57,7 +59,6 @@ export default function PricingPage() {
 
   return (
     <>
-      <Navigation />
       <main id="main-content" className="min-h-screen">
         <section
           className="py-16 px-4 sm:px-6 lg:px-8 relative overflow-hidden"

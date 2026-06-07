@@ -1,6 +1,7 @@
 'use client';
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Sparkles, ArrowRight, Plus, BarChart3, TrendingUp, Briefcase } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
@@ -13,6 +14,7 @@ import { PlanCard } from "@/components/PlanCard";
 import type { Proof, Opportunity, CoachNote as CoachNoteType, User } from "@/lib/types";
 
 export default function DashboardPage() {
+  const router = useRouter();
   const { user: authUser, initialized } = useAuth();
   const [user, setUser] = useState<User | null>(null);
   const [proofs, setProofs] = useState<Proof[]>([]);
@@ -23,7 +25,7 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!initialized) return;
     if (!authUser) {
-      window.location.href = '/signin';
+      router.push('/signin');
       return;
     }
     setLoading(true);

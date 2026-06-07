@@ -18,6 +18,7 @@ import {
   Check,
   Sparkles,
   MessageCircle,
+  Cloud,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
@@ -154,6 +155,7 @@ export default function Navigation() {
     { href: '/dashboard/ai-chat', label: 'AI Chat', icon: MessageCircle },
     { href: '/opportunities', label: 'Opportunities', icon: Briefcase },
     { href: '/dashboard/sources/new', label: 'Add Source', icon: PlusCircle },
+    { href: '/integrations', label: 'Integrations', icon: Cloud },
     { href: '/settings', label: 'Settings', icon: Settings },
   ];
 

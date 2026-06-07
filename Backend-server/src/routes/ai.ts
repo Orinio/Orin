@@ -213,7 +213,7 @@ aiRouter.post('/chat', async (req, res) => {
   }
 });
 
-// POST /ai/chat-stream — Streaming chat
+// POST /ai/chat-stream — Streaming chat with full agentic behavior
 aiRouter.post('/chat-stream', async (req, res) => {
   try {
     const userId = (req as any).user?.id;
@@ -243,18 +243,47 @@ aiRouter.post('/chat-stream', async (req, res) => {
       res.setHeader('Content-Type', 'text/event-stream');
       res.setHeader('Cache-Control', 'no-cache');
       res.setHeader('Connection', 'keep-alive');
+      res.setHeader('X-Accel-Buffering', 'no');
 
-      const agent = getAgent('chat')!;
-      await runAgentStream(agent, message, context, (chunk) => {
-        res.write(`data: ${JSON.stringify({ content: chunk })}\n\n`);
-      });
-      res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+      const sendEvent = (event: string, data: any) => {
+        res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+      };
+
+      // Use orchestrator with memory, tool calling, and full user context
+      const { createOrchestrator } = await import('../lib/ai/orchestrator/agent-orchestrator.js');
+      const orchestrator = createOrchestrator(userId);
+
+      sendEvent('start', { agentId: 'chat', query: message });
+
+      await orchestrator.runAgentStream(
+        'chat',
+        message,
+        { userId, conversationHistory: context.conversationHistory },
+        (event, data) => sendEvent(event, data)
+      );
+
+      res.write('event: end\ndata: {}\n\n');
       res.end();
     } else {
-      const agent = getAgent('chat')!;
-      const result = await runAgent(agent, message, context);
-      await logAIUsage(supabase, userId, 'ai-chat', result.totalTokens);
-      res.json({ success: true, response: { content: result.answer, thinking: result.thinking, tokensUsed: result.totalTokens } });
+      // Non-streaming: use orchestrator with full tool calling
+      const { createOrchestrator } = await import('../lib/ai/orchestrator/agent-orchestrator.js');
+      const orchestrator = createOrchestrator(userId);
+      const result = await orchestrator.runAgent('chat', message, {
+        userId,
+        conversationHistory: context.conversationHistory
+      });
+
+      await logAIUsage(supabase, userId, 'ai-chat', result.tokensUsed);
+      res.json({
+        success: true,
+        response: {
+          content: result.answer || 'I apologize, but I was unable to generate a response.',
+          thinking: result.thinking,
+          tokensUsed: result.tokensUsed,
+          iterations: result.iterations,
+          toolCalls: result.toolCalls.map(tc => ({ tool: tc.tool, success: tc.result.success }))
+        }
+      });
     }
   } catch (err) {
     logger.error({ err }, 'AI chat-stream error');

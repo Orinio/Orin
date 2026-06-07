@@ -1,17 +1,32 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { Sparkles, RefreshCw, Lightbulb, CalendarRange, Trophy, Megaphone, ChevronDown, ArrowRight, Zap, TrendingUp, MessageSquare, MessageCircle, AlertCircle } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { Sparkles, RefreshCw, Lightbulb, CalendarRange, Trophy, Megaphone, ChevronDown, ArrowRight, Zap, TrendingUp, MessageSquare, MessageCircle, AlertCircle, Send, Bot, User, Loader2, X } from 'lucide-react';
 import CoachNote, { CoachNoteSkeleton } from '@/components/CoachNote';
 import type { CoachNote as CoachNoteType, CoachNoteType as NoteType } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { MarkdownRenderer } from '@/components/ai/MarkdownRenderer';
+
+interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: Date;
+}
 
 const noteTypes: { type: NoteType; label: string; icon: React.ReactNode; description: string; color: string }[] = [
   { type: 'daily', label: 'Daily Tip', icon: <Lightbulb className="w-4 h-4" />, description: 'Get a daily career tip based on your profile', color: 'var(--color-bloom)' },
   { type: 'weekly', label: 'Weekly Insight', icon: <CalendarRange className="w-4 h-4" />, description: 'Receive a comprehensive weekly summary', color: 'var(--color-ember)' },
   { type: 'ad_hoc', label: 'Ask Coach', icon: <Megaphone className="w-4 h-4" />, description: 'Get personalized advice on any career topic', color: 'var(--color-pulse)' },
   { type: 'milestone', label: 'Milestone', icon: <Trophy className="w-4 h-4" />, description: 'Celebrate your achievements', color: 'var(--color-spark)' },
+];
+
+const QUICK_QUESTIONS = [
+  "What skills should I learn next?",
+  "How can I improve my portfolio?",
+  "What jobs match my skills?",
+  "Help me prepare for interviews",
 ];
 
 export default function CoachPage() {
@@ -32,6 +47,13 @@ function CoachContent() {
   const [error, setError] = useState<string | null>(null);
   const [showTips, setShowTips] = useState(false);
 
+  // Interactive chat state
+  const [showChat, setShowChat] = useState(false);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatInput, setChatInput] = useState('');
+  const [chatLoading, setChatLoading] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
   const fetchNotes = useCallback(async () => {
     try {
       setLoading(true);
@@ -49,6 +71,10 @@ function CoachContent() {
   }, []);
 
   useEffect(() => { fetchNotes(); }, [fetchNotes]);
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatMessages]);
 
   const generateNote = async () => {
     setGenerating(true);
@@ -79,6 +105,80 @@ function CoachContent() {
       setNotes((prev) => prev.filter((n) => n.id !== id));
       if (currentIndex >= notes.length - 1) setCurrentIndex(Math.max(0, notes.length - 2));
     } catch (err) { console.error('Error dismissing note:', err); }
+  };
+
+  const sendChatMessage = async (text: string) => {
+    if (!text.trim() || chatLoading) return;
+    
+    const userMsg: ChatMessage = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: text.trim(),
+      timestamp: new Date(),
+    };
+    setChatMessages(prev => [...prev, userMsg]);
+    setChatInput('');
+    setChatLoading(true);
+    
+    const assistantId = (Date.now() + 1).toString();
+    const assistantMsg: ChatMessage = {
+      id: assistantId,
+      role: 'assistant',
+      content: '',
+      timestamp: new Date(),
+    };
+    setChatMessages(prev => [...prev, assistantMsg]);
+    
+    try {
+      const response = await fetch('/api/ai/chat-stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' },
+        body: JSON.stringify({ 
+          message: `You are a career coach. Give concise, actionable advice.\n\nUser: ${text.trim()}`,
+          history: chatMessages.slice(-6).map(m => ({ role: m.role, content: m.content }))
+        }),
+      });
+      
+      if (!response.ok) throw new Error('Failed to get response');
+      
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('No stream');
+      
+      const decoder = new TextDecoder();
+      let buffer = '';
+      
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6).trim());
+              if (data.content && !data.answer) {
+                setChatMessages(prev => prev.map(m => 
+                  m.id === assistantId ? { ...m, content: m.content + data.content } : m
+                ));
+              }
+              if (data.answer) {
+                setChatMessages(prev => prev.map(m => 
+                  m.id === assistantId ? { ...m, content: data.answer || m.content } : m
+                ));
+              }
+            } catch {}
+          }
+        }
+      }
+    } catch (err) {
+      setChatMessages(prev => prev.map(m => 
+        m.id === assistantId ? { ...m, content: 'Sorry, I encountered an error. Please try again.' } : m
+      ));
+    } finally {
+      setChatLoading(false);
+    }
   };
 
   const currentNote = notes[currentIndex];
@@ -157,6 +257,113 @@ function CoachContent() {
             {generating ? (<><RefreshCw className="h-4 w-4 animate-spin" /> Generating...</>) : (<><Sparkles className="h-4 w-4" /> Generate Note</>)}
           </button>
         </div>
+      </div>
+
+      {/* Interactive Coach Chat */}
+      <div className="card-premium mx-auto max-w-4xl p-6 animate-fadeInUp" style={{ animationDelay: '150ms' }}>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'var(--color-primary-soft)' }}>
+              <MessageCircle className="w-5 h-5" style={{ color: 'var(--color-bloom)' }} />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold" style={{ color: 'var(--color-ink)' }}>Live Coaching Session</h2>
+              <p className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>Have a real-time conversation with your AI coach</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowChat(!showChat)}
+            className="px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2"
+            style={{
+              backgroundColor: showChat ? 'var(--color-bloom)' : 'var(--color-surface-dim)',
+              color: showChat ? 'white' : 'var(--color-text-secondary)',
+            }}
+          >
+            {showChat ? <><X className="w-3.5 h-3.5" /> Close</> : <><Send className="w-3.5 h-3.5" /> Start Chat</>}
+          </button>
+        </div>
+
+        {showChat && (
+          <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--color-border)' }}>
+            {/* Chat Messages */}
+            <div className="h-80 overflow-y-auto p-4 space-y-4" style={{ backgroundColor: 'var(--color-surface)' }}>
+              {chatMessages.length === 0 && (
+                <div className="flex flex-col items-center justify-center h-full text-center">
+                  <Bot className="w-10 h-10 mb-3" style={{ color: 'var(--color-bloom)' }} />
+                  <p className="text-sm font-medium mb-1" style={{ color: 'var(--color-ink)' }}>Ask your career coach anything</p>
+                  <p className="text-xs mb-4" style={{ color: 'var(--color-text-tertiary)' }}>Get personalized advice based on your portfolio</p>
+                  <div className="flex flex-wrap gap-2 justify-center max-w-md">
+                    {QUICK_QUESTIONS.map((q) => (
+                      <button
+                        key={q}
+                        onClick={() => sendChatMessage(q)}
+                        className="px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors"
+                        style={{ backgroundColor: 'var(--color-surface-dim)', color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)' }}
+                      >
+                        {q}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {chatMessages.map((msg) => (
+                <div key={msg.id} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  {msg.role === 'assistant' && (
+                    <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'var(--color-primary-soft)' }}>
+                      <Bot className="w-3.5 h-3.5" style={{ color: 'var(--color-bloom)' }} />
+                    </div>
+                  )}
+                  <div className={`max-w-[80%] rounded-xl px-4 py-3 text-sm ${msg.role === 'user' ? '' : ''}`}
+                    style={{
+                      backgroundColor: msg.role === 'user' ? 'var(--color-ink)' : 'var(--color-surface-dim)',
+                      color: msg.role === 'user' ? 'var(--color-paper)' : 'var(--color-ink)',
+                    }}>
+                    {msg.role === 'assistant' ? (
+                      <MarkdownRenderer content={msg.content} />
+                    ) : (
+                      <p className="whitespace-pre-wrap">{msg.content}</p>
+                    )}
+                    {msg.content === '' && chatLoading && (
+                      <div className="flex gap-1">
+                        <div className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ backgroundColor: msg.role === 'user' ? 'white' : 'var(--color-bloom)', animationDelay: '0ms' }} />
+                        <div className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ backgroundColor: msg.role === 'user' ? 'white' : 'var(--color-bloom)', animationDelay: '150ms' }} />
+                        <div className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ backgroundColor: msg.role === 'user' ? 'white' : 'var(--color-bloom)', animationDelay: '300ms' }} />
+                      </div>
+                    )}
+                  </div>
+                  {msg.role === 'user' && (
+                    <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'var(--color-surface-dim)' }}>
+                      <User className="w-3.5 h-3.5" style={{ color: 'var(--color-text-secondary)' }} />
+                    </div>
+                  )}
+                </div>
+              ))}
+              <div ref={chatEndRef} />
+            </div>
+            
+            {/* Chat Input */}
+            <div className="p-3 flex gap-2" style={{ backgroundColor: 'var(--color-surface)', borderTop: '1px solid var(--color-border)' }}>
+              <input
+                type="text"
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && sendChatMessage(chatInput)}
+                placeholder="Ask about your career..."
+                className="flex-1 text-sm px-4 py-2.5 rounded-xl border focus:outline-none focus:ring-1"
+                style={{ borderColor: 'var(--color-border)', color: 'var(--color-ink)', backgroundColor: 'var(--color-surface)' }}
+                disabled={chatLoading}
+              />
+              <button
+                onClick={() => sendChatMessage(chatInput)}
+                disabled={!chatInput.trim() || chatLoading}
+                className="px-4 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-30"
+                style={{ backgroundColor: 'var(--color-bloom)', color: 'white' }}
+              >
+                {chatLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Notes Display */}

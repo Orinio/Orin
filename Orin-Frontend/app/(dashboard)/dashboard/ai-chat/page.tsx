@@ -32,6 +32,7 @@ import { MarkdownRenderer } from '@/components/ai/MarkdownRenderer';
 import { SourcesDisplay, type Source } from '@/components/ai/SourcesDisplay';
 import { ArtifactsPanel, type Artifact } from '@/components/ai/ArtifactsPanel';
 import { FileUpload, type AttachedFile } from '@/components/ai/FileUpload';
+import { MessageRating } from '@/components/ai/MessageRating';
 
 // ============================================================
 // Types
@@ -748,6 +749,9 @@ function AIChatContent() {
                           {message.iterations} iterations
                         </span>
                       )}
+                      <div className="ml-auto">
+                        <MessageRating messageId={message.id} />
+                      </div>
                     </div>
                   )}
                 </div>
@@ -787,6 +791,28 @@ function AIChatContent() {
                       {agentStatus || 'Thinking...'}
                     </span>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* ── Streaming with no content yet ──────── */}
+            {loading && messages.some(m => m.isStreaming) && messages[messages.length - 1]?.content === '' && (
+              <div className="flex gap-2.5 sm:gap-3 justify-start">
+                <div
+                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ backgroundColor: 'var(--color-primary-soft)' }}
+                >
+                  <Bot className="h-3.5 w-3.5 sm:h-4 sm:w-4" style={{ color: 'var(--color-bloom)' }} />
+                </div>
+                <div className="flex items-center gap-2 px-4 py-3">
+                  <div className="flex gap-1">
+                    <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: 'var(--color-bloom)', animationDelay: '0ms' }} />
+                    <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: 'var(--color-bloom)', animationDelay: '200ms' }} />
+                    <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: 'var(--color-bloom)', animationDelay: '400ms' }} />
+                  </div>
+                  <span className="text-[11px] font-medium" style={{ color: 'var(--color-text-tertiary)' }}>
+                    {agentStatus || 'Connecting...'}
+                  </span>
                 </div>
               </div>
             )}

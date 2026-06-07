@@ -581,6 +581,13 @@ export class AgentOrchestrator {
     while (iterations < agent.maxIterations) {
       iterations++;
 
+      onEvent('progress', {
+        iteration: iterations,
+        maxIterations: agent.maxIterations,
+        toolCallsSoFar: toolCalls.length,
+        elapsedMs: Date.now() - agentStartTime,
+      });
+
       // Check timeout
       if (Date.now() - agentStartTime > agent.timeoutMs) {
         onEvent('thinking', { content: `Agent timeout after ${agent.timeoutMs}ms` });
@@ -617,7 +624,7 @@ export class AgentOrchestrator {
 
         if (parsed.thinking) {
           thinking = parsed.thinking;
-          onEvent('thinking', { content: parsed.thinking });
+          onEvent('thinking', { content: parsed.thinking, iteration: iterations });
         }
 
         // If we have an answer, stream it and break
@@ -656,18 +663,24 @@ export class AgentOrchestrator {
 
           onEvent('tool_start', {
             tool: tool.name,
+            description: tool.description,
             args: parsed.tool_call.arguments,
-            description: tool.description
+            step: toolCalls.length + 1,
+            totalSteps: agent.maxIterations,
           });
 
+          const toolStartTime = Date.now();
           const result = await tool.execute(parsed.tool_call.arguments, { userId: context.userId });
+          const toolDurationMs = Date.now() - toolStartTime;
           toolCalls.push({ tool: tool.name, args: parsed.tool_call.arguments, result });
 
           onEvent('tool_result', {
             tool: tool.name,
             success: result.success,
             data: result.data,
-            error: result.error
+            error: result.error,
+            durationMs: toolDurationMs,
+            step: toolCalls.length,
           });
 
           // Add tool call and result to messages for next iteration (truncated)
@@ -702,6 +715,8 @@ export class AgentOrchestrator {
     // Send final complete event
     onEvent('complete', {
       agentId,
+      agentName: agent.name,
+      agentRole: agent.role,
       answer: finalAnswer,
       thinking,
       toolCalls: toolCalls.map(tc => ({

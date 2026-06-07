@@ -485,6 +485,7 @@ export type Database = {
           match_score: number | null;
           notes: string | null;
           applied_at: string | null;
+          source: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -496,6 +497,7 @@ export type Database = {
           match_score?: number | null;
           notes?: string | null;
           applied_at?: string | null;
+          source?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -507,6 +509,7 @@ export type Database = {
           match_score?: number | null;
           notes?: string | null;
           applied_at?: string | null;
+          source?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -823,6 +826,7 @@ export type Database = {
           new_data: Record<string, unknown> | null;
           ip_address: string | null;
           user_agent: string | null;
+          description: string | null;
           created_at: string;
         };
         Insert: {
@@ -836,6 +840,7 @@ export type Database = {
           new_data?: Record<string, unknown> | null;
           ip_address?: string | null;
           user_agent?: string | null;
+          description?: string | null;
           created_at?: string;
         };
         Update: {
@@ -849,6 +854,7 @@ export type Database = {
           new_data?: Record<string, unknown> | null;
           ip_address?: string | null;
           user_agent?: string | null;
+          description?: string | null;
           created_at?: string;
         };
         Relationships: [

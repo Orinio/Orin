@@ -163,8 +163,8 @@ export function mapDbNotifPrefsToNotifPrefs(db: DbNotifPrefs): NotificationPrefe
     userId: db.user_id,
     weeklySummary: db.weekly_summary,
     recruiterViews: db.recruiter_views,
-    verificationStatus: db.verification_status,
-    opportunityMatch: db.opportunity_match,
+    verificationStatus: db.verification_changes,
+    opportunityMatch: db.opportunity_matches,
     coachTips: db.coach_tips,
     productUpdates: db.product_updates,
   };

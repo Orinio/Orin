@@ -146,8 +146,8 @@ export default function SettingsPage() {
         setNotifs({
           weeklySummary: notifData.weekly_summary,
           recruiterViews: notifData.recruiter_views,
-          verificationStatus: notifData.verification_status,
-          opportunityMatch: notifData.opportunity_match,
+          verificationStatus: notifData.verification_changes,
+          opportunityMatch: notifData.opportunity_matches,
           coachTips: notifData.coach_tips,
           productUpdates: notifData.product_updates,
         });
@@ -195,7 +195,7 @@ export default function SettingsPage() {
         if (authUser) {
           const { data: userData } = await supabase.from('users').select('id').eq('auth_user_id', authUser.id).maybeSingle();
           if (userData) {
-            const dbKey = key === 'weeklySummary' ? 'weekly_summary' : key === 'recruiterViews' ? 'recruiter_views' : key === 'verificationStatus' ? 'verification_status' : key === 'opportunityMatch' ? 'opportunity_match' : key === 'coachTips' ? 'coach_tips' : 'product_updates';
+            const dbKey = key === 'weeklySummary' ? 'weekly_summary' : key === 'recruiterViews' ? 'recruiter_views' : key === 'verificationStatus' ? 'verification_changes' : key === 'opportunityMatch' ? 'opportunity_matches' : key === 'coachTips' ? 'coach_tips' : 'product_updates';
             await supabase.from('notification_preferences').upsert({ user_id: userData.id, [dbKey]: notifs[key] } as Database['public']['Tables']['notification_preferences']['Insert'], { onConflict: 'user_id' });
           }
         }
@@ -236,7 +236,7 @@ export default function SettingsPage() {
             sb.from('users').select('id').eq('auth_user_id', authUser.id).maybeSingle()
               .then(({ data: userData }) => {
                 if (userData) {
-                  const dbKey = key === 'weeklySummary' ? 'weekly_summary' : key === 'recruiterViews' ? 'recruiter_views' : key === 'verificationStatus' ? 'verification_status' : key === 'opportunityMatch' ? 'opportunity_match' : key === 'coachTips' ? 'coach_tips' : 'product_updates';
+                  const dbKey = key === 'weeklySummary' ? 'weekly_summary' : key === 'recruiterViews' ? 'recruiter_views' : key === 'verificationStatus' ? 'verification_changes' : key === 'opportunityMatch' ? 'opportunity_matches' : key === 'coachTips' ? 'coach_tips' : 'product_updates';
                   void sb.from('notification_preferences').upsert({ user_id: userData.id, [dbKey]: next[key] } as Database['public']['Tables']['notification_preferences']['Insert'], { onConflict: 'user_id' });
                 }
               });

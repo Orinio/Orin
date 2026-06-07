@@ -31,8 +31,8 @@ const userId = await resolvePublicUserId(supabase);
       preferences: {
         weekly_summary: true,
         recruiter_views: true,
-        verification_status: true,
-        opportunity_match: true,
+        verification_changes: true,
+        opportunity_matches: true,
         coach_tips: true,
         product_updates: true,
       },
@@ -61,8 +61,8 @@ const userId = await resolvePublicUserId(supabase);
   }
 
   const allowedFields = [
-    'weekly_summary', 'recruiter_views', 'verification_status',
-    'opportunity_match', 'coach_tips', 'product_updates',
+    'weekly_summary', 'recruiter_views', 'verification_changes',
+    'opportunity_matches', 'coach_tips', 'product_updates',
   ] as const;
 
   const updateData: Partial<NotificationPrefsUpdate> = {};

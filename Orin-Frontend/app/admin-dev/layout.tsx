@@ -15,47 +15,26 @@ const navLinks = [
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
   const pathname = usePathname();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
   const [checking, setChecking] = useState(true);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  const checkAuth = useCallback(async () => {
-    try {
-      const res = await fetch('/api/admin-dev/auth/session');
-      const data = await res.json();
-      if (!data.authenticated) {
-        router.replace('/admin-dev/login');
-        return;
-      }
-      setAuthenticated(true);
-    } catch {
-      router.replace('/admin-dev/login');
-    } finally {
-      setChecking(false);
-    }
-  }, [router]);
 
   useEffect(() => {
-    if (pathname === '/admin-dev/login') {
-      setChecking(false);
-      return;
-    }
-    checkAuth();
-  }, [checkAuth, pathname]);
+    fetch('/api/admin-dev/auth/session')
+      .then((r) => r.json())
+      .then((d) => setAuthenticated(d.authenticated))
+      .catch(() => {})
+      .finally(() => setChecking(false));
+  }, []);
 
   const handleLogout = async () => {
     await fetch('/api/admin-dev/auth/logout', { method: 'POST' });
-    router.replace('/admin-dev/login');
+    setAuthenticated(false);
+    window.location.href = '/admin-dev';
   };
 
-  // Login page renders children directly (no shell)
-  if (pathname === '/admin-dev/login') {
-    return <>{children}</>;
-  }
-
-  if (checking || !authenticated) {
+  if (checking) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-paper)' }}>
         <div className="w-6 h-6 border-2 rounded-full animate-spin" style={{ borderColor: 'var(--color-border)', borderTopColor: 'var(--color-ink)' }} />
@@ -63,14 +42,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }
 
+  if (!authenticated) {
+    return <>{children}</>;
+  }
+
   return (
     <div className="min-h-screen flex" style={{ backgroundColor: 'var(--color-paper)' }}>
-      {/* Mobile overlay */}
       {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
+        <div className="fixed inset-0 z-40 bg-black/50 lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
       {/* Sidebar */}
@@ -146,20 +125,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Top bar */}
         <header
           className="sticky top-0 z-30 flex items-center gap-4 px-4 py-3 lg:px-6"
           style={{ backgroundColor: 'var(--color-surface)', borderBottom: '1px solid var(--color-border)' }}
         >
-          <button
-            type="button"
-            className="lg:hidden p-2 -ml-2 rounded-lg hover:bg-slate-100"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-          >
+          <button type="button" className="lg:hidden p-2 -ml-2 rounded-lg hover:bg-slate-100" onClick={() => setSidebarOpen(!sidebarOpen)}>
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="3" y1="12" x2="21" y2="12" />
-              <line x1="3" y1="6" x2="21" y2="6" />
-              <line x1="3" y1="18" x2="21" y2="18" />
+              <line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="18" x2="21" y2="18" />
             </svg>
           </button>
           <div className="flex-1" />
@@ -172,7 +144,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
         </header>
 
-        {/* Content */}
         <main className="flex-1 p-4 lg:p-6">
           {children}
         </main>

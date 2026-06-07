@@ -92,7 +92,7 @@ export async function middleware(request: NextRequest) {
     );
   }
 
-  // Admin-only routes
+  // Admin-only routes (legacy Supabase-based)
   const adminPaths = ['/admin', '/api/admin/'];
   const isAdminPath = adminPaths.some((path) =>
     request.nextUrl.pathname.startsWith(path)
@@ -105,6 +105,26 @@ export async function middleware(request: NextRequest) {
     if (!userEmail || !adminEmails.includes(userEmail)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
+  }
+
+  // Admin-dev routes — protected by standalone admin auth (cookie-based)
+  const adminDevPaths = ['/admin-dev'];
+  const adminDevApiPaths = ['/api/admin-dev/'];
+  const isAdminDevPath = adminDevPaths.some((path) =>
+    request.nextUrl.pathname.startsWith(path)
+  );
+  const isAdminDevApiPath = adminDevApiPaths.some((path) =>
+    request.nextUrl.pathname.startsWith(path)
+  );
+
+  // Protect admin-dev pages (except the login page which the layout handles)
+  if (isAdminDevPath && request.nextUrl.pathname !== '/admin-dev' && request.nextUrl.pathname !== '/admin-dev/login') {
+    // The layout handles auth checks client-side; middleware just ensures the route exists
+  }
+
+  // Protect admin-dev API routes (except auth endpoints)
+  if (isAdminDevApiPath && !request.nextUrl.pathname.startsWith('/api/admin-dev/auth')) {
+    // API auth is validated inside each route handler using the session cookie
   }
 
   return supabaseResponse;

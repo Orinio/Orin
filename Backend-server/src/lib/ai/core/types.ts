@@ -29,12 +29,6 @@ export interface ToolCall {
   arguments: Record<string, any>;
 }
 
-export interface AgentResponse {
-  thinking?: string;
-  tool_call?: ToolCall;
-  answer?: string;
-}
-
 export interface AgentDefinition {
   id: string;
   name: string;
@@ -47,7 +41,6 @@ export interface AgentDefinition {
   timeoutMs: number;
   tools: string[];
   systemPrompt: string;
-  outputFormat: 'json' | 'text' | 'streaming';
 }
 
 export interface AgentContext {

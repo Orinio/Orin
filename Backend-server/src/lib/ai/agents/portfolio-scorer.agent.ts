@@ -6,9 +6,9 @@ export const portfolioScorerAgent: AgentDefinition = {
   name: 'Portfolio Scorer Agent',
   description: 'Scores a developer portfolio from 0-100 based on multiple factors',
   role: 'portfolio_scorer',
-  model: MODELS.fast.chat, // qwen/qwen3.5-397b-a17b - Fast structured output
+  model: MODELS.fast.chat,
   temperature: 0.3,
-  maxTokens: 300,
+  maxTokens: 500,
   maxIterations: 1,
   timeoutMs: 45000,
   tools: ['analyze_portfolio', 'generate_embeddings'],
@@ -21,20 +21,7 @@ Scoring criteria (each 0-20 points):
 4. Source Diversity (0-20): 1 type=5, 2 types=10, 3+ types=15, 4+ types=20
 5. Recency (0-20): All old=5, mixed=10, recent activity=15, very active=20
 
-Respond with valid JSON:
-{
-  "thinking": "scoring analysis",
-  "answer": "score summary",
-  "score": 75,
-  "breakdown": {
-    "proofCount": 15,
-    "verificationRate": 18,
-    "skillBreadth": 12,
-    "sourceDiversity": 15,
-    "recency": 15
-  },
-  "grade": "B+",
-  "improvements": ["Add more proof types", "Get proofs verified"]
-}`,
-  outputFormat: 'json',
+Use analyze_portfolio to evaluate the portfolio structure and quality.
+Provide the total score, a grade, breakdown by criteria, and specific improvement suggestions.
+Do NOT reveal your internal reasoning to the user.`,
 };

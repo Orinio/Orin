@@ -1,12 +1,14 @@
 import type { AgentDefinition, AgentContext, AgentResult } from './types.js';
 import { chatCompletion, chatCompletionStream, isNvidiaConfigured } from './nvidia.js';
-import { getToolsByNames } from './tool-registry.js';
+import type { ChatMessage } from './nvidia.js';
+import { getToolsByNames, toolsToOpenAITools } from './tool-registry.js';
 import { logAIOperation } from '../metrics.js';
 import { getRequestId, getUserId } from '../../request-context.js';
-import { sanitizeAnswer, extractJSON } from './utils.js';
+import { sanitizeAnswer } from './utils.js';
 
 const MAX_INPUT_LENGTH = 2000;
 const MAX_TOOL_RESULT_LENGTH = 1000;
+const DEFAULT_TOOL_TIMEOUT_MS = 30000;
 
 function buildContextualQuery(query: string, context: AgentContext): string {
   const profileInfo = context.userProfile
@@ -41,20 +43,14 @@ export async function runAgent(
   }
 
   const tools = getToolsByNames(agent.tools);
-  const toolDescriptions = tools.map(t =>
-    `- ${t.name}(${Object.entries(t.parameters.properties).map(([k, v]) => `${k}: ${v.type}`).join(', ')}): ${t.description}`
-  ).join('\n');
-
-  const systemPrompt = tools.length > 0
-    ? `${agent.systemPrompt}\n\nAvailable tools:\n${toolDescriptions}`
-    : agent.systemPrompt;
+  const openAITools = tools.length > 0 ? toolsToOpenAITools(agent.tools) : undefined;
 
   const truncatedQuery = query.length > MAX_INPUT_LENGTH
     ? query.slice(0, MAX_INPUT_LENGTH) + '... (truncated)'
     : query;
 
-  const messages: Array<{ role: string; content: string }> = [
-    { role: 'system', content: systemPrompt },
+  const messages: ChatMessage[] = [
+    { role: 'system', content: agent.systemPrompt },
     { role: 'user', content: buildContextualQuery(truncatedQuery, context) },
   ];
 
@@ -70,7 +66,6 @@ export async function runAgent(
   while (iterations < agent.maxIterations) {
     iterations++;
 
-    // Check agent-level timeout
     if (Date.now() - agentStartTime > agent.timeoutMs) {
       thinking = `Agent timeout after ${agent.timeoutMs}ms`;
       finalAnswer = finalAnswer || 'The operation took too long. Please try a simpler request.';
@@ -82,76 +77,88 @@ export async function runAgent(
       messages,
       temperature: agent.temperature,
       max_tokens: agent.maxTokens,
+      ...(openAITools ? { tools: openAITools, tool_choice: 'auto' } : {}),
     });
 
-    const content = response.choices[0]?.message?.content || '';
+    const message = response.choices[0]?.message;
     totalTokens += response.usage?.total_tokens || 0;
     totalTokensIn += response.usage?.prompt_tokens || 0;
     totalTokensOut += response.usage?.completion_tokens || 0;
 
-    // Try robust JSON extraction
-    const parsed = extractJSON(content);
+    if (!message) break;
 
-    if (!parsed) {
-      finalAnswer = sanitizeAnswer(content);
-      thinking = 'Response was not valid JSON, using raw content';
-      break;
-    }
-
-    thinking = parsed.thinking || thinking;
-
-    if (parsed.answer) {
-      finalAnswer = sanitizeAnswer(parsed.answer);
-      break;
-    }
-
-    if (parsed.tool_call) {
-      const tool = tools.find(t => t.name === parsed.tool_call!.name);
-      if (!tool) {
-        toolCalls.push({
-          tool: parsed.tool_call.name,
-          args: parsed.tool_call.arguments,
-          result: { success: false, error: `Tool '${parsed.tool_call.name}' not found` },
-        });
-        messages.push({
-          role: 'user',
-          content: `Tool '${parsed.tool_call.name}' does not exist. Available: ${tools.map(t => t.name).join(', ')}`,
-        });
-        continue;
-      }
-
-      // Safety: validate tool arguments are not empty/malicious
-      const args = parsed.tool_call.arguments || {};
-      if (typeof args !== 'object') {
-        toolCalls.push({
-          tool: parsed.tool_call.name,
-          args,
-          result: { success: false, error: 'Invalid tool arguments' },
-        });
-        messages.push({
-          role: 'user',
-          content: `Tool '${parsed.tool_call.name}' received invalid arguments. Expected object.`,
-        });
-        continue;
-      }
-
-      const result = await tool.execute(args);
-      toolCalls.push({ tool: parsed.tool_call.name, args, result });
-
-      // Truncate large tool results to avoid context overflow
-      const resultStr = JSON.stringify(result).substring(0, MAX_TOOL_RESULT_LENGTH);
-
-      messages.push({ role: 'assistant', content: JSON.stringify({ tool_call: parsed.tool_call }) });
+    // Native tool calls from the model
+    if (message.tool_calls && message.tool_calls.length > 0) {
       messages.push({
-        role: 'user',
-        content: `Tool result for ${parsed.tool_call.name}: ${resultStr}`,
+        role: 'assistant',
+        content: message.content,
+        tool_calls: message.tool_calls,
       });
+
+      for (const toolCall of message.tool_calls) {
+        const toolName = toolCall.function.name;
+        const tool = tools.find(t => t.name === toolName);
+
+        if (!tool) {
+          toolCalls.push({
+            tool: toolName,
+            args: {},
+            result: { success: false, error: `Tool '${toolName}' not found` },
+          });
+          messages.push({
+            role: 'tool',
+            content: JSON.stringify({ error: `Tool '${toolName}' does not exist. Available: ${tools.map(t => t.name).join(', ')}` }),
+            tool_call_id: toolCall.id,
+            name: toolName,
+          });
+          continue;
+        }
+
+        let args: Record<string, any>;
+        try {
+          args = JSON.parse(toolCall.function.arguments);
+        } catch {
+          args = {};
+        }
+
+        const toolTimeout = (tool as any).timeoutMs || DEFAULT_TOOL_TIMEOUT_MS;
+        let result;
+        try {
+          result = await Promise.race([
+            tool.execute(args),
+            new Promise<never>((_, reject) =>
+              setTimeout(() => reject(new Error(`Tool ${toolName} timed out after ${toolTimeout}ms`)), toolTimeout)
+            )
+          ]);
+        } catch (err) {
+          result = { success: false, error: err instanceof Error ? err.message : 'Tool execution failed' };
+        }
+
+        toolCalls.push({ tool: toolName, args, result });
+
+        const resultStr = JSON.stringify(result).substring(0, MAX_TOOL_RESULT_LENGTH);
+        messages.push({
+          role: 'tool',
+          content: resultStr,
+          tool_call_id: toolCall.id,
+          name: toolName,
+        });
+      }
+
+      continue;
     }
+
+    // Text response — final answer
+    if (message.content) {
+      finalAnswer = sanitizeAnswer(message.content);
+      break;
+    }
+
+    break;
   }
 
   const durationMs = Date.now() - startTime;
 
-  // Structured AI operation log
   logAIOperation({
     operation: agent.id,
     model: agent.model,
@@ -189,21 +196,12 @@ export async function runAgentStream(
     return;
   }
 
-  const tools = getToolsByNames(agent.tools);
-  const toolDescriptions = tools.map(t =>
-    `- ${t.name}(${Object.entries(t.parameters.properties).map(([k, v]) => `${k}: ${v.type}`).join(', ')}): ${t.description}`
-  ).join('\n');
-
-  const systemPrompt = tools.length > 0
-    ? `${agent.systemPrompt}\n\nAvailable tools:\n${toolDescriptions}`
-    : agent.systemPrompt;
-
   const truncatedQuery = query.length > MAX_INPUT_LENGTH
     ? query.slice(0, MAX_INPUT_LENGTH) + '... (truncated)'
     : query;
 
   const messages = [
-    { role: 'system' as const, content: systemPrompt },
+    { role: 'system' as const, content: agent.systemPrompt },
     ...(context.conversationHistory?.slice(-6) || []),
     { role: 'user' as const, content: buildContextualQuery(truncatedQuery, context) },
   ];

@@ -6,7 +6,7 @@ export const coachAgent: AgentDefinition = {
   name: 'Coach Agent',
   description: 'Provides personalized career coaching and advice',
   role: 'career_coach',
-  model: MODELS.primary.coach, // qwen/qwen3-coder-480b-a35b-instruct - Best quality
+  model: MODELS.primary.coach,
   temperature: 0.7,
   maxTokens: 500,
   maxIterations: 1,
@@ -25,18 +25,11 @@ Guidelines:
 - Use a professional but friendly tone
 - Always end with a clear call-to-action when applicable
 
-Response Format (JSON only):
-{
-  "content": "Your coaching advice here",
-  "actionLabel": "Optional CTA button text",
-  "actionUrl": "Optional relevant URL",
-  "priority": 5
-}
-
 Priority scale: -10 (lowest) to 10 (highest)
 - Daily tips: priority 3-5
 - Weekly insights: priority 5-7
 - Milestone celebrations: priority 7-9
-- Ad-hoc requests: priority 4-6`,
-  outputFormat: 'json',
+- Ad-hoc requests: priority 4-6
+
+Do NOT reveal your internal reasoning to the user.`,
 };

@@ -6,7 +6,7 @@ export const opportunityMatcherAgent: AgentDefinition = {
   name: 'Opportunity Matcher Agent',
   description: 'Matches developer skills to job/internship/scholarship opportunities',
   role: 'opportunity_matcher',
-  model: MODELS.toolCalling.primary, // qwen/qwen3.5-397b-a17b - Best tool calling
+  model: MODELS.toolCalling.primary,
   temperature: 0.3,
   maxTokens: 400,
   maxIterations: 2,
@@ -26,8 +26,5 @@ For each match provide:
 4. Specific reasoning for the match
 
 Use generate_embeddings for semantic skill matching when keyword matching is insufficient.
-
-Respond with valid JSON:
-{"thinking":"matching analysis","answer":"match results","matches":[{"opportunityId":"...","score":85,"matchedSkills":[...],"missingSkills":[...]}]}`,
-  outputFormat: 'json',
+Do NOT reveal your internal reasoning to the user.`,
 };

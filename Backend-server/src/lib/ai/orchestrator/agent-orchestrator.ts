@@ -1,16 +1,17 @@
 /**
  * Orin AI - Agent Orchestrator
- * Manages multiple AI agents working together with memory, tool calling, and streaming
+ * Manages multiple AI agents working together with memory, native tool calling, and streaming
  */
 
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from '../../logger.js';
 import { chatCompletion, isNvidiaConfigured } from '../core/nvidia.js';
+import type { ChatMessage, ToolCallResponse } from '../core/nvidia.js';
 import { createMemoryManager, type MemoryManager } from '../memory/memory-manager.js';
-import { getToolsByNames } from '../core/tool-registry.js';
+import { getToolsByNames, toolsToOpenAITools } from '../core/tool-registry.js';
 import { buildAgentContext as buildUserContext } from '../../context.js';
 import { getAllAgents, getAgent } from '../agents/index.js';
-import { sanitizeAnswer, extractJSON } from '../core/utils.js';
+import { sanitizeAnswer } from '../core/utils.js';
 import { logAIOperation } from '../metrics.js';
 import { getRequestId } from '../../request-context.js';
 import type { ToolResult, AgentDefinition } from '../core/types.js';
@@ -38,8 +39,11 @@ const INTENT_AGENT_MAP: Record<string, string> = {
 export type Agent = AgentDefinition;
 
 export interface AgentMessage {
-  role: 'system' | 'user' | 'assistant';
-  content: string;
+  role: 'system' | 'user' | 'assistant' | 'tool';
+  content: string | null;
+  tool_calls?: ToolCallResponse[];
+  tool_call_id?: string;
+  name?: string;
 }
 
 export interface AgentTask {
@@ -132,7 +136,9 @@ export class AgentOrchestrator {
       });
 
       const content = response.choices[0]?.message?.content || '';
-      const parsed = extractJSON<{ category: string; confidence: number }>(content);
+      const parsed = (() => {
+        try { return JSON.parse(content); } catch { return null; }
+      })();
 
       if (parsed?.category && INTENT_AGENT_MAP[parsed.category]) {
         const agentId = INTENT_AGENT_MAP[parsed.category];
@@ -168,7 +174,7 @@ export class AgentOrchestrator {
     const tools = getToolsByNames(agent.tools);
 
     // Build messages
-    const messages: AgentMessage[] = [
+    const messages: ChatMessage[] = [
       { role: 'system', content: agent.systemPrompt }
     ];
 
@@ -190,14 +196,6 @@ export class AgentOrchestrator {
       }
     }
 
-    // Add tool descriptions
-    if (tools.length > 0) {
-      const toolDescriptions = tools.map(t =>
-        `- ${t.name}(${Object.entries(t.parameters.properties).map(([k, v]) => `${k}: ${v.type}`).join(', ')}): ${t.description}`
-      ).join('\n');
-      messages[0].content += `\n\nAvailable tools:\n${toolDescriptions}`;
-    }
-
     // Add conversation history (last 6 messages for context window)
     if (context?.conversationHistory?.length) {
       messages.push(...context.conversationHistory.slice(-6));
@@ -206,7 +204,10 @@ export class AgentOrchestrator {
     // Add user query
     messages.push({ role: 'user', content: query });
 
-    // Execute with tool calling loop
+    // Convert tools to OpenAI format for native tool calling
+    const openAITools = tools.length > 0 ? toolsToOpenAITools(agent.tools) : undefined;
+
+    // Execute with native tool calling loop
     let iterations = 0;
     let totalTokens = 0;
     let finalAnswer = '';
@@ -220,49 +221,87 @@ export class AgentOrchestrator {
         model: agent.model,
         messages,
         temperature: agent.temperature,
-        max_tokens: agent.maxTokens
+        max_tokens: agent.maxTokens,
+        ...(openAITools ? { tools: openAITools, tool_choice: 'auto' } : {}),
       });
 
-      const content = response.choices[0]?.message?.content || '';
+      const choice = response.choices[0];
+      const message = choice?.message;
       totalTokens += response.usage?.total_tokens || 0;
 
-      // Parse response
-      const parsed = extractJSON(content);
+      if (!message) break;
 
-      if (!parsed) {
-        finalAnswer = sanitizeAnswer(content);
-        break;
-      }
+      // Case 1: Model wants to call tools (native tool_calls in response)
+      if (message.tool_calls && message.tool_calls.length > 0) {
+        // Add the assistant message with tool_calls to history
+        messages.push({
+          role: 'assistant',
+          content: message.content,
+          tool_calls: message.tool_calls,
+        });
 
-      thinking = parsed.thinking || thinking;
+        // Execute each tool call
+        for (const toolCall of message.tool_calls) {
+          const toolName = toolCall.function.name;
+          const tool = tools.find(t => t.name === toolName);
 
-      if (parsed.answer) {
-        finalAnswer = sanitizeAnswer(parsed.answer);
-        break;
-      }
+          if (!tool) {
+            // Tool not found — tell the model
+            messages.push({
+              role: 'tool',
+              content: JSON.stringify({ error: `Tool '${toolName}' not found. Available tools: ${tools.map(t => t.name).join(', ')}` }),
+              tool_call_id: toolCall.id,
+              name: toolName,
+            });
+            continue;
+          }
 
-      if (parsed.tool_call) {
-        const tool = tools.find(t => t.name === parsed.tool_call.name);
-        if (tool) {
-          const toolTimeout = (tool as any).timeoutMs || DEFAULT_TOOL_TIMEOUT_MS;
+          // Parse arguments from the model's JSON string
+          let args: Record<string, any>;
           try {
-            const result = await Promise.race([
-              tool.execute(parsed.tool_call.arguments, { userId: context?.userId }),
+            args = JSON.parse(toolCall.function.arguments);
+          } catch {
+            args = {};
+            logger.warn({ toolName, rawArgs: toolCall.function.arguments }, 'Failed to parse tool arguments');
+          }
+
+          // Execute the tool with timeout
+          const toolTimeout = (tool as any).timeoutMs || DEFAULT_TOOL_TIMEOUT_MS;
+          let result: ToolResult;
+          try {
+            result = await Promise.race([
+              tool.execute(args, { userId: context?.userId }),
               new Promise<ToolResult>((_, reject) =>
-                setTimeout(() => reject(new Error(`Tool ${tool.name} timed out after ${toolTimeout}ms`)), toolTimeout)
+                setTimeout(() => reject(new Error(`Tool ${toolName} timed out after ${toolTimeout}ms`)), toolTimeout)
               )
             ]);
-            toolCalls.push({ tool: tool.name, args: parsed.tool_call.arguments, result });
-
-            messages.push({ role: 'assistant', content: JSON.stringify({ tool_call: parsed.tool_call }) });
-            messages.push({ role: 'user', content: `Tool result: ${JSON.stringify(result).substring(0, MAX_TOOL_RESULT_LENGTH)}` });
           } catch (err) {
-            const errorResult: ToolResult = { success: false, error: err instanceof Error ? err.message : 'Tool execution failed' };
-            toolCalls.push({ tool: tool.name, args: parsed.tool_call.arguments, result: errorResult });
-            messages.push({ role: 'user', content: `Tool ${tool.name} failed: ${errorResult.error}` });
+            result = { success: false, error: err instanceof Error ? err.message : 'Tool execution failed' };
           }
+
+          toolCalls.push({ tool: toolName, args, result });
+
+          // Feed tool result back to the model as a tool message
+          const resultStr = JSON.stringify(result).substring(0, MAX_TOOL_RESULT_LENGTH);
+          messages.push({
+            role: 'tool',
+            content: resultStr,
+            tool_call_id: toolCall.id,
+            name: toolName,
+          });
         }
+
+        continue; // Next iteration — model will process tool results
       }
+
+      // Case 2: Model returned text content — this is the final answer
+      if (message.content) {
+        finalAnswer = sanitizeAnswer(message.content);
+        break;
+      }
+
+      // Case 3: Empty response — break to avoid infinite loop
+      break;
     }
 
     const durationMs = Date.now() - startTime;
@@ -302,7 +341,7 @@ export class AgentOrchestrator {
   }
 
   // ------------------------------------------------------------
-  // Streaming Agent Execution with Tool Calling
+  // Streaming Agent Execution with Native Tool Calling
   // ------------------------------------------------------------
 
   /**
@@ -361,21 +400,13 @@ export class AgentOrchestrator {
       }
     }
 
-    // Add tool descriptions
-    if (tools.length > 0) {
-      const toolDescriptions = tools.map(t =>
-        `- ${t.name}(${Object.entries(t.parameters.properties).map(([k, v]) => `${k}: ${v.type}`).join(', ')}): ${t.description}`
-      ).join('\n');
-      systemPrompt += `\n\nAvailable tools:\n${toolDescriptions}`;
-    }
-
     // Truncate query if too long
     const truncatedQuery = query.length > MAX_INPUT_LENGTH
       ? query.substring(0, MAX_INPUT_LENGTH) + '... (truncated)'
       : query;
 
     // Build messages array
-    const messages: Array<{ role: string; content: string }> = [
+    const messages: ChatMessage[] = [
       { role: 'system', content: systemPrompt }
     ];
 
@@ -388,7 +419,10 @@ export class AgentOrchestrator {
     const profileInfo = context.userId ? `\nUser ID: ${context.userId}` : '';
     messages.push({ role: 'user', content: `${profileInfo}\n\nUser Query: ${truncatedQuery}` });
 
-    // Tool calling loop with streaming
+    // Convert tools to OpenAI format for native tool calling
+    const openAITools = tools.length > 0 ? toolsToOpenAITools(agent.tools) : undefined;
+
+    // Native tool calling loop
     let iterations = 0;
     let totalTokens = 0;
     let finalAnswer = '';
@@ -414,40 +448,108 @@ export class AgentOrchestrator {
       }
 
       try {
-        // Use non-streaming completion for tool-calling loop (more reliable for JSON parsing)
         const response = await chatCompletion({
           model: agent.model,
           messages,
           temperature: agent.temperature,
           max_tokens: agent.maxTokens,
+          ...(openAITools ? { tools: openAITools, tool_choice: 'auto' } : {}),
         });
 
-        const content = response.choices[0]?.message?.content || '';
+        const choice = response.choices[0];
+        const message = choice?.message;
         totalTokens += response.usage?.total_tokens || 0;
 
-        // Robust JSON extraction
-        const parsed = extractJSON(content);
-
-        if (!parsed) {
-          finalAnswer = sanitizeAnswer(content);
-          thinking = 'Response was not valid JSON, using raw content';
-          onEvent('thinking', { content: thinking });
-          // Stream the raw answer
-          const chunkSize = 20;
-          for (let i = 0; i < finalAnswer.length; i += chunkSize) {
-            onEvent('answer', { content: finalAnswer.substring(i, i + chunkSize) });
-          }
+        if (!message) {
+          finalAnswer = 'No response from AI service.';
           break;
         }
 
-        if (parsed.thinking) {
-          thinking = parsed.thinking;
-          onEvent('thinking', { content: parsed.thinking, iteration: iterations });
+        // Case 1: Model wants to call tools (native tool_calls in response)
+        if (message.tool_calls && message.tool_calls.length > 0) {
+          // Add the assistant message with tool_calls to history
+          messages.push({
+            role: 'assistant',
+            content: message.content,
+            tool_calls: message.tool_calls,
+          });
+
+          // Execute each tool call
+          for (const toolCall of message.tool_calls) {
+            const toolName = toolCall.function.name;
+            const tool = tools.find(t => t.name === toolName);
+
+            if (!tool) {
+              onEvent('thinking', { content: `Tool '${toolName}' not found. Available: ${tools.map(t => t.name).join(', ')}` });
+              messages.push({
+                role: 'tool',
+                content: JSON.stringify({ error: `Tool '${toolName}' does not exist. Available: ${tools.map(t => t.name).join(', ')}` }),
+                tool_call_id: toolCall.id,
+                name: toolName,
+              });
+              continue;
+            }
+
+            // Parse arguments
+            let args: Record<string, any>;
+            try {
+              args = JSON.parse(toolCall.function.arguments);
+            } catch {
+              args = {};
+              logger.warn({ toolName, rawArgs: toolCall.function.arguments }, 'Failed to parse tool arguments');
+            }
+
+            onEvent('tool_start', {
+              tool: tool.name,
+              description: tool.description,
+              args,
+              step: toolCalls.length + 1,
+              totalSteps: agent.maxIterations,
+            });
+
+            const toolStartTime = Date.now();
+            const toolTimeout = (tool as any).timeoutMs || DEFAULT_TOOL_TIMEOUT_MS;
+
+            let result: ToolResult;
+            try {
+              result = await Promise.race([
+                tool.execute(args, { userId: context.userId }),
+                new Promise<ToolResult>((_, reject) =>
+                  setTimeout(() => reject(new Error(`Tool ${tool.name} timed out after ${toolTimeout}ms`)), toolTimeout)
+                )
+              ]);
+            } catch (err) {
+              result = { success: false, error: err instanceof Error ? err.message : 'Tool execution failed' };
+            }
+
+            const toolDurationMs = Date.now() - toolStartTime;
+            toolCalls.push({ tool: tool.name, args, result });
+
+            onEvent('tool_result', {
+              tool: tool.name,
+              success: result.success,
+              data: result.data,
+              error: result.error,
+              durationMs: toolDurationMs,
+              step: toolCalls.length,
+            });
+
+            // Feed tool result back to the model as a tool message
+            const resultStr = JSON.stringify(result).substring(0, MAX_TOOL_RESULT_LENGTH);
+            messages.push({
+              role: 'tool',
+              content: resultStr,
+              tool_call_id: toolCall.id,
+              name: toolName,
+            });
+          }
+
+          continue; // Next iteration — model will process tool results
         }
 
-        // If we have an answer, stream it and break
-        if (parsed.answer) {
-          finalAnswer = sanitizeAnswer(parsed.answer);
+        // Case 2: Model returned text content — this is the final answer
+        if (message.content) {
+          finalAnswer = sanitizeAnswer(message.content);
           // Stream the answer in chunks for smooth UX
           const chunkSize = 20;
           for (let i = 0; i < finalAnswer.length; i += chunkSize) {
@@ -456,72 +558,10 @@ export class AgentOrchestrator {
           break;
         }
 
-        // If we have a tool call, execute it
-        if (parsed.tool_call) {
-          const tool = tools.find(t => t.name === parsed.tool_call.name);
-          if (!tool) {
-            onEvent('thinking', { content: `Tool '${parsed.tool_call.name}' not found. Available: ${tools.map(t => t.name).join(', ')}` });
-            messages.push({
-              role: 'user',
-              content: `Tool '${parsed.tool_call.name}' does not exist. Available: ${tools.map(t => t.name).join(', ')}`
-            });
-            continue;
-          }
-
-          // Validate tool arguments
-          const args = parsed.tool_call.arguments || {};
-          if (typeof args !== 'object') {
-            onEvent('thinking', { content: `Tool '${tool.name}' received invalid arguments` });
-            messages.push({
-              role: 'user',
-              content: `Tool '${tool.name}' received invalid arguments. Expected object.`
-            });
-            continue;
-          }
-
-          onEvent('tool_start', {
-            tool: tool.name,
-            description: tool.description,
-            args: parsed.tool_call.arguments,
-            step: toolCalls.length + 1,
-            totalSteps: agent.maxIterations,
-          });
-
-          const toolStartTime = Date.now();
-          const toolTimeout = (tool as any).timeoutMs || DEFAULT_TOOL_TIMEOUT_MS;
-
-          let result: ToolResult;
-          try {
-            result = await Promise.race([
-              tool.execute(parsed.tool_call.arguments, { userId: context.userId }),
-              new Promise<ToolResult>((_, reject) =>
-                setTimeout(() => reject(new Error(`Tool ${tool.name} timed out after ${toolTimeout}ms`)), toolTimeout)
-              )
-            ]);
-          } catch (err) {
-            result = { success: false, error: err instanceof Error ? err.message : 'Tool execution failed' };
-          }
-
-          const toolDurationMs = Date.now() - toolStartTime;
-          toolCalls.push({ tool: tool.name, args: parsed.tool_call.arguments, result });
-
-          onEvent('tool_result', {
-            tool: tool.name,
-            success: result.success,
-            data: result.data,
-            error: result.error,
-            durationMs: toolDurationMs,
-            step: toolCalls.length,
-          });
-
-          // Add tool call and result to messages for next iteration (truncated)
-          messages.push({ role: 'assistant', content: JSON.stringify({ tool_call: parsed.tool_call }) });
-          const resultStr = JSON.stringify(result).substring(0, MAX_TOOL_RESULT_LENGTH);
-          messages.push({
-            role: 'user',
-            content: `Tool result for ${parsed.tool_call.name}: ${resultStr}`
-          });
-        }
+        // Case 3: Empty response
+        finalAnswer = 'I was unable to generate a response.';
+        onEvent('answer', { content: finalAnswer });
+        break;
       } catch (err) {
         logger.error({ err, agentId, iterations }, 'Agent streaming error');
         onEvent('thinking', { content: `Error in iteration ${iterations}: ${err instanceof Error ? err.message : 'Unknown error'}` });

@@ -6,7 +6,7 @@ export const safetyGuardAgent: AgentDefinition = {
   name: 'Safety Guard Agent',
   description: 'Ensures content safety and prevents abuse',
   role: 'safety_guard',
-  model: MODELS.safety.content, // nvidia/llama-3.1-nemoguard-8b-content-safety - Fast safety
+  model: MODELS.safety.content,
   temperature: 0.1,
   maxTokens: 100,
   maxIterations: 1,
@@ -24,5 +24,4 @@ Consider content unsafe if it contains:
 - Personal attacks or harassment
 
 Be conservative - flag anything that could be harmful.`,
-  outputFormat: 'json',
 };

@@ -6,9 +6,9 @@ export const verificationAgent: AgentDefinition = {
   name: 'Verification Agent',
   description: 'Verifies proof sources (GitHub, certificates, Kaggle, LinkedIn)',
   role: 'verifier',
-  model: MODELS.fast.nano, // nvidia/llama-3.1-nemotron-nano-8b-v1 - Fast verification
+  model: MODELS.fast.nano,
   temperature: 0.3,
-  maxTokens: 300,
+  maxTokens: 500,
   maxIterations: 3,
   timeoutMs: 60000,
   tools: ['verify_github_repo', 'verify_github_user', 'verify_certificate', 'verify_kaggle', 'verify_linkedin', 'check_url_safety'],
@@ -17,17 +17,10 @@ export const verificationAgent: AgentDefinition = {
 You have access to verification tools. Use the appropriate tool for the source type.
 Always verify before answering. Be factual and concise.
 
-Response format (JSON only):
-{"thinking":"what you're doing","tool_call":{"name":"verify_*","arguments":{"url":"..."}}}
-or
-{"thinking":"verification complete","answer":"Verified/Rejected with details","verified":true}
-
 RULES:
-1. Always use tools to verify - never guess
-2. Check URL safety first if the URL looks suspicious
-3. For GitHub: verify repo exists, check stars, language, fork status
-4. For certificates: verify the URL is accessible and from a known platform
-5. For Kaggle: verify notebook/dataset exists
-6. Respond with valid JSON only`,
-  outputFormat: 'json',
+1. Always use tools to verify — never guess or make assumptions about whether a source is real
+2. Call the appropriate verification tool with the URL provided by the user
+3. After receiving tool results, summarize what was verified
+4. Do NOT reveal your internal reasoning to the user
+5. If verification fails, explain what went wrong honestly`,
 };

@@ -11,11 +11,11 @@ export const routerAgent: AgentDefinition = {
   name: 'Router Agent',
   description: 'Classifies user intent and routes to the correct specialist agent',
   role: 'router',
-  model: MODELS.fast.nano, // nvidia/llama-3.1-nemotron-nano-8b-v1 — cheapest, fastest
-  temperature: 0.1, // Low temperature for deterministic classification
+  model: MODELS.fast.nano,
+  temperature: 0.1,
   maxTokens: 100,
   maxIterations: 1,
-  timeoutMs: 10000, // 10s timeout — should be instant
+  timeoutMs: 10000,
   tools: [],
   systemPrompt: `You are an intent classifier. Your ONLY job is to classify the user's message into ONE of these categories:
 
@@ -31,5 +31,4 @@ Respond with ONLY a JSON object:
 {"category": "<category>", "confidence": <0.0-1.0>}
 
 No other text. Just the JSON.`,
-  outputFormat: 'json',
 };

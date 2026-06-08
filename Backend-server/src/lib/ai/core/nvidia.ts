@@ -23,7 +23,32 @@ const MODEL_FALLBACKS: Record<string, string[]> = {
 
 export interface ChatMessage {
   role: string;
-  content: string;
+  content: string | null;
+  tool_calls?: ToolCallResponse[];
+  tool_call_id?: string;
+  name?: string;
+}
+
+export interface ToolCallResponse {
+  id: string;
+  type: 'function';
+  function: {
+    name: string;
+    arguments: string;
+  };
+}
+
+export interface ToolDefinition {
+  type: 'function';
+  function: {
+    name: string;
+    description: string;
+    parameters: {
+      type: 'object';
+      properties: Record<string, { type: string; description: string; enum?: string[] }>;
+      required: string[];
+    };
+  };
 }
 
 export interface ChatCompletionOptions {
@@ -32,12 +57,18 @@ export interface ChatCompletionOptions {
   temperature?: number;
   max_tokens?: number;
   stream?: boolean;
+  tools?: ToolDefinition[];
+  tool_choice?: 'auto' | 'none' | { type: 'function'; function: { name: string } };
 }
 
 export interface ChatCompletionResponse {
   id: string;
   choices: Array<{
-    message: { role: string; content: string };
+    message: {
+      role: string;
+      content: string | null;
+      tool_calls?: ToolCallResponse[];
+    };
     finish_reason: string;
   }>;
   usage?: {
@@ -138,6 +169,7 @@ export async function chatCompletion(
             temperature: options.temperature ?? 0.7,
             max_tokens: options.max_tokens ?? 500,
             stream: options.stream ?? false,
+            ...(options.tools && options.tools.length > 0 ? { tools: options.tools, tool_choice: options.tool_choice ?? 'auto' } : {}),
           }),
           signal: AbortSignal.timeout(30000),
         },

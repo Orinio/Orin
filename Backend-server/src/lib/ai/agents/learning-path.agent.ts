@@ -6,7 +6,7 @@ export const learningPathAgent: AgentDefinition = {
   name: 'Learning Path Agent',
   description: 'Generates personalized learning paths based on skill gaps and market demand',
   role: 'learning_advisor',
-  model: MODELS.primary.learning, // qwen/qwen3-coder-480b-a35b-instruct - Best for detailed reasoning
+  model: MODELS.primary.learning,
   temperature: 0.5,
   maxTokens: 800,
   maxIterations: 2,
@@ -21,24 +21,8 @@ When building a learning path:
 4. Suggest project ideas to build proofs
 5. Set milestones for accountability
 
-Structure your response as a JSON learning path:
-{
-  "thinking": "analysis of gaps and priorities",
-  "answer": "learning path summary",
-  "steps": [
-    {
-      "skill": "React",
-      "priority": "high",
-      "estimatedHours": 20,
-      "resources": [{"title": "...", "url": "...", "type": "course"}],
-      "projectIdea": "Build a dashboard",
-      "prerequisites": []
-    }
-  ],
-  "milestones": ["Week 1: Complete first module", "Week 2: Build project"],
-  "totalEstimatedHours": 100
-}
-
-Focus on FREE resources. Be specific with URLs.`,
-  outputFormat: 'json',
+Use web_search and fetch_webpage to find current free learning resources with real URLs.
+Use extract_skills to identify what skills the user needs to learn.
+Focus on FREE resources. Be specific with URLs.
+Do NOT reveal your internal reasoning to the user.`,
 };

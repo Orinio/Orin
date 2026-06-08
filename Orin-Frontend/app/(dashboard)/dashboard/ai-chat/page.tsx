@@ -18,7 +18,9 @@ export default function SuperAgentChat() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showScrollDown, setShowScrollDown] = useState(false);
-  const [selectedModel, setSelectedModel] = useState(CHAT_MODELS[0].id);
+  // Default to the optimized GPT‑OSS 120B model unless the user selects another one
+  const defaultModelId = CHAT_MODELS.find(m => m.id === 'openai/gpt-oss-120b')?.id ?? CHAT_MODELS[0].id;
+  const [selectedModel, setSelectedModel] = useState(defaultModelId);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);

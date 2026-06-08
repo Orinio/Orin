@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { BarChart3, TrendingUp, Eye, Shield } from 'lucide-react';
+import { BarChart3, TrendingUp, Eye, Shield, Plus, AlertCircle } from 'lucide-react';
+import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { mapDbProofToProof, formatNumber, getProofTypeColor } from '@/lib/utils';
 import type { Proof } from '@/lib/types';
+import { useAuth } from '@/lib/auth-context';
 
 function StatCard({ label, value, sub, icon: Icon, color }: { label: string; value: string | number; sub?: string; icon: typeof BarChart3; color: string }) {
   return (
@@ -129,16 +131,32 @@ function VerificationPie({ proofs }: { proofs: Proof[] }) {
 }
 
 export default function AnalyticsPage() {
+  const { user: authUser } = useAuth();
   const [proofs, setProofs] = useState<Proof[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchData() {
       try {
-        if (!supabase) return;
+        if (!supabase || !authUser) return;
+
+        // Resolve auth user to DB user ID
+        const { data: userData } = await supabase
+          .from('users')
+          .select('id')
+          .eq('auth_user_id', authUser.id)
+          .maybeSingle();
+
+        if (!userData) {
+          setLoading(false);
+          return;
+        }
+
         const { data, error } = await supabase
           .from('proof_cards')
           .select('*')
+          .eq('user_id', userData.id)
           .is('deleted_at', null)
           .order('created_at', { ascending: false });
 
@@ -146,12 +164,13 @@ export default function AnalyticsPage() {
         if (data) setProofs(data.map(mapDbProofToProof));
       } catch (e) {
         console.warn('Failed to fetch analytics:', e);
+        setError(e instanceof Error ? e.message : 'Failed to load analytics');
       } finally {
         setLoading(false);
       }
     }
     fetchData();
-  }, []);
+  }, [authUser]);
 
   if (loading) {
     return (
@@ -169,6 +188,32 @@ export default function AnalyticsPage() {
   const totalViews = proofs.reduce((sum, p) => sum + p.viewCount, 0);
   const verifiedCount = proofs.filter((p) => p.verificationStatus === 'verified').length;
   const publicCount = proofs.filter((p) => p.visibility === 'public').length;
+
+  if (proofs.length === 0 && !loading) {
+    return (
+      <div className="space-y-8">
+        <header className="animate-fadeInUp">
+          <h1 className="text-2xl font-semibold" style={{ color: 'var(--color-ink)', fontFamily: 'var(--font-heading)' }}>Analytics</h1>
+          <p className="mt-1 text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
+            Insights and metrics across your proof portfolio.
+          </p>
+        </header>
+        <div className="card-premium flex flex-col items-center justify-center py-16 text-center">
+          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl" style={{ backgroundColor: 'var(--color-bloom)12' }}>
+            <BarChart3 className="h-8 w-8" style={{ color: 'var(--color-bloom)' }} />
+          </div>
+          <h3 className="text-lg font-semibold" style={{ color: 'var(--color-ink)' }}>No analytics yet</h3>
+          <p className="mt-1 max-w-sm text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
+            Add your first proof card to start seeing analytics and insights about your career portfolio.
+          </p>
+          <Link href="/dashboard/proof/new" className="btn-success mt-6 px-5 py-2.5 text-sm inline-flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            Create your first proof
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">

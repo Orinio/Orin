@@ -7,6 +7,8 @@ import {
 } from 'lucide-react';
 import { formatRelativeTime } from '@/lib/utils';
 import type { Notification } from '@/lib/types';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/lib/auth-context';
 
 const typeConfig: Record<
   Notification['type'],
@@ -64,7 +66,7 @@ function NotificationSkeleton() {
   );
 }
 
-function EmptyState() {
+function EmptyState({ onTriggerDemo }: { onTriggerDemo: () => void }) {
   return (
     <div className="card-premium flex flex-col items-center justify-center py-16 text-center">
       <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl" style={{ backgroundColor: 'var(--color-bloom)12' }}>
@@ -76,11 +78,15 @@ function EmptyState() {
       <p className="mt-1 max-w-sm text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
         When you get notifications, they&apos;ll show up here. Things like recruiter views, verification updates, and more.
       </p>
+      <button onClick={onTriggerDemo} className="btn-outline mt-6 px-5 py-2.5 text-sm">
+        Create sample notifications
+      </button>
     </div>
   );
 }
 
 export default function NotificationsPage() {
+  const { user: authUser } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [markingAll, setMarkingAll] = useState(false);
@@ -139,6 +145,52 @@ export default function NotificationsPage() {
     }
   };
 
+  const handleTriggerDemo = async () => {
+    if (!supabase || !authUser) return;
+    try {
+      const { data: userData } = await supabase
+        .from('users')
+        .select('id')
+        .eq('auth_user_id', authUser.id)
+        .maybeSingle();
+      if (!userData) return;
+
+      const demoNotifications = [
+        { user_id: userData.id, type: 'system' as const, title: 'Welcome to Orin!', body: 'Start by adding your first proof of work to build your career portfolio.', link: '/dashboard/sources/new', payload: { event: 'welcome' } },
+        { user_id: userData.id, type: 'coach_tip' as const, title: 'Pro tip: Add multiple sources', body: 'The more sources you connect, the better your AI career coach can advise you.', link: '/dashboard/sources/new', payload: { event: 'tip' } },
+        { user_id: userData.id, type: 'opportunity_match' as const, title: 'New opportunity matched!', body: 'We found 5 new internships that match your skills. Check them out!', link: '/opportunities', payload: { event: 'match', count: 5 } },
+      ];
+
+      await supabase.from('notifications').insert(demoNotifications);
+
+      // Re-fetch notifications
+      const { data } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', userData.id)
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false });
+
+      if (data) {
+        setNotifications(
+          data.map((n) => ({
+            id: n.id,
+            userId: n.user_id,
+            type: n.type as Notification['type'],
+            title: n.title,
+            body: n.body ?? undefined,
+            link: n.link ?? undefined,
+            payload: n.payload || {},
+            createdAt: new Date(n.created_at),
+            readAt: n.read_at ? new Date(n.read_at) : undefined,
+          } as Notification))
+        );
+      }
+    } catch (e) {
+      console.warn('Failed to create demo notifications:', e);
+    }
+  };
+
   return (
     <div className="mx-auto max-w-3xl space-y-8">
       <header className="flex items-center justify-between animate-fadeInUp">
@@ -167,7 +219,7 @@ export default function NotificationsPage() {
       {loading ? (
         <NotificationSkeleton />
       ) : notifications.length === 0 ? (
-        <EmptyState />
+        <EmptyState onTriggerDemo={handleTriggerDemo} />
       ) : (
         <div className="space-y-3 animate-fadeInUp" style={{ animationDelay: '100ms' }}>
           {notifications.map((notification) => {

@@ -86,6 +86,20 @@ const userId = await resolvePublicUserId(supabase);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  // Create a notification for the new proof
+  try {
+    await supabase.from('notifications').insert({
+      user_id: userId,
+      type: 'verification_update',
+      title: 'New proof card created',
+      body: `Your proof "${title}" has been created and is pending verification.`,
+      link: `/dashboard/proof/${proof.id}`,
+      payload: { proofId: proof.id, sourceType: source_type },
+    });
+  } catch {
+    // Notification creation is best-effort
+  }
+
   return NextResponse.json({ proof }, { status: 201 });
 }
 

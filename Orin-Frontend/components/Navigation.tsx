@@ -19,6 +19,7 @@ import {
   Sparkles,
   MessageCircle,
   Cloud,
+  BarChart3,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
@@ -159,8 +160,9 @@ export default function Navigation() {
     { href: '/dashboard', label: 'Dashboard', icon: LayoutGrid },
     { href: '/dashboard/ai-chat', label: 'AI Chat', icon: Sparkles },
     { href: '/opportunities', label: 'Opportunities', icon: Briefcase },
+    { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart3 },
     { href: '/dashboard/sources/new', label: 'Add Source', icon: PlusCircle },
-    { href: '/integrations', label: 'Integrations', icon: Cloud },
+    { href: '/notifications', label: 'Notifications', icon: Bell },
     { href: '/settings', label: 'Settings', icon: Settings },
   ];
 

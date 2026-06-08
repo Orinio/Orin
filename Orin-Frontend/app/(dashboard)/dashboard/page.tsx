@@ -171,10 +171,15 @@ export default function DashboardPage() {
                 <p className="mt-2 text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
                   Connect GitHub, upload certificates, or link your competitive programming profiles to get started.
                 </p>
-                <Link href="/dashboard/sources/new" className="btn-success mt-6 px-5 py-2.5 text-sm">
-                  <Plus className="h-4 w-4" />
-                  Add your first source
-                </Link>
+                <div className="mt-6 flex flex-wrap justify-center gap-3">
+                  <Link href="/dashboard/proof/new" className="btn-success px-5 py-2.5 text-sm inline-flex items-center gap-2">
+                    <Plus className="h-4 w-4" />
+                    Create your first proof
+                  </Link>
+                  <Link href="/dashboard/sources/new" className="btn-outline px-5 py-2.5 text-sm inline-flex items-center gap-2">
+                    Add a source
+                  </Link>
+                </div>
               </div>
             ) : (
               <ProofFeed dbUserId={user.id} />

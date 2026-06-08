@@ -198,7 +198,7 @@ aiRouter.post('/chat-stream', userRateLimitMiddleware('ai-chat-stream'), async (
     const userId = (req as any).user?.id;
     if (!userId) { res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } }); return; }
 
-    const { message, history } = req.body;
+    const { message, history, model } = req.body;
     if (!message) { res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'Message is required' } }); return; }
 
     const context = await buildAgentContext((req as any).user.id);
@@ -226,7 +226,7 @@ aiRouter.post('/chat-stream', userRateLimitMiddleware('ai-chat-stream'), async (
       await orchestrator.runAgentStream(
         'chat',
         message,
-        { userId, conversationHistory: context.conversationHistory as AgentMessage[] },
+        { userId, conversationHistory: context.conversationHistory as AgentMessage[], modelOverride: model || undefined },
         (event, data) => sendEvent(event, data)
       );
 

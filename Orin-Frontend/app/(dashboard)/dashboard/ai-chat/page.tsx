@@ -1,19 +1,15 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { PanelLeft, ArrowDown, Sparkles } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { chatStore } from '@/lib/chat-store';
 import type { ChatConversation } from '@/lib/chat-types';
-import ChatInput from '@/components/ai/ChatInput';
+import ChatInput, { CHAT_MODELS } from '@/components/ai/ChatInput';
 import SuperMessage, { type SuperMessageData } from '@/components/ai/SuperMessage';
 import type { ToolStep } from '@/components/ai/StepIndicator';
 import ChatHistory from '@/components/ai/ChatHistory';
 import Logo from '@/components/Logo';
-
-// ============================================================
-// Super Agent Chat — Unified AI interface
-// ============================================================
 
 export default function SuperAgentChat() {
   const { user } = useAuth();
@@ -22,11 +18,11 @@ export default function SuperAgentChat() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showScrollDown, setShowScrollDown] = useState(false);
+  const [selectedModel, setSelectedModel] = useState(CHAT_MODELS[0].id);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
-
-  // ── Helpers ──────────────────────────────────────
+  const isUserScrolledRef = useRef(false);
 
   const createConversation = useCallback(() => {
     const conv = chatStore.newConversation(user?.id || null, 'chat');
@@ -64,48 +60,34 @@ export default function SuperAgentChat() {
     setSidebarOpen(false);
   }, [conversation, user, createConversation]);
 
-  // ── Scroll ───────────────────────────────────────
-
   const scrollToBottom = useCallback((smooth = true) => {
-    messagesEndRef.current?.scrollIntoView({ behavior: smooth ? 'smooth' : 'instant' });
+    if (!isUserScrolledRef.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: smooth ? 'smooth' : 'instant' });
+    }
   }, []);
 
-  useEffect(() => {
+  const handleScroll = useCallback(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
-    const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = container;
-      setShowScrollDown(scrollHeight - scrollTop - clientHeight > 100);
-    };
-    container.addEventListener('scroll', handleScroll);
-    return () => container.removeEventListener('scroll', handleScroll);
+    const { scrollTop, scrollHeight, clientHeight } = container;
+    const atBottom = scrollHeight - scrollTop - clientHeight < 80;
+    setShowScrollDown(!atBottom);
+    isUserScrolledRef.current = !atBottom;
   }, []);
-
-  useEffect(() => {
-    if (messages.length > 0) {
-      const last = messages[messages.length - 1];
-      if (last.role === 'user' || !last.isStreaming) scrollToBottom();
-    }
-  }, [messages, scrollToBottom]);
-
-  // ── Update assistant message in-place ─────────────
 
   const updateAssistant = useCallback((id: string, patch: Partial<SuperMessageData>) => {
     setMessages(prev => {
       const updated = [...prev];
       const idx = updated.findIndex(m => m.id === id);
-      if (idx !== -1) {
-        updated[idx] = { ...updated[idx], ...patch };
-      }
+      if (idx !== -1) updated[idx] = { ...updated[idx], ...patch };
       return updated;
     });
   }, []);
 
-  // ── Send message ─────────────────────────────────
-
-  const handleSend = useCallback(async (content: string, files?: File[]) => {
+  const handleSend = useCallback(async (content: string, files?: File[], modelId?: string) => {
     let conv = conversation;
     if (!conv) conv = createConversation();
+    isUserScrolledRef.current = false;
 
     const userMsg: SuperMessageData = {
       id: `msg_${Date.now()}_user`,
@@ -127,7 +109,6 @@ export default function SuperAgentChat() {
     setMessages(prev => [...prev, userMsg, assistantMsg]);
     setIsStreaming(true);
 
-    // Save user message
     conv.messages.push({
       id: userMsg.id,
       role: 'user',
@@ -147,7 +128,6 @@ export default function SuperAgentChat() {
     try {
       abortRef.current = new AbortController();
 
-      // Convert files to base64 for backend
       let attachments: Array<{ name: string; type: string; base64: string }> | undefined;
       if (files && files.length > 0) {
         attachments = await Promise.all(
@@ -166,6 +146,7 @@ export default function SuperAgentChat() {
         headers: { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' },
         body: JSON.stringify({
           message: content,
+          model: modelId || selectedModel,
           history: conv.messages.slice(-10).map(m => ({ role: m.role, content: m.content })),
           ...(attachments && { attachments }),
         }),
@@ -180,69 +161,39 @@ export default function SuperAgentChat() {
       const decoder = new TextDecoder();
       let buffer = '';
 
-      // ── Process a single SSE message ───────────
       const processMessage = (eventType: string, dataStr: string) => {
         try {
           const data = JSON.parse(dataStr);
-
           switch (eventType) {
             case 'start':
               if (data.agentId) agentId = data.agentId;
               break;
-
-            case 'progress':
-              // Overall progress tracking
-              break;
-
             case 'thinking':
               if (data.content) thinking = data.content;
               updateAssistant(assistantId, { thinking: data.content });
               break;
-
             case 'tool_start': {
-              const step: ToolStep = {
-                name: data.tool,
-                description: data.description,
-                status: 'running',
-                args: data.args,
-                step: data.step,
-              };
+              const step: ToolStep = { name: data.tool, description: data.description, status: 'running', args: data.args, step: data.step };
               steps.push(step);
               updateAssistant(assistantId, { steps: [...steps] });
               break;
             }
-
             case 'tool_result': {
-              // Update the last matching step
               for (let i = steps.length - 1; i >= 0; i--) {
                 if (steps[i].name === data.tool && steps[i].status === 'running') {
-                  steps[i] = {
-                    ...steps[i],
-                    status: data.success ? 'success' : 'error',
-                    durationMs: data.durationMs,
-                    result: { success: data.success, data: data.data, error: data.error },
-                  };
+                  steps[i] = { ...steps[i], status: data.success ? 'success' : 'error', durationMs: data.durationMs, result: { success: data.success, data: data.data, error: data.error } };
                   break;
                 }
               }
               updateAssistant(assistantId, { steps: [...steps] });
               break;
             }
-
             case 'answer':
-              if (data.content) {
-                fullContent += data.content;
-                updateAssistant(assistantId, { content: fullContent });
-              }
+              if (data.content) { fullContent += data.content; updateAssistant(assistantId, { content: fullContent }); }
               break;
-
             case 'visual_spec':
-              if (data.spec) {
-                visualSpecs.push(data.spec);
-                updateAssistant(assistantId, { visualSpecs: [...visualSpecs] });
-              }
+              if (data.spec) { visualSpecs.push(data.spec); updateAssistant(assistantId, { visualSpecs: [...visualSpecs] }); }
               break;
-
             case 'complete':
               if (data.answer) fullContent = data.answer;
               if (data.thinking) thinking = data.thinking;
@@ -250,66 +201,39 @@ export default function SuperAgentChat() {
               if (data.agentName) agentName = data.agentName;
               if (data.tokensUsed) tokensUsed = data.tokensUsed;
               if (data.durationMs) durationMs = data.durationMs;
-              if (data.visualSpecs) {
-                visualSpecs.length = 0;
-                data.visualSpecs.forEach((spec: any) => visualSpecs.push(spec));
-              }
+              if (data.visualSpecs) { visualSpecs.length = 0; data.visualSpecs.forEach((s: any) => visualSpecs.push(s)); }
               if (data.toolCalls) {
                 steps.length = 0;
-                data.toolCalls.forEach((tc: any) => {
-                  steps.push({
-                    name: tc.tool,
-                    status: tc.success ? 'success' : 'error',
-                    args: tc.args,
-                    result: { success: tc.success, data: tc.data, error: tc.error },
-                    durationMs: tc.durationMs,
-                  });
-                });
+                data.toolCalls.forEach((tc: any) => { steps.push({ name: tc.tool, status: tc.success ? 'success' : 'error', args: tc.args, result: { success: tc.success, data: tc.data, error: tc.error }, durationMs: tc.durationMs }); });
               }
               updateAssistant(assistantId, {
-                content: fullContent || 'No response generated.',
-                thinking: thinking || undefined,
-                agentId,
-                agentName,
-                tokensUsed,
-                durationMs,
-                steps: [...steps],
-                visualSpecs: visualSpecs.length > 0 ? [...visualSpecs] : undefined,
-                isStreaming: false,
+                content: fullContent || 'No response generated.', thinking: thinking || undefined, agentId, agentName, tokensUsed, durationMs,
+                steps: [...steps], visualSpecs: visualSpecs.length > 0 ? [...visualSpecs] : undefined, isStreaming: false,
               });
               break;
           }
         } catch {}
       };
 
-      // ── Read stream ────────────────────────────
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-
         buffer += decoder.decode(value, { stream: true });
-
-        // Process complete SSE messages (separated by blank lines)
         while (true) {
           const msgEnd = buffer.indexOf('\n\n');
           if (msgEnd === -1) break;
-
           const rawMessage = buffer.substring(0, msgEnd);
           buffer = buffer.substring(msgEnd + 2);
-
           let eventType = 'message';
           let dataStr = '';
-
           for (const line of rawMessage.split('\n')) {
             if (line.startsWith('event: ')) eventType = line.slice(7).trim();
             else if (line.startsWith('data: ')) dataStr = line.slice(6);
           }
-
           if (dataStr) processMessage(eventType, dataStr);
         }
       }
 
-      // Flush remaining buffer
       if (buffer.trim()) {
         let eventType = 'message';
         let dataStr = '';
@@ -320,26 +244,16 @@ export default function SuperAgentChat() {
         if (dataStr) processMessage(eventType, dataStr);
       }
 
-      // Finalize
       updateAssistant(assistantId, {
-        content: fullContent || 'I apologize, but I was unable to generate a response.',
-        isStreaming: false,
-        agentId,
-        agentName,
-        tokensUsed,
-        durationMs,
+        content: fullContent || 'I apologize, but I was unable to generate a response.', isStreaming: false,
+        agentId, agentName, tokensUsed, durationMs,
         steps: steps.length > 0 ? [...steps] : undefined,
         visualSpecs: visualSpecs.length > 0 ? [...visualSpecs] : undefined,
       });
 
-      // Save to conversation
       conv.messages.push({
-        id: assistantId,
-        role: 'assistant',
-        content: fullContent || 'No response',
-        timestamp: new Date().toISOString(),
-        agentId,
-        thinking: thinking || undefined,
+        id: assistantId, role: 'assistant', content: fullContent || 'No response', timestamp: new Date().toISOString(),
+        agentId, thinking: thinking || undefined,
         toolCalls: steps.map(tc => ({ tool: tc.name, args: tc.args || {}, result: tc.result })),
         visualSpecs: visualSpecs.length > 0 ? visualSpecs : undefined,
       });
@@ -349,50 +263,31 @@ export default function SuperAgentChat() {
 
     } catch (err: any) {
       if (err.name === 'AbortError') {
-        updateAssistant(assistantId, {
-          content: assistantMsg.content || 'Generation stopped.',
-          isStreaming: false,
-        });
+        updateAssistant(assistantId, { content: assistantMsg.content || 'Generation stopped.', isStreaming: false });
       } else {
-        updateAssistant(assistantId, {
-          content: fullContent || undefined,
-          error: 'Something went wrong. Please try again.',
-          isStreaming: false,
-        });
+        updateAssistant(assistantId, { content: fullContent || undefined, error: 'Something went wrong. Please try again.', isStreaming: false });
       }
     } finally {
       setIsStreaming(false);
       abortRef.current = null;
     }
-  }, [conversation, user, createConversation, updateAssistant]);
+  }, [conversation, user, createConversation, updateAssistant, selectedModel]);
 
   const handleStop = useCallback(() => abortRef.current?.abort(), []);
 
   const handleRate = useCallback(async (messageId: string, rating: 'positive' | 'negative' | 'flagged', feedback?: string) => {
-    // Update message in state
-    setMessages(prev => prev.map(m =>
-      m.id === messageId ? { ...m, rating, ratingFeedback: feedback } : m
-    ));
-
-    // Persist to conversation
+    setMessages(prev => prev.map(m => m.id === messageId ? { ...m, rating, ratingFeedback: feedback } : m));
     if (conversation) {
       const msg = conversation.messages.find(m => m.id === messageId);
-      if (msg) {
-        msg.rating = rating;
-        msg.ratingFeedback = feedback;
-        await chatStore.save(conversation, user?.id ? 'cloud' : 'local');
-      }
+      if (msg) { msg.rating = rating; msg.ratingFeedback = feedback; await chatStore.save(conversation, user?.id ? 'cloud' : 'local'); }
     }
   }, [conversation, user]);
 
   const handleRetry = useCallback((messageId: string) => {
-    // Find the last user message before the error
     const idx = messages.findIndex(m => m.id === messageId);
     if (idx === -1) return;
-    // Find the user message that triggered this assistant response
     for (let i = idx - 1; i >= 0; i--) {
       if (messages[i].role === 'user') {
-        // Remove the error message and resend
         setMessages(prev => prev.filter(m => m.id !== messageId));
         handleSend(messages[i].content);
         return;
@@ -400,24 +295,17 @@ export default function SuperAgentChat() {
     }
   }, [messages, handleSend]);
 
-  const handleNew = useCallback(() => {
-    createConversation();
-    setSidebarOpen(false);
-  }, [createConversation]);
-
-  // ── Render ───────────────────────────────────────
+  const handleNew = useCallback(() => { createConversation(); setSidebarOpen(false); }, [createConversation]);
 
   const isWelcome = messages.length === 0;
+  const currentModel = CHAT_MODELS.find(m => m.id === selectedModel) || CHAT_MODELS[0];
 
   return (
-    <div className="h-screen flex flex-col" style={{ backgroundColor: 'var(--color-paper)' }}>
+    <div className="h-screen flex flex-col overflow-hidden" style={{ backgroundColor: 'var(--color-paper)' }}>
       {/* Header */}
       <header
         className="flex-shrink-0 flex items-center justify-between px-4 h-12"
-        style={{
-          borderBottom: '1px solid var(--color-border)',
-          backgroundColor: 'var(--color-paper)',
-        }}
+        style={{ borderBottom: '1px solid var(--color-border)', backgroundColor: 'var(--color-paper)' }}
       >
         <div className="flex items-center gap-3">
           <button
@@ -429,10 +317,7 @@ export default function SuperAgentChat() {
           </button>
           <div className="flex items-center gap-2">
             <Logo size="sm" />
-            <span
-              className="text-sm font-semibold hidden sm:inline"
-              style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-ink)' }}
-            >
+            <span className="text-sm font-semibold hidden sm:inline" style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-ink)' }}>
               Orin
             </span>
           </div>
@@ -446,15 +331,18 @@ export default function SuperAgentChat() {
 
         <div className="flex items-center gap-2">
           <div
+            className="hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px]"
+            style={{ backgroundColor: 'var(--color-surface-dim)', color: currentModel.badgeColor || 'var(--color-mist)', fontFamily: 'var(--font-mono)' }}
+          >
+            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: currentModel.badgeColor || 'var(--color-bloom)' }} />
+            {currentModel.name.split(' ').slice(0, 2).join(' ')}
+          </div>
+          <div
             className="flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px]"
-            style={{
-              backgroundColor: 'var(--color-surface-dim)',
-              color: 'var(--color-mist)',
-              fontFamily: 'var(--font-mono)',
-            }}
+            style={{ backgroundColor: 'var(--color-surface-dim)', color: 'var(--color-mist)', fontFamily: 'var(--font-mono)' }}
           >
             <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: 'var(--color-bloom)' }} />
-            Super Agent
+            Agent
           </div>
         </div>
       </header>
@@ -470,19 +358,20 @@ export default function SuperAgentChat() {
       />
 
       {/* Chat area */}
-      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
+      <div
+        ref={scrollContainerRef}
+        onScroll={handleScroll}
+        className="flex-1 overflow-y-auto"
+        style={{ scrollBehavior: 'smooth' }}
+      >
         {isWelcome ? (
           <div className="h-full flex flex-col items-center justify-center px-4">
             <div
               className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6"
-              style={{
-                backgroundColor: 'var(--color-ink)',
-                boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
-              }}
+              style={{ backgroundColor: 'var(--color-ink)', boxShadow: '0 8px 32px rgba(0,0,0,0.12)' }}
             >
               <Sparkles className="w-6 h-6" style={{ color: 'var(--color-spark)' }} />
             </div>
-
             <h1
               className="text-2xl sm:text-3xl font-bold mb-2 text-center"
               style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-ink)' }}
@@ -493,34 +382,33 @@ export default function SuperAgentChat() {
               className="text-sm mb-10 text-center max-w-md leading-relaxed"
               style={{ color: 'var(--color-mist)', fontFamily: 'var(--font-body)' }}
             >
-              I&apos;m your AI career assistant. I analyze your portfolio, find opportunities,
-              verify projects, and plan your career path — all in one conversation.
+              I&apos;m your AI career assistant. Pick a model, then ask me anything about your portfolio, skills, or job search.
             </p>
-
-            <ChatInput onSend={handleSend} disabled={isStreaming} />
+            <ChatInput
+              onSend={handleSend}
+              disabled={isStreaming}
+              selectedModel={selectedModel}
+              onModelChange={setSelectedModel}
+            />
           </div>
         ) : (
-          <div className="py-4">
+          <div className="py-4 max-w-4xl mx-auto">
             {messages.map((msg) => (
               <SuperMessage key={msg.id} message={msg} onRate={handleRate} onRetry={handleRetry} />
             ))}
-
-            {showScrollDown && (
-              <button
-                onClick={() => scrollToBottom()}
-                className="fixed bottom-24 left-1/2 -translate-x-1/2 z-10 w-9 h-9 rounded-full flex items-center justify-center shadow-lg transition-all duration-200 hover:scale-110"
-                style={{
-                  backgroundColor: 'var(--color-surface)',
-                  border: '1px solid var(--color-border)',
-                  color: 'var(--color-ink)',
-                }}
-              >
-                <ArrowDown className="w-4 h-4" />
-              </button>
-            )}
-
             <div ref={messagesEndRef} />
           </div>
+        )}
+
+        {/* Floating scroll-to-bottom */}
+        {showScrollDown && !isWelcome && (
+          <button
+            onClick={() => { isUserScrolledRef.current = false; messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }}
+            className="fixed bottom-24 left-1/2 -translate-x-1/2 z-10 w-9 h-9 rounded-full flex items-center justify-center shadow-lg transition-all duration-200 hover:scale-110"
+            style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-ink)' }}
+          >
+            <ArrowDown className="w-4 h-4" />
+          </button>
         )}
       </div>
 
@@ -532,6 +420,8 @@ export default function SuperAgentChat() {
             onStop={handleStop}
             disabled={isStreaming}
             isStreaming={isStreaming}
+            selectedModel={selectedModel}
+            onModelChange={setSelectedModel}
           />
         </div>
       )}

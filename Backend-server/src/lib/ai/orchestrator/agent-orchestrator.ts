@@ -367,7 +367,7 @@ export class AgentOrchestrator {
   async runAgentStream(
     agentId: string,
     query: string,
-    context: { userId?: string; conversationHistory?: AgentMessage[] },
+    context: { userId?: string; conversationHistory?: AgentMessage[]; modelOverride?: string },
     onEvent: (event: string, data: any) => void
   ): Promise<void> {
     const agent = this.agents.get(agentId);
@@ -461,7 +461,7 @@ export class AgentOrchestrator {
 
       try {
         const response = await chatCompletion({
-          model: agent.model,
+          model: context.modelOverride || agent.model,
           messages,
           temperature: agent.temperature,
           max_tokens: agent.maxTokens,

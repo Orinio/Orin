@@ -105,16 +105,7 @@ export function PortfolioAnalyzer() {
         }
       }
 
-      // If we couldn't parse breakdown, create placeholder
-      if (breakdown.length === 0) {
-        breakdown.push(
-          { criteria: 'Proof Diversity', score: Math.min(20, Math.round(scoreNum * 0.2)), maxScore: 20, feedback: ' variety of proof types' },
-          { criteria: 'Skill Coverage', score: Math.min(20, Math.round(scoreNum * 0.2)), maxScore: 20, feedback: ' breadth of skills' },
-          { criteria: 'Verification Status', score: Math.min(20, Math.round(scoreNum * 0.2)), maxScore: 20, feedback: ' verified proofs' },
-          { criteria: 'Profile Completeness', score: Math.min(20, Math.round(scoreNum * 0.2)), maxScore: 20, feedback: ' complete profile' },
-          { criteria: 'Activity & Recency', score: Math.min(20, Math.round(scoreNum * 0.2)), maxScore: 20, feedback: ' recent activity' },
-        );
-      }
+
 
       setScore({
         overall: scoreNum,

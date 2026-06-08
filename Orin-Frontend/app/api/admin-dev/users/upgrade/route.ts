@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
 
   let query = supabase
     .from('users')
-    .select('id, email, full_name, username, role, subscription_plan, subscription_status')
+    .select('id, email, full_name, username, role')
     .is('deleted_at', null);
 
   if (targetUserId) {
@@ -52,28 +52,38 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'User not found' }, { status: 404 });
   }
 
-  const updates: Record<string, unknown> = {};
-  if (plan) updates.subscription_plan = plan;
-  if (status) updates.subscription_status = status;
-  if (expiresAt !== undefined) updates.subscription_expires_at = expiresAt;
-  updates.updated_at = new Date().toISOString();
+  const { data: currentSub } = await supabase
+    .from('subscriptions')
+    .select('plan, status')
+    .eq('user_id', targetUser.id)
+    .is('deleted_at', null)
+    .maybeSingle();
 
-  const { error: updateError } = await supabase
-    .from('users')
-    .update(updates)
-    .eq('id', targetUser.id);
+  const subUpdates: Record<string, unknown> = {};
+  if (plan) subUpdates.plan = plan;
+  if (status) subUpdates.status = status;
+  if (expiresAt !== undefined) subUpdates.current_period_end = expiresAt;
 
-  if (updateError) {
-    return NextResponse.json({ error: updateError.message }, { status: 500 });
+  if (Object.keys(subUpdates).length > 0) {
+    const { error: updateError } = await supabase
+      .from('subscriptions')
+      .upsert({
+        user_id: targetUser.id,
+        ...subUpdates,
+      }, { onConflict: 'user_id' });
+
+    if (updateError) {
+      return NextResponse.json({ error: updateError.message }, { status: 500 });
+    }
   }
 
   await supabase.from('audit_log').insert({
     actor_role: 'admin',
-    action: 'admin.upgradePlan',
-    entity_type: 'users',
+    action: 'admin_action',
+    entity_type: 'subscriptions',
     entity_id: targetUser.id,
-    old_data: { subscription_plan: targetUser.subscription_plan, subscription_status: targetUser.subscription_status },
-    new_data: { subscription_plan: plan || targetUser.subscription_plan, subscription_status: status || targetUser.subscription_status },
+    old_data: { plan: currentSub?.plan || 'free', status: currentSub?.status || 'active' },
+    new_data: { plan: plan || currentSub?.plan || 'free', status: status || currentSub?.status || 'active' },
   });
 
   return NextResponse.json({
@@ -83,10 +93,10 @@ export async function POST(request: NextRequest) {
       email: targetUser.email,
       fullName: targetUser.full_name,
       username: targetUser.username,
-      previousPlan: targetUser.subscription_plan,
-      newPlan: plan || targetUser.subscription_plan,
-      previousStatus: targetUser.subscription_status,
-      newStatus: status || targetUser.subscription_status,
+      previousPlan: currentSub?.plan || 'free',
+      newPlan: plan || currentSub?.plan || 'free',
+      previousStatus: currentSub?.status || 'active',
+      newStatus: status || currentSub?.status || 'active',
     },
   });
 }
@@ -101,7 +111,7 @@ export async function GET(request: NextRequest) {
 
   let query = supabase
     .from('users')
-    .select('id, email, username, full_name, role, subscription_plan, subscription_status, subscription_expires_at, created_at')
+    .select('id, email, username, full_name, role, created_at')
     .is('deleted_at', null)
     .order('created_at', { ascending: false })
     .limit(50);
@@ -110,8 +120,24 @@ export async function GET(request: NextRequest) {
     query = query.or(`email.ilike.%${search}%,username.ilike.%${search}%,full_name.ilike.%${search}%`);
   }
 
-  const { data, error } = await query;
+  const { data: users, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  return NextResponse.json({ users: data });
+  const userIds = (users || []).map(u => u.id);
+  const { data: subs } = await supabase
+    .from('subscriptions')
+    .select('user_id, plan, status, current_period_end')
+    .in('user_id', userIds)
+    .is('deleted_at', null);
+
+  const subMap = new Map((subs || []).map(s => [s.user_id, s]));
+
+  const enrichedUsers = (users || []).map(u => ({
+    ...u,
+    subscription_plan: subMap.get(u.id)?.plan || 'free',
+    subscription_status: subMap.get(u.id)?.status || 'active',
+    subscription_expires_at: subMap.get(u.id)?.current_period_end || null,
+  }));
+
+  return NextResponse.json({ users: enrichedUsers });
 }

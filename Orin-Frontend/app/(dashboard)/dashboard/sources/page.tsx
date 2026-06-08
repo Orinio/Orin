@@ -44,7 +44,7 @@ function SourceSkeleton() {
   );
 }
 
-function EmptyState({ onAddDemo }: { onAddDemo: () => void }) {
+function EmptyState() {
   return (
     <div className="card-premium flex flex-col items-center justify-center py-16 text-center">
       <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl" style={{ backgroundColor: 'var(--color-bloom)12' }}>
@@ -56,14 +56,11 @@ function EmptyState({ onAddDemo }: { onAddDemo: () => void }) {
       <p className="mt-1 max-w-sm text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
         Connect your GitHub, Kaggle, or other accounts to automatically import proof of work.
       </p>
-      <div className="mt-6 flex gap-3">
+      <div className="mt-6">
         <Link href="/dashboard/sources/new" className="btn-success px-5 py-2.5 text-sm inline-flex items-center gap-2">
           <Plus className="h-4 w-4" />
           Add a source
         </Link>
-        <button onClick={onAddDemo} className="btn-outline px-5 py-2.5 text-sm">
-          Add demo sources
-        </button>
       </div>
     </div>
   );
@@ -105,38 +102,6 @@ export default function SourcesPage() {
     fetchSources();
   }, [user]);
 
-  const handleAddDemo = async () => {
-    if (!supabase || !user) return;
-    try {
-      const { data: userData } = await supabase
-        .from('users')
-        .select('id')
-        .eq('auth_user_id', user.id)
-        .maybeSingle();
-      if (!userData) return;
-
-      const demoSources = [
-        { user_id: userData.id, source_type: 'github' as const, source_url: 'https://github.com/demo', source_name: 'GitHub Profile', is_connected: true, metadata: { repos: 15, contributions: 500 } },
-        { user_id: userData.id, source_type: 'certificate' as const, source_url: 'https://coursera.org/demo', source_name: 'Coursera Certificates', is_connected: true, metadata: { certificates: 5 } },
-        { user_id: userData.id, source_type: 'kaggle' as const, source_url: 'https://kaggle.com/demo', source_name: 'Kaggle Profile', is_connected: true, metadata: { competitions: 3 } },
-      ];
-
-      await supabase.from('proof_sources').insert(demoSources);
-
-      // Re-fetch sources
-      const { data } = await supabase
-        .from('proof_sources')
-        .select('*')
-        .eq('user_id', userData.id)
-        .is('deleted_at', null)
-        .order('created_at', { ascending: false });
-
-      if (data) setSources(data.map(mapDbProofSourceToProofSource));
-    } catch (e) {
-      console.warn('Failed to add demo sources:', e);
-    }
-  };
-
   if (loading) return <SourceSkeleton />;
 
   return (
@@ -155,7 +120,7 @@ export default function SourcesPage() {
       </header>
 
       {sources.length === 0 ? (
-        <EmptyState onAddDemo={handleAddDemo} />
+        <EmptyState />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 animate-fadeInUp" style={{ animationDelay: '100ms' }}>
           {sources.map((source) => (

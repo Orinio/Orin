@@ -27,12 +27,17 @@ const userId = await resolvePublicUserId(supabase);
   }
 
   if (!subscription) {
-    return NextResponse.json({
-      subscription: {
-        plan: 'free',
-        status: 'active',
-      },
-    });
+    const { data: created, error: createError } = await supabase
+      .from('subscriptions')
+      .insert({ user_id: userId })
+      .select()
+      .single();
+
+    if (createError) {
+      return NextResponse.json({ error: createError.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ subscription: created });
   }
 
   return NextResponse.json({ subscription });

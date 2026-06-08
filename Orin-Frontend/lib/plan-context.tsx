@@ -71,11 +71,17 @@ export function PlanProvider({ children }: { children: ReactNode }) {
           if (authUser) {
             const { data: userData } = await supabase
               .from('users')
-              .select('subscription_plan, subscription_status')
+              .select('id')
               .eq('auth_user_id', authUser.id)
               .maybeSingle();
             if (userData) {
-              const p = (userData.subscription_plan as SubscriptionPlanId) || 'free';
+              const { data: subData } = await supabase
+                .from('subscriptions')
+                .select('plan')
+                .eq('user_id', userData.id)
+                .is('deleted_at', null)
+                .maybeSingle();
+              const p = (subData?.plan as SubscriptionPlanId) || 'free';
               setPlan(p);
               writeCachedPlan(p);
               return;

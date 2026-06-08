@@ -39,19 +39,6 @@ const SORT_OPTIONS = [
   { value: 'salary', label: 'Salary (high to low)' },
 ] as const;
 
-const FALLBACK_OPPORTUNITIES: Opportunity[] = [
-  { id: 'fo-1', title: 'Software Engineering Intern', company: 'Google', type: 'internship', requiredSkills: ['Python', 'Java', 'Data Structures', 'Algorithms'], niceToHave: ['Machine Learning'], description: 'Join Google as a software engineering intern.', location: 'Mountain View, CA', isRemote: false, link: 'https://careers.google.com', matchPercentage: 85, salaryMin: 8000, salaryMax: 10000, salaryCurrency: 'USD', isActive: true, metadata: {}, createdAt: new Date(), updatedAt: new Date() },
-  { id: 'fo-2', title: 'Frontend Engineering Intern', company: 'Meta', type: 'internship', requiredSkills: ['React', 'TypeScript', 'JavaScript', 'CSS'], niceToHave: ['GraphQL'], description: 'Build the next generation of social experiences.', location: 'Menlo Park, CA', isRemote: false, link: 'https://careers.meta.com', matchPercentage: 78, salaryMin: 7500, salaryMax: 9500, salaryCurrency: 'USD', isActive: true, metadata: {}, createdAt: new Date(), updatedAt: new Date() },
-  { id: 'fo-3', title: 'ML Engineering Intern', company: 'OpenAI', type: 'internship', requiredSkills: ['Python', 'PyTorch', 'Machine Learning', 'Deep Learning'], niceToHave: ['Transformers', 'CUDA'], description: 'Work on cutting-edge AI research.', location: 'San Francisco, CA', isRemote: false, link: 'https://openai.com/careers', matchPercentage: 90, salaryMin: 8500, salaryMax: 11000, salaryCurrency: 'USD', isActive: true, metadata: {}, createdAt: new Date(), updatedAt: new Date() },
-  { id: 'fo-4', title: 'Senior Frontend Engineer', company: 'Vercel', type: 'job', requiredSkills: ['React', 'Next.js', 'TypeScript', 'Tailwind CSS'], niceToHave: ['Edge Functions'], description: 'Join the team behind Next.js.', location: 'Remote', isRemote: true, link: 'https://vercel.com/careers', matchPercentage: 88, salaryMin: 150000, salaryMax: 200000, salaryCurrency: 'USD', isActive: true, metadata: {}, createdAt: new Date(), updatedAt: new Date() },
-  { id: 'fo-5', title: 'Software Engineer', company: 'GitHub', type: 'job', requiredSkills: ['Ruby', 'React', 'TypeScript'], niceToHave: ['Go', 'PostgreSQL'], description: 'Help developers worldwide collaborate.', location: 'San Francisco, CA', isRemote: true, link: 'https://github.com/careers', matchPercentage: 82, salaryMin: 130000, salaryMax: 180000, salaryCurrency: 'USD', isActive: true, metadata: {}, createdAt: new Date(), updatedAt: new Date() },
-  { id: 'fo-6', title: 'Women in Tech Scholarship', company: 'Goldman Sachs', type: 'scholarship', requiredSkills: ['Computer Science', 'Engineering'], niceToHave: ['Finance'], description: 'Supporting women in technology.', location: 'Global', isRemote: true, link: 'https://goldmansachs.com', matchPercentage: 70, salaryMin: 10000, salaryMax: 15000, salaryCurrency: 'USD', isActive: true, metadata: {}, createdAt: new Date(), updatedAt: new Date() },
-  { id: 'fo-7', title: 'AI/ML Mentorship Program', company: 'Anthropic', type: 'mentorship', requiredSkills: ['Machine Learning', 'Python', 'AI Safety'], niceToHave: ['Research'], description: 'Get mentored by leading AI researchers.', location: 'San Francisco, CA', isRemote: true, link: 'https://anthropic.com', matchPercentage: 88, salaryMin: 0, salaryMax: 0, salaryCurrency: 'USD', isActive: true, metadata: {}, createdAt: new Date(), updatedAt: new Date() },
-  { id: 'fo-8', title: 'Global AI Hackathon', company: 'Devpost', type: 'hackathon', requiredSkills: ['AI/ML', 'Python'], niceToHave: ['NLP', 'LLMs'], description: 'Build innovative AI solutions in 48 hours. $50K in prizes.', location: 'Global', isRemote: true, link: 'https://devpost.com', matchPercentage: 75, salaryMin: 0, salaryMax: 50000, salaryCurrency: 'USD', isActive: true, metadata: {}, createdAt: new Date(), updatedAt: new Date() },
-  { id: 'fo-9', title: 'Data Science Intern', company: 'Netflix', type: 'internship', requiredSkills: ['Python', 'SQL', 'Machine Learning', 'Statistics'], niceToHave: ['Spark', 'TensorFlow'], description: 'Use data to drive content decisions.', location: 'Los Gatos, CA', isRemote: false, link: 'https://jobs.netflix.com', matchPercentage: 72, salaryMin: 7000, salaryMax: 9000, salaryCurrency: 'USD', isActive: true, metadata: {}, createdAt: new Date(), updatedAt: new Date() },
-  { id: 'fo-10', title: 'Backend Engineer', company: 'Supabase', type: 'job', requiredSkills: ['TypeScript', 'PostgreSQL', 'Go'], niceToHave: ['Edge Functions', 'Real-time'], description: 'Build the open source Firebase alternative.', location: 'Remote', isRemote: true, link: 'https://supabase.com/careers', matchPercentage: 85, salaryMin: 120000, salaryMax: 170000, salaryCurrency: 'USD', isActive: true, metadata: {}, createdAt: new Date(), updatedAt: new Date() },
-];
-
 export default function OpportunitiesPage() {
   return (
     <ErrorBoundary>
@@ -90,12 +77,7 @@ function OpportunitiesContent() {
     fetchData();
   }, []);
 
-  // If no opportunities from DB, show fallback opportunities so the page isn't empty
-  useEffect(() => {
-    if (!loading && opportunities.length === 0) {
-      setOpportunities(FALLBACK_OPPORTUNITIES);
-    }
-  }, [loading, opportunities.length]);
+
 
   const fetchAIMatches = async () => {
     setAiLoading(true);

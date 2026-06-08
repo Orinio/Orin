@@ -27,16 +27,17 @@ const userId = await resolvePublicUserId(supabase);
   }
 
   if (!prefs) {
-    return NextResponse.json({
-      preferences: {
-        weekly_summary: true,
-        recruiter_views: true,
-        verification_changes: false,
-        opportunity_matches: true,
-        coach_tips: false,
-        product_updates: true,
-      },
-    });
+    const { data: created, error: createError } = await supabase
+      .from('notification_preferences')
+      .insert({ user_id: userId })
+      .select()
+      .single();
+
+    if (createError) {
+      return NextResponse.json({ error: createError.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ preferences: created });
   }
 
   return NextResponse.json({ preferences: prefs });

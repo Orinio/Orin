@@ -15,16 +15,30 @@ billingRouter.get('/me', async (req, res) => {
 
     const { data: profile } = await supabase
       .from('users')
-      .select('subscription_plan, subscription_status, subscription_expires_at')
+      .select('id')
       .eq('auth_user_id', userId)
+      .single();
+
+    if (!profile) {
+      res.status(404).json({ error: { code: 'NOT_FOUND', message: 'User not found' } });
+      return;
+    }
+
+    const { data: subscription } = await supabase
+      .from('subscriptions')
+      .select('plan, status, current_period_end')
+      .eq('user_id', profile.id)
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false })
+      .limit(1)
       .single();
 
     res.json({
       success: true,
       data: {
-        plan: profile?.subscription_plan || 'free',
-        status: profile?.subscription_status || 'active',
-        expiresAt: profile?.subscription_expires_at || null,
+        plan: subscription?.plan || 'free',
+        status: subscription?.status || 'active',
+        expiresAt: subscription?.current_period_end || null,
       },
     });
   } catch (err) {

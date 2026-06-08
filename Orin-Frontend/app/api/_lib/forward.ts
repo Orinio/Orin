@@ -52,8 +52,7 @@ export async function forwardToBackend(
       body = JSON.stringify(options.body);
     } else {
       try {
-        const clonedReq = req.clone();
-        body = await clonedReq.text();
+        body = await req.text();
       } catch {}
     }
   }

@@ -194,6 +194,7 @@ aiRouter.post('/chat', userRateLimitMiddleware('ai-chat'), validate(chatMessageS
 
 // POST /ai/chat-stream — Streaming chat with full agentic behavior
 aiRouter.post('/chat-stream', userRateLimitMiddleware('ai-chat-stream'), async (req, res) => {
+  let headersSent = false;
   try {
     const userId = (req as any).user?.id;
     if (!userId) { res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } }); return; }
@@ -212,9 +213,10 @@ aiRouter.post('/chat-stream', userRateLimitMiddleware('ai-chat-stream'), async (
       res.setHeader('Cache-Control', 'no-cache');
       res.setHeader('Connection', 'keep-alive');
       res.setHeader('X-Accel-Buffering', 'no');
+      headersSent = true;
 
       const sendEvent = (event: string, data: any) => {
-        res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+        try { res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`); } catch {}
       };
 
       // Use orchestrator with memory, tool calling, and full user context
@@ -255,7 +257,12 @@ aiRouter.post('/chat-stream', userRateLimitMiddleware('ai-chat-stream'), async (
     }
   } catch (err) {
     logger.error({ err }, 'AI chat-stream error');
-    res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } });
+    if (headersSent) {
+      try { res.write(`event: error\ndata: ${JSON.stringify({ message: 'Internal server error' })}\n\n`); } catch {}
+      try { res.end(); } catch {}
+    } else {
+      res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } });
+    }
   }
 });
 

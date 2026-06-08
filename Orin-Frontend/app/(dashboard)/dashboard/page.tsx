@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Plus, BarChart3, TrendingUp, Briefcase, AlertCircle, RefreshCw } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Plus, BarChart3, TrendingUp, Briefcase, AlertCircle, RefreshCw, User, ExternalLink, Sparkles, ArrowRight } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useCurrentUser, useDashboardStats } from "@/lib/queries/user";
 import { useProofs } from "@/lib/queries/proofs";
@@ -34,13 +35,112 @@ function DashboardSkeleton() {
   );
 }
 
+function ProfileCompletionCard({ user }: { user: { fullName?: string; headline?: string; bio?: string; location?: string; username?: string } }) {
+  const checks = [
+    { label: 'Full name', done: !!user.fullName },
+    { label: 'Headline', done: !!user.headline },
+    { label: 'Bio', done: !!user.bio },
+    { label: 'Location', done: !!user.location },
+    { label: 'Username', done: !!user.username },
+  ];
+  const completed = checks.filter(c => c.done).length;
+  const total = checks.length;
+  const percent = Math.round((completed / total) * 100);
+
+  if (percent === 100) return null;
+
+  return (
+    <div className="card-premium p-5 animate-fadeInUp" style={{ border: '1px solid var(--color-bloom)20' }}>
+      <div className="flex items-center gap-3 mb-3">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ backgroundColor: 'var(--color-bloom)12' }}>
+          <User className="h-4 w-4" style={{ color: 'var(--color-bloom)' }} />
+        </div>
+        <div className="flex-1">
+          <h3 className="text-sm font-semibold" style={{ color: 'var(--color-ink)' }}>Complete your profile</h3>
+          <p className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>{completed}/{total} fields completed</p>
+        </div>
+        <span className="text-sm font-bold" style={{ color: 'var(--color-bloom)' }}>{percent}%</span>
+      </div>
+      <div className="h-1.5 rounded-full mb-3" style={{ backgroundColor: 'var(--color-surface-dim)' }}>
+        <div className="h-1.5 rounded-full transition-all duration-500" style={{ width: `${percent}%`, backgroundColor: 'var(--color-bloom)' }} />
+      </div>
+      <div className="flex flex-wrap gap-2 mb-3">
+        {checks.map(check => (
+          <span key={check.label} className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full" style={{
+            backgroundColor: check.done ? 'var(--color-bloom)12' : 'var(--color-surface-dim)',
+            color: check.done ? 'var(--color-bloom)' : 'var(--color-text-tertiary)',
+          }}>
+            {check.done ? '✓' : '○'} {check.label}
+          </span>
+        ))}
+      </div>
+      <Link href="/settings" className="inline-flex items-center gap-1.5 text-xs font-semibold" style={{ color: 'var(--color-bloom)' }}>
+        Complete profile <ArrowRight className="h-3 w-3" />
+      </Link>
+    </div>
+  );
+}
+
+function QuickStartCard() {
+  return (
+    <div className="card-premium p-5 animate-fadeInUp" style={{ border: '1px solid var(--color-ember)20', backgroundColor: 'var(--color-ember)04' }}>
+      <div className="flex items-center gap-2 mb-3">
+        <Sparkles className="h-4 w-4" style={{ color: 'var(--color-ember)' }} />
+        <h3 className="text-sm font-semibold" style={{ color: 'var(--color-ink)' }}>Get started with Orin</h3>
+      </div>
+      <div className="space-y-2">
+        <Link href="/dashboard/proof/new" className="flex items-center gap-3 rounded-xl p-3 transition-all hover:scale-[1.01]" style={{ border: '1px solid var(--color-border)' }}>
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ backgroundColor: 'var(--color-bloom)12' }}>
+            <Plus className="h-4 w-4" style={{ color: 'var(--color-bloom)' }} />
+          </div>
+          <div className="flex-1">
+            <p className="text-xs font-semibold" style={{ color: 'var(--color-ink)' }}>Create your first proof card</p>
+            <p className="text-[11px]" style={{ color: 'var(--color-text-tertiary)' }}>Showcase your skills and achievements</p>
+          </div>
+          <ArrowRight className="h-3.5 w-3.5" style={{ color: 'var(--color-text-tertiary)' }} />
+        </Link>
+        <Link href="/dashboard/sources/new" className="flex items-center gap-3 rounded-xl p-3 transition-all hover:scale-[1.01]" style={{ border: '1px solid var(--color-border)' }}>
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ backgroundColor: 'var(--color-ember)12' }}>
+            <ExternalLink className="h-4 w-4" style={{ color: 'var(--color-ember)' }} />
+          </div>
+          <div className="flex-1">
+            <p className="text-xs font-semibold" style={{ color: 'var(--color-ink)' }}>Connect a source</p>
+            <p className="text-[11px]" style={{ color: 'var(--color-text-tertiary)' }}>GitHub, Kaggle, certificates, and more</p>
+          </div>
+          <ArrowRight className="h-3.5 w-3.5" style={{ color: 'var(--color-text-tertiary)' }} />
+        </Link>
+        <Link href="/dashboard/ai-chat" className="flex items-center gap-3 rounded-xl p-3 transition-all hover:scale-[1.01]" style={{ border: '1px solid var(--color-border)' }}>
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ backgroundColor: 'var(--color-pulse)12' }}>
+            <Sparkles className="h-4 w-4" style={{ color: 'var(--color-pulse)' }} />
+          </div>
+          <div className="flex-1">
+            <p className="text-xs font-semibold" style={{ color: 'var(--color-ink)' }}>Chat with AI coach</p>
+            <p className="text-[11px]" style={{ color: 'var(--color-text-tertiary)' }}>Get career advice and proof analysis</p>
+          </div>
+          <ArrowRight className="h-3.5 w-3.5" style={{ color: 'var(--color-text-tertiary)' }} />
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const router = useRouter();
   const { user: authUser, initialized } = useAuth();
   const { data: user, isLoading: userLoading } = useCurrentUser();
   const { data: stats, isLoading: statsLoading, error: statsError, refetch } = useDashboardStats(user?.id ?? null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
-  if (!initialized || userLoading || statsLoading) {
+  useEffect(() => {
+    if (user && !userLoading) {
+      const hasCompletedOnboarding = typeof window !== 'undefined' && localStorage.getItem('orin.onboarded');
+      if (!hasCompletedOnboarding && !user.fullName && !user.headline && !user.bio) {
+        setShowOnboarding(true);
+      }
+    }
+  }, [user, userLoading]);
+
+  if (!initialized || userLoading) {
     return <DashboardSkeleton />;
   }
 
@@ -75,6 +175,8 @@ export default function DashboardPage() {
   const opportunities = stats?.recentOpportunities ?? [];
   const coachNote = stats?.latestCoachNote ?? null;
 
+  const hasData = proofsCount > 0 || uniqueSkills > 0 || totalViews > 0;
+
   const statsCards = [
     { label: "Proof cards", value: proofsCount, delta: `${verifiedCount} verified`, icon: BarChart3, color: 'var(--color-bloom)' },
     { label: "Total skills", value: uniqueSkills, delta: `${topSkills.length} top`, icon: TrendingUp, color: 'var(--color-ember)' },
@@ -94,7 +196,9 @@ export default function DashboardPage() {
               Welcome back{user.fullName ? `, ${user.fullName.split(' ')[0]}` : ''}
             </h1>
             <p className="mt-1 text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
-              Track verified proof and stay on top of your next opportunity.
+              {hasData
+                ? 'Track verified proof and stay on top of your next opportunity.'
+                : 'Start building your career proof portfolio.'}
             </p>
           </div>
           <div className="flex gap-3">
@@ -102,12 +206,17 @@ export default function DashboardPage() {
               <Plus className="h-4 w-4" />
               Add Source
             </Link>
-            <Link href={`/${user.username}`} className="btn-outline px-5 py-2.5 text-sm">
-              View Profile
-            </Link>
+            {user.username && (
+              <Link href={`/${user.username}`} className="btn-outline px-5 py-2.5 text-sm">
+                View Profile
+              </Link>
+            )}
           </div>
         </div>
       </header>
+
+      {/* Profile Completion - show if profile is incomplete */}
+      {!hasData && <ProfileCompletionCard user={user} />}
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
         {/* Main Content */}
@@ -140,7 +249,7 @@ export default function DashboardPage() {
                 <h2 className="flex items-center gap-3 text-lg font-semibold" style={{ color: 'var(--color-ink)' }}>
                   AI Career Coach
                 </h2>
-                <Link href="/dashboard/coach" className="flex items-center gap-2 text-sm font-medium transition-colors" style={{ color: 'var(--color-bloom)' }}>
+                <Link href="/dashboard/ai-chat" className="flex items-center gap-2 text-sm font-medium transition-colors" style={{ color: 'var(--color-bloom)' }}>
                   View all notes
                 </Link>
               </div>
@@ -157,9 +266,11 @@ export default function DashboardPage() {
                   Recent proof cards created from your sources.
                 </p>
               </div>
-              <Link href={`/${user.username}`} className="btn-outline px-4 py-2 text-sm">
-                Publish public profile
-              </Link>
+              {user.username && (
+                <Link href={`/${user.username}`} className="btn-outline px-4 py-2 text-sm">
+                  Publish public profile
+                </Link>
+              )}
             </div>
 
             {proofsCount === 0 ? (
@@ -189,43 +300,48 @@ export default function DashboardPage() {
 
         {/* Sidebar */}
         <aside className="space-y-6 lg:col-span-4">
+          {/* Quick Start - show when no data */}
+          {!hasData && <QuickStartCard />}
+
           {/* Skills Summary */}
-          <div className="card-premium p-5 animate-fadeInUp" style={{ animationDelay: '150ms' }}>
-            <h2 className="text-base font-semibold" style={{ color: 'var(--color-ink)' }}>Skill Summary</h2>
-            <div className="mt-4 flex items-center gap-4">
-              <div className="relative h-20 w-20 shrink-0">
-                <svg className="h-20 w-20 -rotate-90" viewBox="0 0 80 80">
-                  <circle cx="40" cy="40" r="34" fill="none" stroke="var(--color-border)" strokeWidth="8" />
-                  <circle
-                    cx="40" cy="40" r="34" fill="none"
-                    stroke="var(--color-bloom)" strokeWidth="8"
-                    strokeLinecap="round"
-                    strokeDasharray={`${Math.min((uniqueSkills / 20) * 213.6, 213.6)} 213.6`}
-                    className="progress-ring"
-                  />
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-lg font-bold" style={{ color: 'var(--color-ink)' }}>{uniqueSkills}</span>
+          {uniqueSkills > 0 && (
+            <div className="card-premium p-5 animate-fadeInUp" style={{ animationDelay: '150ms' }}>
+              <h2 className="text-base font-semibold" style={{ color: 'var(--color-ink)' }}>Skill Summary</h2>
+              <div className="mt-4 flex items-center gap-4">
+                <div className="relative h-20 w-20 shrink-0">
+                  <svg className="h-20 w-20 -rotate-90" viewBox="0 0 80 80">
+                    <circle cx="40" cy="40" r="34" fill="none" stroke="var(--color-border)" strokeWidth="8" />
+                    <circle
+                      cx="40" cy="40" r="34" fill="none"
+                      stroke="var(--color-bloom)" strokeWidth="8"
+                      strokeLinecap="round"
+                      strokeDasharray={`${Math.min((uniqueSkills / 20) * 213.6, 213.6)} 213.6`}
+                      className="progress-ring"
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-lg font-bold" style={{ color: 'var(--color-ink)' }}>{uniqueSkills}</span>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>skills discovered</p>
+                  <p className="mt-0.5 text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
+                    {topSkills.slice(0, 3).map((s) => s.name).join(', ')}
+                  </p>
                 </div>
               </div>
-              <div>
-                <p className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>skills discovered</p>
-                <p className="mt-0.5 text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
-                  {topSkills.slice(0, 3).map((s) => s.name).join(', ') || 'No skills yet'}
-                </p>
-              </div>
+              {topSkills.length > 0 && (
+                <div className="mt-4 space-y-2">
+                  {topSkills.slice(0, 5).map((skill) => (
+                    <div key={skill.name} className="flex items-center justify-between text-sm">
+                      <span style={{ color: 'var(--color-ink)' }}>{skill.name}</span>
+                      <span className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>{skill.count} proof{skill.count !== 1 ? 's' : ''}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-            {topSkills.length > 0 && (
-              <div className="mt-4 space-y-2">
-                {topSkills.slice(0, 5).map((skill) => (
-                  <div key={skill.name} className="flex items-center justify-between text-sm">
-                    <span style={{ color: 'var(--color-ink)' }}>{skill.name}</span>
-                    <span className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>{skill.count} proof{skill.count !== 1 ? 's' : ''}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          )}
 
           {/* Plan card */}
           <div className="animate-fadeInUp" style={{ animationDelay: '230ms' }}>

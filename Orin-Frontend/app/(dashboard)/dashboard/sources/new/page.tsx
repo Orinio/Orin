@@ -62,7 +62,7 @@ export default function AddProofSourcePage() {
       });
 
       if (response.ok) {
-        router.push('/dashboard');
+        router.push('/dashboard/sources');
       } else {
         const data = await response.json();
         setError(data.error || 'Failed to add source');

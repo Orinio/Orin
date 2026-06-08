@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { BarChart3, TrendingUp, Eye, Shield, Plus, AlertCircle } from 'lucide-react';
+import { BarChart3, TrendingUp, Eye, Shield, Plus, AlertCircle, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { mapDbProofToProof, formatNumber, getProofTypeColor } from '@/lib/utils';
@@ -204,12 +204,18 @@ export default function AnalyticsPage() {
           </div>
           <h3 className="text-lg font-semibold" style={{ color: 'var(--color-ink)' }}>No analytics yet</h3>
           <p className="mt-1 max-w-sm text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
-            Add your first proof card to start seeing analytics and insights about your career portfolio.
+            Add your first proof card or connect a source to start seeing analytics and insights about your career portfolio.
           </p>
-          <Link href="/dashboard/proof/new" className="btn-success mt-6 px-5 py-2.5 text-sm inline-flex items-center gap-2">
-            <Plus className="h-4 w-4" />
-            Create your first proof
-          </Link>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <Link href="/dashboard/proof/new" className="btn-success px-5 py-2.5 text-sm inline-flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              Create your first proof
+            </Link>
+            <Link href="/dashboard/sources/new" className="btn-outline px-5 py-2.5 text-sm inline-flex items-center gap-2">
+              <ExternalLink className="h-4 w-4" />
+              Add a source
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -217,11 +223,23 @@ export default function AnalyticsPage() {
 
   return (
     <div className="space-y-8">
-      <header className="animate-fadeInUp">
-        <h1 className="text-2xl font-semibold" style={{ color: 'var(--color-ink)', fontFamily: 'var(--font-heading)' }}>Analytics</h1>
-        <p className="mt-1 text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
-          Insights and metrics across your proof portfolio.
-        </p>
+      <header className="flex items-center justify-between animate-fadeInUp">
+        <div>
+          <h1 className="text-2xl font-semibold" style={{ color: 'var(--color-ink)', fontFamily: 'var(--font-heading)' }}>Analytics</h1>
+          <p className="mt-1 text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
+            Insights and metrics across your proof portfolio.
+          </p>
+        </div>
+        <div className="flex gap-3">
+          <Link href="/dashboard/sources/new" className="btn-outline px-4 py-2 text-sm inline-flex items-center gap-2">
+            <ExternalLink className="h-4 w-4" />
+            Add Source
+          </Link>
+          <Link href="/dashboard/proof/new" className="btn-success px-4 py-2 text-sm inline-flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            New Proof
+          </Link>
+        </div>
       </header>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 animate-fadeInUp" style={{ animationDelay: '100ms' }}>

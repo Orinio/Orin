@@ -31,6 +31,9 @@ export type Database = {
           registration_ip: string | null;
           registration_ua: string | null;
           onboarded: boolean;
+          subscription_plan: 'free' | 'pro' | 'team';
+          subscription_status: 'active' | 'canceled' | 'past_due' | 'trialing' | 'incomplete';
+          subscription_expires_at: string | null;
           created_at: string;
           updated_at: string;
           deleted_at: string | null;
@@ -61,6 +64,9 @@ export type Database = {
           registration_ip?: string | null;
           registration_ua?: string | null;
           onboarded?: boolean;
+          subscription_plan?: 'free' | 'pro' | 'team';
+          subscription_status?: 'active' | 'canceled' | 'past_due' | 'trialing' | 'incomplete';
+          subscription_expires_at?: string | null;
           created_at?: string;
           updated_at?: string;
           deleted_at?: string | null;
@@ -91,6 +97,9 @@ export type Database = {
           registration_ip?: string | null;
           registration_ua?: string | null;
           onboarded?: boolean;
+          subscription_plan?: 'free' | 'pro' | 'team';
+          subscription_status?: 'active' | 'canceled' | 'past_due' | 'trialing' | 'incomplete';
+          subscription_expires_at?: string | null;
           created_at?: string;
           updated_at?: string;
           deleted_at?: string | null;

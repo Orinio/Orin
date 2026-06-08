@@ -64,6 +64,27 @@ export function PlanProvider({ children }: { children: ReactNode }) {
       setPlan(p);
       writeCachedPlan(p);
     } catch {
+      try {
+        const { supabase } = await import('./supabase');
+        if (supabase) {
+          const { data: { user: authUser } } = await supabase.auth.getUser();
+          if (authUser) {
+            const { data: userData } = await supabase
+              .from('users')
+              .select('subscription_plan, subscription_status')
+              .eq('auth_user_id', authUser.id)
+              .maybeSingle();
+            if (userData) {
+              const p = (userData.subscription_plan as SubscriptionPlanId) || 'free';
+              setPlan(p);
+              writeCachedPlan(p);
+              return;
+            }
+          }
+        }
+      } catch {
+        // Fall through to cached
+      }
       const cached = readCachedPlan();
       setPlan(cached || 'free');
     } finally {

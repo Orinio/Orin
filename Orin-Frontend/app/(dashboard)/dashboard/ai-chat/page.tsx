@@ -12,7 +12,7 @@ import ChatHistory from '@/components/ai/ChatHistory';
 import Logo from '@/components/Logo';
 
 export default function SuperAgentChat() {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const [messages, setMessages] = useState<SuperMessageData[]>([]);
   const [conversation, setConversation] = useState<ChatConversation | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -141,9 +141,14 @@ export default function SuperAgentChat() {
         );
       }
 
+      const headers: Record<string, string> = { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' };
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+
       const res = await fetch('/api/ai/chat-stream', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' },
+        headers,
         body: JSON.stringify({
           message: content,
           model: modelId || selectedModel,

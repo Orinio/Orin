@@ -65,6 +65,18 @@ export async function forwardToBackend(
       body,
     });
 
+    // If backend returned an error before streaming started, surface it
+    if (!backendRes.ok && options?.streaming) {
+      const errorText = await backendRes.text().catch(() => '');
+      let errorData: any;
+      try { errorData = JSON.parse(errorText); } catch { errorData = { error: errorText }; }
+      console.error(`Backend ${backendRes.status} for ${path}:`, errorData);
+      return NextResponse.json(
+        { error: errorData?.error?.message || errorData?.error || `Backend returned ${backendRes.status}` },
+        { status: backendRes.status }
+      );
+    }
+
     if (options?.streaming && backendRes.headers.get('Content-Type')?.includes('text/event-stream')) {
       const reader = backendRes.body?.getReader();
       if (!reader) {

@@ -29,8 +29,8 @@ export interface SkillAnalysis {
 
 export function extractSkillsFromProofs(proofs: Proof[]): string[] {
   const allSkills = proofs.flatMap((proof) => [
-    ...proof.skillsExtracted,
-    ...proof.skillsUserAdded,
+    ...(proof.skillsExtracted || []),
+    ...(proof.skillsUserAdded || []),
   ]);
 
   const uniqueSkills = [...new Set(allSkills.map((s) => s.toLowerCase().trim()))];
@@ -41,7 +41,7 @@ export function getSkillFrequencyMap(proofs: Proof[]): Map<string, number> {
   const frequencyMap = new Map<string, number>();
 
   proofs.forEach((proof) => {
-    const allSkills = [...proof.skillsExtracted, ...proof.skillsUserAdded];
+    const allSkills = [...(proof.skillsExtracted || []), ...(proof.skillsUserAdded || [])];
     allSkills.forEach((skill) => {
       const normalized = skill.toLowerCase().trim();
       frequencyMap.set(normalized, (frequencyMap.get(normalized) || 0) + 1);
@@ -68,7 +68,7 @@ export function getSkillTrend(
   const recentProofs = proofs.filter(
     (p) =>
       new Date(p.createdAt) >= thirtyDaysAgo &&
-      [...p.skillsExtracted, ...p.skillsUserAdded].some(
+      [...(p.skillsExtracted || []), ...(p.skillsUserAdded || [])].some(
         (s) => s.toLowerCase().trim() === skill
       )
   );
@@ -77,7 +77,7 @@ export function getSkillTrend(
     (p) =>
       new Date(p.createdAt) >= sixtyDaysAgo &&
       new Date(p.createdAt) < thirtyDaysAgo &&
-      [...p.skillsExtracted, ...p.skillsUserAdded].some(
+      [...(p.skillsExtracted || []), ...(p.skillsUserAdded || [])].some(
         (s) => s.toLowerCase().trim() === skill
       )
   );
@@ -226,7 +226,7 @@ export function analyzeSkills(proofs: Proof[], targetRole?: string): SkillAnalys
     sources: [...new Set(
       proofs
         .filter((p) =>
-          [...p.skillsExtracted, ...p.skillsUserAdded].some(
+          [...(p.skillsExtracted || []), ...(p.skillsUserAdded || [])].some(
             (s) => s.toLowerCase().trim() === name
           )
         )
@@ -236,7 +236,7 @@ export function analyzeSkills(proofs: Proof[], targetRole?: string): SkillAnalys
       Math.max(
         ...proofs
           .filter((p) =>
-            [...p.skillsExtracted, ...p.skillsUserAdded].some(
+            [...(p.skillsExtracted || []), ...(p.skillsUserAdded || [])].some(
               (s) => s.toLowerCase().trim() === name
             )
           )

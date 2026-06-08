@@ -5,10 +5,12 @@ import { getAgent } from '../lib/ai/agents/index.js';
 import { runAgent } from '../lib/ai/core/agent-runner.js';
 import type { AgentMessage } from '../lib/ai/orchestrator/agent-orchestrator.js';
 import { analyzeSkills, identifySkillGaps, getSkillRecommendations, extractSkillsFromProofs } from '../lib/skills.js';
-import { checkAIRateLimit, logAIUsage } from '../lib/rate-limit.js';
-import { validateRequest, verifyRequestSchema, chatMessageSchema, chatStreamSchema, matchRequestSchema, safetyCheckSchema } from '../lib/validations.js';
+import { logAIUsage } from '../lib/rate-limit.js';
+import { chatMessageSchema, verifyRequestSchema } from '../lib/validations.js';
 import { buildAgentContext } from '../lib/context.js';
 import { isNvidiaConfigured } from '../lib/ai/core/nvidia.js';
+import { userRateLimitMiddleware, getCached, setCache } from '../middleware/rate-limit.js';
+import { validate } from '../middleware/validate.js';
 
 export const aiRouter = Router();
 
@@ -71,7 +73,7 @@ function getFallbackResponse(operation: string, context: any): { answer: string;
 }
 
 // POST /ai/verify — Verify a proof
-aiRouter.post('/verify', async (req, res) => {
+aiRouter.post('/verify', userRateLimitMiddleware('ai-verify'), validate(verifyRequestSchema), async (req, res) => {
   try {
     const userId = (req as any).user?.id;
     if (!userId) {
@@ -79,19 +81,7 @@ aiRouter.post('/verify', async (req, res) => {
       return;
     }
 
-    const rateLimitResult = await checkAIRateLimit(supabase, userId, 'ai-verify');
-    if (!rateLimitResult.allowed) {
-      res.status(429).json({ error: { code: 'RATE_LIMITED', message: rateLimitResult.reason, nextAllowedAt: rateLimitResult.nextAllowedAt } });
-      return;
-    }
-
-    const validation = validateRequest(verifyRequestSchema, req.body);
-    if (!validation.success) {
-      res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: validation.error } });
-      return;
-    }
-
-    const { action, proofId, proofUrl, sourceType, proofData, text, username, url, query } = validation.data;
+    const { action, proofId, proofUrl, sourceType, proofData, text, username, url, query } = req.body;
     const context = await buildAgentContext((req as any).user.id);
     const agent = getAgent('verification')!;
 
@@ -175,26 +165,14 @@ aiRouter.post('/verify', async (req, res) => {
 });
 
 // POST /ai/chat — Non-streaming chat
-aiRouter.post('/chat', async (req, res) => {
+aiRouter.post('/chat', userRateLimitMiddleware('ai-chat'), validate(chatMessageSchema), async (req, res) => {
   try {
     const userId = (req as any).user?.id;
     if (!userId) { res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } }); return; }
 
-    const rateLimitResult = await checkAIRateLimit(supabase, userId, 'ai-chat');
-    if (!rateLimitResult.allowed) {
-      res.status(429).json({ error: { code: 'RATE_LIMITED', message: rateLimitResult.reason } });
-      return;
-    }
-
-    const validation = validateRequest(chatMessageSchema, req.body);
-    if (!validation.success) {
-      res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: validation.error } });
-      return;
-    }
-
-    const { message, history } = validation.data;
+    const { message, history } = req.body;
     const context = await buildAgentContext((req as any).user.id);
-    context.conversationHistory = history?.slice(-6).map((m: any) => ({ role: m.role, content: m.content }));
+    context.conversationHistory = (history || []).slice(-6).map((m: any) => ({ role: m.role, content: m.content }));
 
     // Graceful degradation: return fallback if AI is unavailable
     if (!isNvidiaConfigured()) {
@@ -215,27 +193,16 @@ aiRouter.post('/chat', async (req, res) => {
 });
 
 // POST /ai/chat-stream — Streaming chat with full agentic behavior
-aiRouter.post('/chat-stream', async (req, res) => {
+aiRouter.post('/chat-stream', userRateLimitMiddleware('ai-chat-stream'), async (req, res) => {
   try {
     const userId = (req as any).user?.id;
     if (!userId) { res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } }); return; }
 
-    const rateLimitResult = await checkAIRateLimit(supabase, userId, 'ai-chat');
-    if (!rateLimitResult.allowed) {
-      res.status(429).json({ error: { code: 'RATE_LIMITED', message: rateLimitResult.reason } });
-      return;
-    }
-
-    const streamValidation = validateRequest(chatStreamSchema, req.body);
-    if (!streamValidation.success) {
-      res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: streamValidation.error } });
-      return;
-    }
-
-    const { message, history } = streamValidation.data;
+    const { message, history } = req.body;
+    if (!message) { res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'Message is required' } }); return; }
 
     const context = await buildAgentContext((req as any).user.id);
-    context.conversationHistory = history.slice(-6).map((m: any) => ({ role: m.role, content: m.content }));
+    context.conversationHistory = (history || []).slice(-6).map((m: any) => ({ role: m.role, content: m.content }));
 
     const acceptHeader = req.headers.accept;
     const wantsStreaming = acceptHeader?.includes('text/event-stream');
@@ -293,16 +260,10 @@ aiRouter.post('/chat-stream', async (req, res) => {
 });
 
 // GET /ai/skills — Skill analysis
-aiRouter.get('/skills', async (req, res) => {
+aiRouter.get('/skills', userRateLimitMiddleware('ai-skills'), async (req, res) => {
   try {
     const userId = (req as any).user?.id;
     if (!userId) { res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } }); return; }
-
-    const rateLimitResult = await checkAIRateLimit(supabase, userId, 'ai-skills');
-    if (!rateLimitResult.allowed) {
-      res.status(429).json({ error: { code: 'RATE_LIMITED', message: rateLimitResult.reason } });
-      return;
-    }
 
     const context = await buildAgentContext((req as any).user.id);
     const { searchParams } = new URL(req.url, `http://localhost`);
@@ -333,21 +294,21 @@ aiRouter.get('/skills', async (req, res) => {
 });
 
 // POST /ai/match — Match opportunities
-aiRouter.post('/match', async (req, res) => {
+aiRouter.post('/match', userRateLimitMiddleware('ai-match'), async (req, res) => {
   try {
     const userId = (req as any).user?.id;
     if (!userId) { res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } }); return; }
 
-    const rateLimitResult = await checkAIRateLimit(supabase, userId, 'ai-match-opportunities');
-    if (!rateLimitResult.allowed) {
-      res.status(429).json({ error: { code: 'RATE_LIMITED', message: rateLimitResult.reason } });
+    // Check response cache (deterministic: same skills + same opportunities = same result)
+    const cacheKey = `match:${userId}`;
+    const cached = getCached(cacheKey);
+    if (cached) {
+      res.json(cached);
       return;
     }
 
     const context = await buildAgentContext((req as any).user.id);
-
-    const matchValidation = validateRequest(matchRequestSchema, req.body);
-    const { limit } = matchValidation.success ? matchValidation.data : { limit: 10 };
+    const { limit = 10 } = req.body || {};
 
     const opportunities = await getCachedOpportunities();
 
@@ -374,8 +335,11 @@ aiRouter.post('/match', async (req, res) => {
       };
     }).sort((a: any, b: any) => b.matchScore - a.matchScore).slice(0, limit);
 
+    const response = { success: true, matches, skillAnalysis: { topSkills: context.skillAnalysis?.topSkills.slice(0, 10), uniqueSkills: context.skillAnalysis?.uniqueSkills } };
+    setCache(cacheKey, response, 120_000); // Cache for 2 minutes
+
     await logAIUsage(supabase, userId, 'ai-match-opportunities', 0);
-    res.json({ success: true, matches, skillAnalysis: { topSkills: context.skillAnalysis?.topSkills.slice(0, 10), uniqueSkills: context.skillAnalysis?.uniqueSkills } });
+    res.json(response);
   } catch (err) {
     logger.error({ err }, 'Match opportunities error');
     res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } });
@@ -383,16 +347,10 @@ aiRouter.post('/match', async (req, res) => {
 });
 
 // POST /ai/learning-path — Generate learning path
-aiRouter.post('/learning-path', async (req, res) => {
+aiRouter.post('/learning-path', userRateLimitMiddleware('ai-learning-path'), async (req, res) => {
   try {
     const userId = (req as any).user?.id;
     if (!userId) { res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } }); return; }
-
-    const rateLimitResult = await checkAIRateLimit(supabase, userId, 'ai-learning-path');
-    if (!rateLimitResult.allowed) {
-      res.status(429).json({ error: { code: 'RATE_LIMITED', message: rateLimitResult.reason } });
-      return;
-    }
 
     const context = await buildAgentContext((req as any).user.id);
     const { targetRole, timeframe = '3months' } = req.body;
@@ -424,7 +382,7 @@ aiRouter.post('/learning-path', async (req, res) => {
 });
 
 // POST /ai/score — Score portfolio
-aiRouter.post('/score', async (req, res) => {
+aiRouter.post('/score', userRateLimitMiddleware('ai-score'), async (req, res) => {
   try {
     const userId = (req as any).user?.id;
     if (!userId) { res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } }); return; }
@@ -442,7 +400,7 @@ aiRouter.post('/score', async (req, res) => {
 });
 
 // POST /ai/safety — Check safety
-aiRouter.post('/safety', async (req, res) => {
+aiRouter.post('/safety', userRateLimitMiddleware('ai-safety'), async (req, res) => {
   try {
     const userId = (req as any).user?.id;
     if (!userId) {
@@ -450,13 +408,7 @@ aiRouter.post('/safety', async (req, res) => {
       return;
     }
 
-    const safetyValidation = validateRequest(safetyCheckSchema, req.body);
-    if (!safetyValidation.success) {
-      res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: safetyValidation.error } });
-      return;
-    }
-
-    const { url, email } = safetyValidation.data;
+    const { url, email } = req.body;
     if (!url && !email) {
       res.status(400).json({ error: { code: 'MISSING_FIELDS', message: 'Either url or email is required' } });
       return;

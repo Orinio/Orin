@@ -5,7 +5,7 @@ import { ThumbsUp, ThumbsDown, Flag, MessageSquare } from 'lucide-react';
 
 interface MessageRatingProps {
   messageId: string;
-  onRate?: (messageId: string, rating: 'positive' | 'negative' | 'flagged') => void;
+  onRate?: (messageId: string, rating: 'positive' | 'negative' | 'flagged', feedback?: string) => void;
 }
 
 export function MessageRating({ messageId, onRate }: MessageRatingProps) {
@@ -27,7 +27,7 @@ export function MessageRating({ messageId, onRate }: MessageRatingProps) {
   };
 
   const submitFeedback = () => {
-    onRate?.(messageId, rating!);
+    onRate?.(messageId, rating!, feedback || undefined);
     setShowFeedback(false);
     setFeedback('');
   };

@@ -9,6 +9,7 @@ import { isNvidiaConfigured } from '../lib/ai/core/nvidia.js';
 import { createOrchestrator, AGENTS } from '../lib/ai/orchestrator/agent-orchestrator.js';
 import { createMemoryManager } from '../lib/ai/memory/memory-manager.js';
 import { getAllTools, getToolsByCategory } from '../lib/ai/core/tool-registry.js';
+import { userRateLimitMiddleware } from '../middleware/rate-limit.js';
 export const agentRouter = Router();
 
 // ============================================================
@@ -74,7 +75,7 @@ agentRouter.get('/agents/:id', async (req, res) => {
  * POST /ai/agents/chat - Run the chat agent
  * (Must be before /agents/:id to avoid matching "chat" as :id)
  */
-agentRouter.post('/agents/chat', async (req, res) => {
+agentRouter.post('/agents/chat', userRateLimitMiddleware('ai-agents-chat'), async (req, res) => {
   try {
     if (!isNvidiaConfigured()) {
       res.status(503).json({ error: { code: 'AI_NOT_CONFIGURED', message: 'AI service not available' } });
@@ -106,19 +107,43 @@ agentRouter.post('/agents/chat', async (req, res) => {
  * POST /ai/agents/chat/stream - Stream chat responses with real SSE streaming
  * (Must be before /agents/:id to avoid matching "chat" as :id)
  */
-agentRouter.post('/agents/chat/stream', async (req, res) => {
+agentRouter.post('/agents/chat/stream', userRateLimitMiddleware('ai-agents-stream'), async (req, res) => {
   try {
     if (!isNvidiaConfigured()) {
       res.status(503).json({ error: { code: 'AI_NOT_CONFIGURED', message: 'AI service not available' } });
       return;
     }
 
-    const { query, conversationHistory } = req.body;
+    const { query, conversationHistory, attachments } = req.body;
     const userId = (req as any).user?.id;
 
     if (!query) {
       res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'Query is required' } });
       return;
+    }
+
+    // Analyze image attachments if present
+    let enrichedQuery = query;
+    if (attachments && Array.isArray(attachments) && attachments.length > 0) {
+      const imageAttachments = attachments.filter((a: any) => a.type?.startsWith('image/'));
+      if (imageAttachments.length > 0) {
+        try {
+          const { analyzeImage } = await import('../lib/ai/services/vision.service.js');
+          const analyses = await Promise.all(
+            imageAttachments.map(async (att: any) => {
+              try {
+                const result = await analyzeImage(att.base64, `Analyze this image in context of the user's question: ${query}`);
+                return `[Image: ${att.name}] ${result}`;
+              } catch {
+                return `[Image: ${att.name}] (unable to analyze)`;
+              }
+            })
+          );
+          enrichedQuery = `${query}\n\nAttached images:\n${analyses.join('\n')}`;
+        } catch {
+          // Vision service unavailable, continue without image analysis
+        }
+      }
     }
 
     // Set up SSE
@@ -142,7 +167,7 @@ agentRouter.post('/agents/chat/stream', async (req, res) => {
     try {
       const orchestrator = createOrchestrator(userId);
 
-      // Auto-route: classify intent and pick the best agent
+      // Auto-route: classify intent and pick the best agent (use original query for classification)
       let agentId = 'chat';
       try {
         const routing = await orchestrator.routeQuery(query);
@@ -152,7 +177,7 @@ agentRouter.post('/agents/chat/stream', async (req, res) => {
         // Fallback to chat if routing fails
       }
 
-      await orchestrator.runAgentStream(agentId, query, { userId, conversationHistory }, (event, data) => {
+      await orchestrator.runAgentStream(agentId, enrichedQuery, { userId, conversationHistory }, (event, data) => {
         if (!aborted) sendEvent(event, data);
       });
     } catch (error) {
@@ -174,7 +199,7 @@ agentRouter.post('/agents/chat/stream', async (req, res) => {
 /**
  * POST /ai/agents/:id/run - Run a single agent
  */
-agentRouter.post('/agents/:id/run', async (req, res) => {
+agentRouter.post('/agents/:id/run', userRateLimitMiddleware('ai-agent-run'), async (req, res) => {
   try {
     if (!isNvidiaConfigured()) {
       res.status(503).json({ error: { code: 'AI_NOT_CONFIGURED', message: 'AI service not available' } });
@@ -209,7 +234,7 @@ agentRouter.post('/agents/:id/run', async (req, res) => {
 /**
  * POST /ai/workflows/career-analysis - Run career analysis workflow
  */
-agentRouter.post('/workflows/career-analysis', async (req, res) => {
+agentRouter.post('/workflows/career-analysis', userRateLimitMiddleware('ai-workflow-career'), async (req, res) => {
   try {
     if (!isNvidiaConfigured()) {
       res.status(503).json({ error: { code: 'AI_NOT_CONFIGURED', message: 'AI service not available' } });
@@ -243,7 +268,7 @@ agentRouter.post('/workflows/career-analysis', async (req, res) => {
 /**
  * POST /ai/workflows/verify-proof - Run proof verification workflow
  */
-agentRouter.post('/workflows/verify-proof', async (req, res) => {
+agentRouter.post('/workflows/verify-proof', userRateLimitMiddleware('ai-workflow-verify'), async (req, res) => {
   try {
     if (!isNvidiaConfigured()) {
       res.status(503).json({ error: { code: 'AI_NOT_CONFIGURED', message: 'AI service not available' } });

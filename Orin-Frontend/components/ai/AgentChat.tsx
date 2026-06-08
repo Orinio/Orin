@@ -24,7 +24,6 @@ import {
 import { useAuth } from '@/lib/auth-context';
 import { usePlan } from '@/lib/plan-context';
 import { chatStore } from '@/lib/chat-store';
-import { ChatHistorySidebar } from './ChatHistorySidebar';
 import type { ChatConversation, ChatMessage } from '@/lib/chat-types';
 
 interface Message {
@@ -221,13 +220,8 @@ export function AgentChat({ initialAgent = 'chat', onMessageSent }: AgentChatPro
   return (
     <div className="flex h-full rounded-[var(--radius-xl)] border border-[var(--color-border)] bg-[var(--color-surface)] overflow-hidden" style={{ boxShadow: 'var(--shadow-lg)' }}>
       {sidebarOpen && (
-        <div className="hidden md:flex">
-          <ChatHistorySidebar
-            activeId={conversation?.id || null}
-            onSelect={handleSelectConversation}
-            onNew={startNewConversation}
-            refreshKey={refreshKey}
-          />
+        <div className="hidden md:flex w-64 border-r border-[var(--color-border)] bg-[var(--color-surface-dim)] p-3">
+          <p className="text-xs opacity-40" style={{ fontFamily: 'var(--font-body)' }}>Sidebar (legacy)</p>
         </div>
       )}
 

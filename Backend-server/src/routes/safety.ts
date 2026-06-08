@@ -9,12 +9,13 @@ import {
   sanitizeResponse,
   fullSafetyCheck
 } from '../lib/ai/services/safety.service.js';
+import { userRateLimitMiddleware } from '../middleware/rate-limit.js';
 export const safetyRouter = Router();
 
 /**
  * POST /ai/safety/check - Check content safety
  */
-safetyRouter.post('/check', async (req, res) => {
+safetyRouter.post('/check', userRateLimitMiddleware('ai-safety-check'), async (req, res) => {
   try {
     if (!isNvidiaConfigured()) {
       res.status(503).json({ error: { code: 'AI_NOT_CONFIGURED', message: 'AI service not available' } });
@@ -43,7 +44,7 @@ safetyRouter.post('/check', async (req, res) => {
 /**
  * POST /ai/safety/pii - Detect PII in text
  */
-safetyRouter.post('/pii', async (req, res) => {
+safetyRouter.post('/pii', userRateLimitMiddleware('ai-safety-pii'), async (req, res) => {
   try {
     if (!isNvidiaConfigured()) {
       res.status(503).json({ error: { code: 'AI_NOT_CONFIGURED', message: 'AI service not available' } });
@@ -72,7 +73,7 @@ safetyRouter.post('/pii', async (req, res) => {
 /**
  * POST /ai/safety/topic - Check if content is on-topic
  */
-safetyRouter.post('/topic', async (req, res) => {
+safetyRouter.post('/topic', userRateLimitMiddleware('ai-safety-topic'), async (req, res) => {
   try {
     if (!isNvidiaConfigured()) {
       res.status(503).json({ error: { code: 'AI_NOT_CONFIGURED', message: 'AI service not available' } });
@@ -101,7 +102,7 @@ safetyRouter.post('/topic', async (req, res) => {
 /**
  * POST /ai/safety/sanitize - Sanitize text
  */
-safetyRouter.post('/sanitize', async (req, res) => {
+safetyRouter.post('/sanitize', userRateLimitMiddleware('ai-safety-sanitize'), async (req, res) => {
   try {
     const { text, type } = req.body;
 
@@ -131,7 +132,7 @@ safetyRouter.post('/sanitize', async (req, res) => {
 /**
  * POST /ai/safety/full-check - Full safety pipeline
  */
-safetyRouter.post('/full-check', async (req, res) => {
+safetyRouter.post('/full-check', userRateLimitMiddleware('ai-safety-full'), async (req, res) => {
   try {
     if (!isNvidiaConfigured()) {
       res.status(503).json({ error: { code: 'AI_NOT_CONFIGURED', message: 'AI service not available' } });

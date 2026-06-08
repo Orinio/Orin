@@ -1,5 +1,5 @@
-import { supabase } from '../supabase.js';
-import { logger } from '../logger.js';
+import { supabase } from '../lib/supabase.js';
+import { logger } from '../lib/logger.js';
 import type { Request, Response, NextFunction } from 'express';
 
 // ============================================================
@@ -107,9 +107,9 @@ export function userRateLimitMiddleware(endpoint: string) {
 
     try {
       // Check Supabase-based rate limit
-      const { logAIUsage, checkAIRateLimit } = await import('../../rate-limit.js');
+      const rateLimit = await import('../lib/rate-limit.js');
 
-      const rateResult = await checkAIRateLimit(supabase, userId, endpoint);
+      const rateResult = await rateLimit.checkAIRateLimit(supabase, userId, endpoint);
       if (!rateResult.allowed) {
         res.status(429).json({
           error: {
@@ -146,7 +146,7 @@ export function userRateLimitMiddleware(endpoint: string) {
         if (tokensUsed > 0) {
           consumeTokens(userId, tokensUsed, tier);
         }
-        logAIUsage(supabase, userId, endpoint, tokensUsed).catch(() => {});
+        rateLimit.logAIUsage(supabase, userId, endpoint, tokensUsed).catch(() => {});
         return originalJson(body);
       };
 

@@ -6,6 +6,8 @@ import {
   ChevronRight,
   Sparkles,
   Loader2,
+  AlertCircle,
+  RefreshCw,
 } from 'lucide-react';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { SourcesDisplay } from './SourcesDisplay';
@@ -26,6 +28,9 @@ export interface SuperMessageData {
   timestamp: Date;
   tokensUsed?: number;
   durationMs?: number;
+  error?: string;
+  rating?: 'positive' | 'negative' | 'flagged';
+  ratingFeedback?: string;
 }
 
 const AGENT_ACCENTS: Record<string, { color: string; label: string; letter: string }> = {
@@ -43,11 +48,6 @@ function StreamingText({ content }: { content: string }) {
   const [displayed, setDisplayed] = useState('');
   const [showCursor, setShowCursor] = useState(true);
   const indexRef = useRef(0);
-
-  useEffect(() => {
-    indexRef.current = 0;
-    setDisplayed('');
-  }, [content]);
 
   useEffect(() => {
     if (!content) return;
@@ -85,7 +85,7 @@ function StreamingText({ content }: { content: string }) {
   );
 }
 
-export default function SuperMessage({ message }: { message: SuperMessageData }) {
+export default function SuperMessage({ message, onRate, onRetry }: { message: SuperMessageData; onRate?: (messageId: string, rating: 'positive' | 'negative' | 'flagged', feedback?: string) => void; onRetry?: (messageId: string) => void }) {
   const [thinkingOpen, setThinkingOpen] = useState(false);
   const [artifactsOpen, setArtifactsOpen] = useState<Record<string, boolean>>({});
 
@@ -186,6 +186,31 @@ export default function SuperMessage({ message }: { message: SuperMessageData })
                   ) : null}
                 </div>
 
+                {/* Error + Retry */}
+                {message.error && !isStreaming && (
+                  <div
+                    className="mt-3 flex items-center gap-2 px-3 py-2 rounded-lg text-xs"
+                    style={{
+                      backgroundColor: 'var(--color-pulse)10',
+                      border: '1px solid var(--color-pulse)30',
+                      color: 'var(--color-pulse)',
+                    }}
+                  >
+                    <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                    <span className="flex-1">{message.error}</span>
+                    {onRetry && (
+                      <button
+                        onClick={() => onRetry(message.id)}
+                        className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold transition-colors hover:bg-black/5"
+                        style={{ color: 'var(--color-pulse)' }}
+                      >
+                        <RefreshCw className="w-3 h-3" />
+                        Retry
+                      </button>
+                    )}
+                  </div>
+                )}
+
                 {/* Sources */}
                 {message.sources && message.sources.length > 0 && (
                   <div className="mt-3">
@@ -270,7 +295,7 @@ export default function SuperMessage({ message }: { message: SuperMessageData })
                 {/* Rating + tokens */}
                 {!isStreaming && message.content && (
                   <div className="mt-3 flex items-center gap-3">
-                    <MessageRating messageId={message.id} />
+                    <MessageRating messageId={message.id} onRate={onRate} />
                     {message.tokensUsed && (
                       <span className="text-[10px] opacity-30" style={{ fontFamily: 'var(--font-mono)' }}>
                         {message.tokensUsed} tokens

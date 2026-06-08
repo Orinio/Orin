@@ -9,6 +9,8 @@ export interface ChatMessage {
   toolCalls?: Array<{ tool: string; args: any; result: any }>;
   durationMs?: number;
   thinking?: string;
+  rating?: 'positive' | 'negative' | 'flagged';
+  ratingFeedback?: string;
 }
 
 export interface ChatConversation {

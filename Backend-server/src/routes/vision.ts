@@ -8,13 +8,14 @@ import {
   analyzeScreenshot 
 } from '../lib/ai/services/vision.service.js';
 import { supabase } from '../lib/supabase.js';
+import { userRateLimitMiddleware } from '../middleware/rate-limit.js';
 
 export const visionRouter = Router();
 
 /**
  * POST /ai/vision/analyze - Analyze an image
  */
-visionRouter.post('/analyze', async (req, res) => {
+visionRouter.post('/analyze', userRateLimitMiddleware('ai-vision'), async (req, res) => {
   try {
     if (!isNvidiaConfigured()) {
       res.status(503).json({ error: { code: 'AI_NOT_CONFIGURED', message: 'AI service not available' } });
@@ -47,7 +48,7 @@ visionRouter.post('/analyze', async (req, res) => {
 /**
  * POST /ai/vision/certificate/extract - Extract certificate information
  */
-visionRouter.post('/certificate/extract', async (req, res) => {
+visionRouter.post('/certificate/extract', userRateLimitMiddleware('ai-vision-extract'), async (req, res) => {
   try {
     if (!isNvidiaConfigured()) {
       res.status(503).json({ error: { code: 'AI_NOT_CONFIGURED', message: 'AI service not available' } });
@@ -76,7 +77,7 @@ visionRouter.post('/certificate/extract', async (req, res) => {
 /**
  * POST /ai/vision/certificate/verify - Verify a certificate
  */
-visionRouter.post('/certificate/verify', async (req, res) => {
+visionRouter.post('/certificate/verify', userRateLimitMiddleware('ai-vision-verify'), async (req, res) => {
   try {
     if (!isNvidiaConfigured()) {
       res.status(503).json({ error: { code: 'AI_NOT_CONFIGURED', message: 'AI service not available' } });
@@ -144,7 +145,7 @@ visionRouter.post('/certificate/verify', async (req, res) => {
 /**
  * POST /ai/vision/screenshot - Analyze a screenshot for proof
  */
-visionRouter.post('/screenshot', async (req, res) => {
+visionRouter.post('/screenshot', userRateLimitMiddleware('ai-vision-screenshot'), async (req, res) => {
   try {
     if (!isNvidiaConfigured()) {
       res.status(503).json({ error: { code: 'AI_NOT_CONFIGURED', message: 'AI service not available' } });

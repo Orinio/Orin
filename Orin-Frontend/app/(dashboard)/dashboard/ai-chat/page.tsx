@@ -102,7 +102,7 @@ export default function SuperAgentChat() {
 
   // ── Send message ─────────────────────────────────
 
-  const handleSend = useCallback(async (content: string) => {
+  const handleSend = useCallback(async (content: string, files?: File[]) => {
     let conv = conversation;
     if (!conv) conv = createConversation();
 
@@ -134,8 +134,30 @@ export default function SuperAgentChat() {
       timestamp: userMsg.timestamp.toISOString(),
     });
 
+    let fullContent = '';
+    let thinking = '';
+    let agentId = 'chat';
+    let agentName = 'Orin';
+    let tokensUsed = 0;
+    let durationMs = 0;
+    const steps: ToolStep[] = [];
+
     try {
       abortRef.current = new AbortController();
+
+      // Convert files to base64 for backend
+      let attachments: Array<{ name: string; type: string; base64: string }> | undefined;
+      if (files && files.length > 0) {
+        attachments = await Promise.all(
+          files.map(async (f) => {
+            const buffer = await f.arrayBuffer();
+            const base64 = btoa(
+              new Uint8Array(buffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
+            );
+            return { name: f.name, type: f.type, base64 };
+          })
+        );
+      }
 
       const res = await fetch('/api/ai/chat-stream', {
         method: 'POST',
@@ -143,6 +165,7 @@ export default function SuperAgentChat() {
         body: JSON.stringify({
           message: content,
           history: conv.messages.slice(-10).map(m => ({ role: m.role, content: m.content })),
+          ...(attachments && { attachments }),
         }),
         signal: abortRef.current.signal,
       });
@@ -154,13 +177,6 @@ export default function SuperAgentChat() {
 
       const decoder = new TextDecoder();
       let buffer = '';
-      let fullContent = '';
-      let thinking = '';
-      let agentId = 'chat';
-      let agentName = 'Orin';
-      let tokensUsed = 0;
-      let durationMs = 0;
-      const steps: ToolStep[] = [];
 
       // ── Process a single SSE message ───────────
       const processMessage = (eventType: string, dataStr: string) => {
@@ -323,7 +339,8 @@ export default function SuperAgentChat() {
         });
       } else {
         updateAssistant(assistantId, {
-          content: 'Something went wrong. Please try again.',
+          content: fullContent || undefined,
+          error: 'Something went wrong. Please try again.',
           isStreaming: false,
         });
       }
@@ -334,6 +351,38 @@ export default function SuperAgentChat() {
   }, [conversation, user, createConversation, updateAssistant]);
 
   const handleStop = useCallback(() => abortRef.current?.abort(), []);
+
+  const handleRate = useCallback(async (messageId: string, rating: 'positive' | 'negative' | 'flagged', feedback?: string) => {
+    // Update message in state
+    setMessages(prev => prev.map(m =>
+      m.id === messageId ? { ...m, rating, ratingFeedback: feedback } : m
+    ));
+
+    // Persist to conversation
+    if (conversation) {
+      const msg = conversation.messages.find(m => m.id === messageId);
+      if (msg) {
+        msg.rating = rating;
+        msg.ratingFeedback = feedback;
+        await chatStore.save(conversation, user?.id ? 'cloud' : 'local');
+      }
+    }
+  }, [conversation, user]);
+
+  const handleRetry = useCallback((messageId: string) => {
+    // Find the last user message before the error
+    const idx = messages.findIndex(m => m.id === messageId);
+    if (idx === -1) return;
+    // Find the user message that triggered this assistant response
+    for (let i = idx - 1; i >= 0; i--) {
+      if (messages[i].role === 'user') {
+        // Remove the error message and resend
+        setMessages(prev => prev.filter(m => m.id !== messageId));
+        handleSend(messages[i].content);
+        return;
+      }
+    }
+  }, [messages, handleSend]);
 
   const handleNew = useCallback(() => {
     createConversation();
@@ -437,7 +486,7 @@ export default function SuperAgentChat() {
         ) : (
           <div className="py-4">
             {messages.map((msg) => (
-              <SuperMessage key={msg.id} message={msg} />
+              <SuperMessage key={msg.id} message={msg} onRate={handleRate} onRetry={handleRetry} />
             ))}
 
             {showScrollDown && (

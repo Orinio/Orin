@@ -7,6 +7,7 @@ import { runAgent } from '../lib/ai/core/agent-runner.js';
 import { getPromptForNoteType, parseCoachResponse } from '../lib/prompts.js';
 import { checkRateLimit } from '../lib/rate-limit.js';
 import { buildAgentContext } from '../lib/context.js';
+import { userRateLimitMiddleware } from '../middleware/rate-limit.js';
 
 export const coachRouter = Router();
 
@@ -17,7 +18,7 @@ const generateNoteSchema = z.object({
 });
 
 // POST /coach/generate — Generate a coach note
-coachRouter.post('/generate', async (req, res) => {
+coachRouter.post('/generate', userRateLimitMiddleware('coach-generate'), async (req, res) => {
   try {
     const userId = (req as any).user?.id;
     if (!userId) {

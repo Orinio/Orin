@@ -6,12 +6,13 @@ import {
   generateEmbeddings, 
   cosineSimilarity 
 } from '../lib/ai/services/embedding.service.js';
+import { userRateLimitMiddleware } from '../middleware/rate-limit.js';
 export const embeddingRouter = Router();
 
 /**
  * POST /ai/embeddings/generate - Generate embedding for text
  */
-embeddingRouter.post('/generate', async (req, res) => {
+embeddingRouter.post('/generate', userRateLimitMiddleware('ai-embeddings'), async (req, res) => {
   try {
     if (!isNvidiaConfigured()) {
       res.status(503).json({ error: { code: 'AI_NOT_CONFIGURED', message: 'AI service not available' } });
@@ -44,7 +45,7 @@ embeddingRouter.post('/generate', async (req, res) => {
 /**
  * POST /ai/embeddings/batch - Generate embeddings for multiple texts
  */
-embeddingRouter.post('/batch', async (req, res) => {
+embeddingRouter.post('/batch', userRateLimitMiddleware('ai-embeddings-batch'), async (req, res) => {
   try {
     if (!isNvidiaConfigured()) {
       res.status(503).json({ error: { code: 'AI_NOT_CONFIGURED', message: 'AI service not available' } });
@@ -82,7 +83,7 @@ embeddingRouter.post('/batch', async (req, res) => {
 /**
  * POST /ai/embeddings/similarity - Calculate similarity between texts
  */
-embeddingRouter.post('/similarity', async (req, res) => {
+embeddingRouter.post('/similarity', userRateLimitMiddleware('ai-embeddings-similarity'), async (req, res) => {
   try {
     if (!isNvidiaConfigured()) {
       res.status(503).json({ error: { code: 'AI_NOT_CONFIGURED', message: 'AI service not available' } });
@@ -119,7 +120,7 @@ embeddingRouter.post('/similarity', async (req, res) => {
 /**
  * POST /ai/embeddings/skills/extract - Extract skills and generate embeddings
  */
-embeddingRouter.post('/skills/extract', async (req, res) => {
+embeddingRouter.post('/skills/extract', userRateLimitMiddleware('ai-embeddings-extract'), async (req, res) => {
   try {
     if (!isNvidiaConfigured()) {
       res.status(503).json({ error: { code: 'AI_NOT_CONFIGURED', message: 'AI service not available' } });

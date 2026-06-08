@@ -19,6 +19,8 @@ const serif = Lora({
 });
 
 export const metadata: Metadata = {
+  viewport: "width=device-width, initial-scale=1",
+
   title: "ORIN - Turn Work Into Career Proof",
   description:
     "Transform your scattered work into verified career proof. AI coach, proof cards, and real opportunities.",
@@ -44,7 +46,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${sans.variable} ${serif.variable} h-full scroll-smooth`}>
-      <body className="flex min-h-screen flex-col antialiased bg-[var(--color-paper)] text-[var(--color-ink)]">
+      <body className="flex min-h-screen flex-col antialiased bg-[var(--color-paper)] text-[var(--color-ink)] overflow-x-hidden">
         <a href="#main-content" className="skip-link">Skip to main content</a>
         <QueryProvider>
           <AuthProvider>

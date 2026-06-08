@@ -136,6 +136,15 @@ export default function Navigation() {
     setMobileOpen(false);
   }, [pathname]);
 
+  // Prevent background scrolling when mobile menu is open
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+  }, [mobileOpen]);
+
   const unreadCount = notifications.filter((n) => !n.readAt).length;
 
   const markAllRead = async () => {

@@ -7,8 +7,8 @@ import { getRequestId, getUserId } from '../../request-context.js';
 import { sanitizeAnswer } from './utils.js';
 
 const MAX_INPUT_LENGTH = 2000;
-const MAX_TOOL_RESULT_LENGTH = 1000;
-const DEFAULT_TOOL_TIMEOUT_MS = 30000;
+const MAX_TOOL_RESULT_LENGTH = 1500;
+const DEFAULT_TOOL_TIMEOUT_MS = 20000;
 
 function buildContextualQuery(query: string, context: AgentContext): string {
   const profileInfo = context.userProfile

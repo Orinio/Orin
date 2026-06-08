@@ -1,23 +1,16 @@
 /**
  * Orin AI - Agent Orchestrator
- * Manages multiple AI agents working together with memory, tool calling, and streaming
+ * Manages multiple AI agents working together with memory, native tool calling, and streaming
  */
-import type { ToolResult } from '../core/types.js';
-export interface Agent {
-    id: string;
-    name: string;
-    role: string;
-    model: string;
-    systemPrompt: string;
-    tools: string[];
-    temperature: number;
-    maxTokens: number;
-    maxIterations: number;
-    timeoutMs: number;
-}
+import type { ToolCallResponse } from '../core/nvidia.js';
+import type { ToolResult, AgentDefinition } from '../core/types.js';
+export type Agent = AgentDefinition;
 export interface AgentMessage {
-    role: 'system' | 'user' | 'assistant';
-    content: string;
+    role: 'system' | 'user' | 'assistant' | 'tool';
+    content: string | null;
+    tool_calls?: ToolCallResponse[];
+    tool_call_id?: string;
+    name?: string;
 }
 export interface AgentTask {
     id: string;
@@ -59,6 +52,15 @@ export declare class AgentOrchestrator {
     private memoryManager;
     private sessionId;
     constructor(userId?: string);
+    /**
+     * Classify user intent using the router agent (cheap nano model).
+     * Returns the agent ID to route to.
+     */
+    routeQuery(query: string): Promise<{
+        agentId: string;
+        category: string;
+        confidence: number;
+    }>;
     runAgent(agentId: string, query: string, context?: {
         userId?: string;
         conversationHistory?: AgentMessage[];
@@ -88,7 +90,7 @@ export declare function createOrchestrator(userId?: string): AgentOrchestrator;
 declare const _default: {
     AgentOrchestrator: typeof AgentOrchestrator;
     createOrchestrator: typeof createOrchestrator;
-    AGENTS: Record<string, Agent>;
+    AGENTS: Record<string, AgentDefinition>;
 };
 export default _default;
 //# sourceMappingURL=agent-orchestrator.d.ts.map

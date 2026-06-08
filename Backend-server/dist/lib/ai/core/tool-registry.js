@@ -7,6 +7,8 @@ exports.getToolsByNames = getToolsByNames;
 exports.getToolsByCategory = getToolsByCategory;
 exports.getAllTools = getAllTools;
 exports.getToolDescriptions = getToolDescriptions;
+exports.toolToOpenAIFormat = toolToOpenAIFormat;
+exports.toolsToOpenAITools = toolsToOpenAITools;
 const toolRegistry = new Map();
 function registerTool(tool) {
     toolRegistry.set(tool.name, tool);
@@ -33,5 +35,25 @@ function getToolDescriptions(toolNames) {
         ? toolNames.map(n => toolRegistry.get(n)).filter((t) => !!t)
         : Array.from(toolRegistry.values());
     return tools.map(t => `- ${t.name}(${Object.entries(t.parameters.properties).map(([k, v]) => `${k}: ${v.type}`).join(', ')}): ${t.description}`).join('\n');
+}
+function toolToOpenAIFormat(tool) {
+    return {
+        type: 'function',
+        function: {
+            name: tool.name,
+            description: tool.description,
+            parameters: {
+                type: 'object',
+                properties: tool.parameters.properties,
+                required: tool.parameters.required,
+            },
+        },
+    };
+}
+function toolsToOpenAITools(toolNames) {
+    return toolNames
+        .map(name => toolRegistry.get(name))
+        .filter((t) => !!t)
+        .map(toolToOpenAIFormat);
 }
 //# sourceMappingURL=tool-registry.js.map

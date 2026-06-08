@@ -11,7 +11,7 @@ const nvidia_js_1 = require("../lib/ai/core/nvidia.js");
 const agent_orchestrator_js_1 = require("../lib/ai/orchestrator/agent-orchestrator.js");
 const memory_manager_js_1 = require("../lib/ai/memory/memory-manager.js");
 const tool_registry_js_1 = require("../lib/ai/core/tool-registry.js");
-const auth_js_1 = require("../middleware/auth.js");
+const rate_limit_js_1 = require("../middleware/rate-limit.js");
 exports.agentRouter = (0, express_1.Router)();
 // ============================================================
 // Agent Management Routes
@@ -19,7 +19,7 @@ exports.agentRouter = (0, express_1.Router)();
 /**
  * GET /ai/agents - List all available agents
  */
-exports.agentRouter.get('/agents', auth_js_1.authMiddleware, async (_req, res) => {
+exports.agentRouter.get('/agents', async (_req, res) => {
     try {
         const agents = Object.values(agent_orchestrator_js_1.AGENTS).map(agent => ({
             id: agent.id,
@@ -39,7 +39,7 @@ exports.agentRouter.get('/agents', auth_js_1.authMiddleware, async (_req, res) =
 /**
  * GET /ai/agents/:id - Get agent details
  */
-exports.agentRouter.get('/agents/:id', auth_js_1.authMiddleware, async (req, res) => {
+exports.agentRouter.get('/agents/:id', async (req, res) => {
     try {
         const agent = agent_orchestrator_js_1.AGENTS[req.params.id];
         if (!agent) {
@@ -72,7 +72,7 @@ exports.agentRouter.get('/agents/:id', auth_js_1.authMiddleware, async (req, res
  * POST /ai/agents/chat - Run the chat agent
  * (Must be before /agents/:id to avoid matching "chat" as :id)
  */
-exports.agentRouter.post('/agents/chat', auth_js_1.authMiddleware, async (req, res) => {
+exports.agentRouter.post('/agents/chat', (0, rate_limit_js_1.userRateLimitMiddleware)('ai-agents-chat'), async (req, res) => {
     try {
         if (!(0, nvidia_js_1.isNvidiaConfigured)()) {
             res.status(503).json({ error: { code: 'AI_NOT_CONFIGURED', message: 'AI service not available' } });
@@ -97,52 +97,95 @@ exports.agentRouter.post('/agents/chat', auth_js_1.authMiddleware, async (req, r
     }
 });
 /**
- * POST /ai/agents/chat/stream - Stream chat responses
+ * POST /ai/agents/chat/stream - Stream chat responses with real SSE streaming
  * (Must be before /agents/:id to avoid matching "chat" as :id)
  */
-exports.agentRouter.post('/agents/chat/stream', auth_js_1.authMiddleware, async (req, res) => {
+exports.agentRouter.post('/agents/chat/stream', (0, rate_limit_js_1.userRateLimitMiddleware)('ai-agents-stream'), async (req, res) => {
     try {
         if (!(0, nvidia_js_1.isNvidiaConfigured)()) {
             res.status(503).json({ error: { code: 'AI_NOT_CONFIGURED', message: 'AI service not available' } });
             return;
         }
-        const { query } = req.body;
+        const { query, conversationHistory, attachments } = req.body;
         const userId = req.user?.id;
         if (!query) {
             res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'Query is required' } });
             return;
+        }
+        // Analyze image attachments if present
+        let enrichedQuery = query;
+        if (attachments && Array.isArray(attachments) && attachments.length > 0) {
+            const imageAttachments = attachments.filter((a) => a.type?.startsWith('image/'));
+            if (imageAttachments.length > 0) {
+                try {
+                    const { analyzeImage } = await import('../lib/ai/services/vision.service.js');
+                    const analyses = await Promise.all(imageAttachments.map(async (att) => {
+                        try {
+                            const result = await analyzeImage(att.base64, `Analyze this image in context of the user's question: ${query}`);
+                            return `[Image: ${att.name}] ${result}`;
+                        }
+                        catch {
+                            return `[Image: ${att.name}] (unable to analyze)`;
+                        }
+                    }));
+                    enrichedQuery = `${query}\n\nAttached images:\n${analyses.join('\n')}`;
+                }
+                catch {
+                    // Vision service unavailable, continue without image analysis
+                }
+            }
         }
         // Set up SSE
         res.setHeader('Content-Type', 'text/event-stream');
         res.setHeader('Cache-Control', 'no-cache');
         res.setHeader('Connection', 'keep-alive');
         res.setHeader('X-Accel-Buffering', 'no');
+        res.flushHeaders();
         const sendEvent = (event, data) => {
             res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
         };
+        // Handle client disconnect
+        let aborted = false;
+        req.on('close', () => { aborted = true; });
         // Send initial event
         sendEvent('start', { agentId: 'chat', query });
         try {
             const orchestrator = (0, agent_orchestrator_js_1.createOrchestrator)(userId);
-            const result = await orchestrator.runAgent('chat', query, { userId });
-            // Send result
-            sendEvent('complete', result);
+            // Auto-route: classify intent and pick the best agent (use original query for classification)
+            let agentId = 'chat';
+            try {
+                const routing = await orchestrator.routeQuery(query);
+                agentId = routing.agentId;
+                sendEvent('progress', { routing: { category: routing.category, confidence: routing.confidence, agentId } });
+            }
+            catch {
+                // Fallback to chat if routing fails
+            }
+            await orchestrator.runAgentStream(agentId, enrichedQuery, { userId, conversationHistory }, (event, data) => {
+                if (!aborted)
+                    sendEvent(event, data);
+            });
         }
         catch (error) {
-            sendEvent('error', { message: 'Failed to process request' });
+            if (!aborted)
+                sendEvent('error', { message: 'Failed to process request' });
         }
-        res.write('event: end\ndata: {}\n\n');
-        res.end();
+        if (!aborted) {
+            res.write('event: end\ndata: {}\n\n');
+            res.end();
+        }
     }
     catch (error) {
         logger_js_1.logger.error({ error }, 'Failed to stream chat');
-        res.status(500).json({ error: { code: 'AGENT_ERROR', message: 'Failed to stream chat' } });
+        if (!res.headersSent) {
+            res.status(500).json({ error: { code: 'AGENT_ERROR', message: 'Failed to stream chat' } });
+        }
     }
 });
 /**
  * POST /ai/agents/:id/run - Run a single agent
  */
-exports.agentRouter.post('/agents/:id/run', auth_js_1.authMiddleware, async (req, res) => {
+exports.agentRouter.post('/agents/:id/run', (0, rate_limit_js_1.userRateLimitMiddleware)('ai-agent-run'), async (req, res) => {
     try {
         if (!(0, nvidia_js_1.isNvidiaConfigured)()) {
             res.status(503).json({ error: { code: 'AI_NOT_CONFIGURED', message: 'AI service not available' } });
@@ -172,7 +215,7 @@ exports.agentRouter.post('/agents/:id/run', auth_js_1.authMiddleware, async (req
 /**
  * POST /ai/workflows/career-analysis - Run career analysis workflow
  */
-exports.agentRouter.post('/workflows/career-analysis', auth_js_1.authMiddleware, async (req, res) => {
+exports.agentRouter.post('/workflows/career-analysis', (0, rate_limit_js_1.userRateLimitMiddleware)('ai-workflow-career'), async (req, res) => {
     try {
         if (!(0, nvidia_js_1.isNvidiaConfigured)()) {
             res.status(503).json({ error: { code: 'AI_NOT_CONFIGURED', message: 'AI service not available' } });
@@ -201,7 +244,7 @@ exports.agentRouter.post('/workflows/career-analysis', auth_js_1.authMiddleware,
 /**
  * POST /ai/workflows/verify-proof - Run proof verification workflow
  */
-exports.agentRouter.post('/workflows/verify-proof', auth_js_1.authMiddleware, async (req, res) => {
+exports.agentRouter.post('/workflows/verify-proof', (0, rate_limit_js_1.userRateLimitMiddleware)('ai-workflow-verify'), async (req, res) => {
     try {
         if (!(0, nvidia_js_1.isNvidiaConfigured)()) {
             res.status(503).json({ error: { code: 'AI_NOT_CONFIGURED', message: 'AI service not available' } });
@@ -232,7 +275,7 @@ exports.agentRouter.post('/workflows/verify-proof', auth_js_1.authMiddleware, as
 /**
  * GET /ai/tools - List all available tools
  */
-exports.agentRouter.get('/tools', auth_js_1.authMiddleware, async (_req, res) => {
+exports.agentRouter.get('/tools', async (_req, res) => {
     try {
         const tools = (0, tool_registry_js_1.getAllTools)().map(tool => ({
             name: tool.name,
@@ -250,7 +293,7 @@ exports.agentRouter.get('/tools', auth_js_1.authMiddleware, async (_req, res) =>
 /**
  * GET /ai/tools/:category - Get tools by category
  */
-exports.agentRouter.get('/tools/:category', auth_js_1.authMiddleware, async (req, res) => {
+exports.agentRouter.get('/tools/:category', async (req, res) => {
     try {
         const tools = (0, tool_registry_js_1.getToolsByCategory)(req.params.category).map(tool => ({
             name: tool.name,
@@ -271,7 +314,7 @@ exports.agentRouter.get('/tools/:category', auth_js_1.authMiddleware, async (req
 /**
  * POST /ai/memory/save - Save to memory
  */
-exports.agentRouter.post('/memory/save', auth_js_1.authMiddleware, async (req, res) => {
+exports.agentRouter.post('/memory/save', async (req, res) => {
     try {
         const userId = req.user?.id;
         if (!userId) {
@@ -307,7 +350,7 @@ exports.agentRouter.post('/memory/save', auth_js_1.authMiddleware, async (req, r
 /**
  * GET /ai/memory/search - Search memories
  */
-exports.agentRouter.get('/memory/search', auth_js_1.authMiddleware, async (req, res) => {
+exports.agentRouter.get('/memory/search', async (req, res) => {
     try {
         const userId = req.user?.id;
         if (!userId) {
@@ -327,7 +370,7 @@ exports.agentRouter.get('/memory/search', auth_js_1.authMiddleware, async (req, 
 /**
  * GET /ai/memory/preferences - Get user preferences
  */
-exports.agentRouter.get('/memory/preferences', auth_js_1.authMiddleware, async (req, res) => {
+exports.agentRouter.get('/memory/preferences', async (req, res) => {
     try {
         const userId = req.user?.id;
         if (!userId) {
@@ -346,7 +389,7 @@ exports.agentRouter.get('/memory/preferences', auth_js_1.authMiddleware, async (
 /**
  * GET /ai/memory/skills - Get user skills from memory
  */
-exports.agentRouter.get('/memory/skills', auth_js_1.authMiddleware, async (req, res) => {
+exports.agentRouter.get('/memory/skills', async (req, res) => {
     try {
         const userId = req.user?.id;
         if (!userId) {
@@ -365,7 +408,7 @@ exports.agentRouter.get('/memory/skills', auth_js_1.authMiddleware, async (req, 
 /**
  * GET /ai/memory/goals - Get user goals
  */
-exports.agentRouter.get('/memory/goals', auth_js_1.authMiddleware, async (req, res) => {
+exports.agentRouter.get('/memory/goals', async (req, res) => {
     try {
         const userId = req.user?.id;
         if (!userId) {

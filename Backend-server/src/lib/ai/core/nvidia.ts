@@ -4,8 +4,9 @@ import { getRequestId } from '../../request-context.js';
 
 const NVIDIA_BASE_URL = 'https://integrate.api.nvidia.com/v1';
 const NVIDIA_API_KEY = process.env.NVIDIA_API_KEY;
-const MAX_RETRIES = 2;
-const RETRY_BASE_MS = 2000;
+const MAX_RETRIES = 3;
+const RETRY_BASE_MS = 1500;
+const API_TIMEOUT_MS = 45000; // 45s for API calls (was 30s — too tight for tool-calling models)
 
 // ---- Model Fallback Chain ----
 // When primary model is unavailable (rate limited, overloaded), try fallbacks.
@@ -59,6 +60,7 @@ export interface ChatCompletionOptions {
   stream?: boolean;
   tools?: ToolDefinition[];
   tool_choice?: 'auto' | 'none' | { type: 'function'; function: { name: string } };
+  timeoutMs?: number; // Per-call timeout override
 }
 
 export interface ChatCompletionResponse {
@@ -133,11 +135,16 @@ async function fetchWithRetry(
       return response;
     } catch (err) {
       if (err instanceof AppError && err.code === 'RATE_LIMITED') throw err;
+      // Retry on timeout, network, and server errors
+      if (err instanceof Error && (err.name === 'TimeoutError' || err.name === 'AbortError' || err.message?.includes('timeout'))) {
+        lastError = new AppError('EXTERNAL_SERVICE_ERROR', `NVIDIA NIM timeout: ${err.message}`, 504);
+        continue;
+      }
       if (err instanceof AppError && err.code === 'EXTERNAL_SERVICE_ERROR') {
         lastError = err;
         continue; // Retry server errors
       }
-      throw err; // Throw network/timeout errors immediately
+      throw err; // Throw unexpected errors immediately
     }
   }
 
@@ -171,7 +178,7 @@ export async function chatCompletion(
             stream: options.stream ?? false,
             ...(options.tools && options.tools.length > 0 ? { tools: options.tools, tool_choice: options.tool_choice ?? 'auto' } : {}),
           }),
-          signal: AbortSignal.timeout(30000),
+          signal: AbortSignal.timeout(options.timeoutMs ?? API_TIMEOUT_MS),
         },
       );
 
@@ -229,7 +236,7 @@ export async function* chatCompletionStream(
             max_tokens: options.max_tokens ?? 500,
             stream: true,
           }),
-          signal: AbortSignal.timeout(30000),
+          signal: AbortSignal.timeout(options.timeoutMs ?? API_TIMEOUT_MS),
         },
       );
 

@@ -5,26 +5,34 @@ const models_js_1 = require("../core/models.js");
 exports.skillAnalysisAgent = {
     id: 'skill-analysis',
     name: 'Skill Analysis Agent',
-    description: 'Extracts, categorizes, and scores technical skills',
-    model: models_js_1.MODELS.fast.chat, // qwen/qwen3.5-397b-a17b - Fast with good analysis
+    description: 'Deep skill extraction, categorization, and market demand analysis',
+    role: 'skill_analyst',
+    model: models_js_1.MODELS.fast.chat,
     temperature: 0.3,
-    maxTokens: 400,
-    maxIterations: 2,
-    timeoutMs: 30000,
-    tools: ['extract_skills', 'generate_embeddings', 'detect_language'],
-    systemPrompt: `You are Orin Skill Analyst. Extract, categorize, and score technical skills from text and portfolios.
+    maxTokens: 1500,
+    maxIterations: 4,
+    timeoutMs: 90000,
+    tools: ['extract_skills', 'detect_language', 'get_user_portfolio_summary', 'fetch_user_proofs', 'web_search', 'fetch_webpage'],
+    systemPrompt: `You are Orin Skill Analyst — an autonomous skill intelligence agent that extracts, categorizes, and analyzes technical skills from real data.
 
-Use extract_skills to identify skills from descriptions.
-Use generate_embeddings to create skill vectors for similarity matching.
-Use detect_language to identify programming languages in code.
+ANALYSIS WORKFLOW:
+1. Call get_user_portfolio_summary to get the user's real skills and proofs
+2. For each proof/skill, analyze depth and recency
+3. Cross-reference with market demand using web_search if needed
+4. Produce a structured skill intelligence report
 
-For each skill found:
-1. Categorize it (programming, framework, tool, soft skill)
-2. Assign confidence level (high/medium/low)
-3. Count occurrences for frequency analysis
+REPORT STRUCTURE:
+1. Technical Skills: Languages, frameworks, tools — ranked by proficiency evidence
+2. Skill Depth: Based on proof count, verification rate, and complexity
+3. Market Demand: Current demand for each skill (use web_search)
+4. Gaps: Missing high-demand skills relative to their career goals
+5. Recommendations: Priority-ordered skill development path
 
-Respond with valid JSON:
-{"thinking":"analysis","answer":"structured skill analysis","skills":[{"name":"...","category":"...","confidence":"high"}]}`,
-    outputFormat: 'json',
+RULES:
+- Use tools to extract and analyze skills — never fabricate skill data
+- Distinguish between claimed skills (user-added) and verified skills (extracted from proofs)
+- Consider skill recency — a 2-year-old React project matters less than a recent one
+- Never reveal your internal reasoning
+- Do NOT output JSON — respond in structured markdown`,
 };
 //# sourceMappingURL=skill-analysis.agent.js.map

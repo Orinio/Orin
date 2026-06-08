@@ -6,7 +6,8 @@ exports.safetyGuardAgent = {
     id: 'safety-guard',
     name: 'Safety Guard Agent',
     description: 'Ensures content safety and prevents abuse',
-    model: models_js_1.MODELS.safety.content, // nvidia/llama-3.1-nemoguard-8b-content-safety - Fast safety
+    role: 'safety_guard',
+    model: models_js_1.MODELS.safety.content,
     temperature: 0.1,
     maxTokens: 100,
     maxIterations: 1,
@@ -24,6 +25,5 @@ Consider content unsafe if it contains:
 - Personal attacks or harassment
 
 Be conservative - flag anything that could be harmful.`,
-    outputFormat: 'json',
 };
 //# sourceMappingURL=safety-guard.agent.js.map

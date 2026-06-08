@@ -10,6 +10,7 @@ const agent_runner_js_1 = require("../lib/ai/core/agent-runner.js");
 const prompts_js_1 = require("../lib/prompts.js");
 const rate_limit_js_1 = require("../lib/rate-limit.js");
 const context_js_1 = require("../lib/context.js");
+const rate_limit_js_2 = require("../middleware/rate-limit.js");
 exports.coachRouter = (0, express_1.Router)();
 const generateNoteSchema = zod_1.z.object({
     noteType: zod_1.z.enum(['daily', 'weekly', 'milestone', 'ad_hoc']),
@@ -17,7 +18,7 @@ const generateNoteSchema = zod_1.z.object({
     userQuery: zod_1.z.string().optional(),
 });
 // POST /coach/generate — Generate a coach note
-exports.coachRouter.post('/generate', async (req, res) => {
+exports.coachRouter.post('/generate', (0, rate_limit_js_2.userRateLimitMiddleware)('coach-generate'), async (req, res) => {
     try {
         const userId = req.user?.id;
         if (!userId) {

@@ -2,7 +2,7 @@ export interface Tool {
   name: string;
   description: string;
   category: 'verification' | 'search' | 'analysis' | 'safety' | 'data' | 'learning' | 'career' | 'code' | 'web' | 'memory';
-  timeoutMs?: number;
+  timeoutMs?: number; // Per-tool timeout override (default: 20s)
   parameters: {
     type: 'object';
     properties: Record<string, { type: string; description: string; enum?: string[] }>;

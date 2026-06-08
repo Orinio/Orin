@@ -4,14 +4,17 @@
  * Uses NVIDIA NeMo Guard models for content moderation
  */
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.sanitizeResponse = void 0;
 exports.checkContentSafety = checkContentSafety;
 exports.detectPII = detectPII;
 exports.checkTopic = checkTopic;
 exports.sanitizeInput = sanitizeInput;
-exports.sanitizeResponse = sanitizeResponse;
 exports.fullSafetyCheck = fullSafetyCheck;
 const models_js_1 = require("../core/models.js");
 const logger_js_1 = require("../../logger.js");
+const utils_js_1 = require("../core/utils.js");
+// Re-export for backward compatibility
+exports.sanitizeResponse = utils_js_1.sanitizeAnswer;
 /**
  * Check content safety using NeMo Guard
  */
@@ -241,25 +244,6 @@ function sanitizeInput(input) {
     return sanitized;
 }
 /**
- * Sanitize AI response before sending to user
- */
-function sanitizeResponse(response) {
-    // Remove any API keys or secrets that might have leaked
-    let sanitized = response;
-    // Patterns to redact
-    const patterns = [
-        /api[_-]?key[:\s]*[A-Za-z0-9_-]{20,}/gi,
-        /secret[:\s]*[A-Za-z0-9_-]{20,}/gi,
-        /password[:\s]+\S+/gi,
-        /Bearer\s+[A-Za-z0-9._-]{20,}/gi,
-        /nvapi-[A-Za-z0-9_-]{20,}/gi
-    ];
-    for (const pattern of patterns) {
-        sanitized = sanitized.replace(pattern, '[REDACTED]');
-    }
-    return sanitized;
-}
-/**
  * Full safety pipeline - check input and output
  */
 async function fullSafetyCheck(userInput, aiResponse) {
@@ -273,7 +257,7 @@ async function fullSafetyCheck(userInput, aiResponse) {
     let outputSafety;
     let sanitizedOutput;
     if (aiResponse) {
-        sanitizedOutput = sanitizeResponse(aiResponse);
+        sanitizedOutput = (0, exports.sanitizeResponse)(aiResponse);
         outputSafety = await checkContentSafety(sanitizedInput, sanitizedOutput);
     }
     return {

@@ -7,8 +7,9 @@ import { opportunityMatcherAgent } from './opportunity-matcher.agent.js';
 import { learningPathAgent } from './learning-path.agent.js';
 import { portfolioScorerAgent } from './portfolio-scorer.agent.js';
 import { safetyGuardAgent } from './safety-guard.agent.js';
+import { routerAgent } from './router.agent.js';
 export declare function getAgent(id: string): AgentDefinition | undefined;
 export declare function getAllAgents(): AgentDefinition[];
 export declare function getAgentIds(): string[];
-export { verificationAgent, coachAgent, chatAgent, skillAnalysisAgent, opportunityMatcherAgent, learningPathAgent, portfolioScorerAgent, safetyGuardAgent, };
+export { routerAgent, verificationAgent, coachAgent, chatAgent, skillAnalysisAgent, opportunityMatcherAgent, learningPathAgent, portfolioScorerAgent, safetyGuardAgent, };
 //# sourceMappingURL=index.d.ts.map

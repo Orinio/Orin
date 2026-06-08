@@ -1,6 +1,6 @@
 /**
  * Orin AI - Memory System
- * Persistent memory for AI agents across conversations
+ * Persistent memory for AI agents with pgvector semantic search
  */
 export interface MemoryEntry {
     id: string;
@@ -9,6 +9,7 @@ export interface MemoryEntry {
     content: string;
     metadata?: Record<string, any>;
     importance: number;
+    similarity?: number;
     createdAt: string;
     updatedAt: string;
 }
@@ -32,7 +33,9 @@ export interface UserPreferences {
 }
 export declare class MemoryManager {
     private userId;
+    private contextCache;
     constructor(userId: string);
+    private embedText;
     saveConversation(agentId: string, messages: Array<{
         role: string;
         content: string;
@@ -66,6 +69,7 @@ export declare class MemoryManager {
         metadata?: any;
     }>>;
     searchMemories(query: string, limit?: number): Promise<MemoryEntry[]>;
+    private searchMemoriesKeyword;
     buildAgentContext(): Promise<string>;
 }
 export declare function createMemoryManager(userId: string): MemoryManager;

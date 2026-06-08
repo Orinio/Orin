@@ -4,7 +4,7 @@
  * Selected models from NVIDIA NIM competition testing
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AGENT_MODELS = exports.MODEL_METADATA = exports.MODELS = exports.NVIDIA_CONFIG = void 0;
+exports.MODEL_METADATA = exports.MODELS = exports.NVIDIA_CONFIG = void 0;
 exports.getModelForUseCase = getModelForUseCase;
 exports.getAllModels = getAllModels;
 exports.supportsToolCalling = supportsToolCalling;
@@ -125,19 +125,6 @@ exports.MODEL_METADATA = {
         speed: 'fastest',
         description: 'PII detection and extraction'
     }
-};
-// ============================================================
-// Agent Model Assignments
-// ============================================================
-exports.AGENT_MODELS = {
-    chat: exports.MODELS.primary.chat,
-    coach: exports.MODELS.primary.coach,
-    verification: exports.MODELS.fast.nano,
-    'skill-analysis': exports.MODELS.fast.chat,
-    'opportunity-matcher': exports.MODELS.toolCalling.primary,
-    'learning-path': exports.MODELS.primary.learning,
-    'portfolio-scorer': exports.MODELS.fast.chat,
-    'safety-guard': exports.MODELS.safety.content,
 };
 // ============================================================
 // Helper Functions

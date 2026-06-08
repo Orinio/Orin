@@ -17,8 +17,8 @@ import { getRequestId } from '../../request-context.js';
 import type { ToolResult, AgentDefinition } from '../core/types.js';
 
 const MAX_INPUT_LENGTH = 2000;
-const MAX_TOOL_RESULT_LENGTH = 1000;
-const DEFAULT_TOOL_TIMEOUT_MS = 30000;
+const MAX_TOOL_RESULT_LENGTH = 1500;
+const DEFAULT_TOOL_TIMEOUT_MS = 20000;
 
 // ============================================================
 // Intent → Agent routing map
@@ -265,8 +265,14 @@ export class AgentOrchestrator {
             logger.warn({ toolName, rawArgs: toolCall.function.arguments }, 'Failed to parse tool arguments');
           }
 
-          // Execute the tool with timeout
-          const toolTimeout = (tool as any).timeoutMs || DEFAULT_TOOL_TIMEOUT_MS;
+          // Execute the tool with budget-aware timeout
+          // Budget = min(tool timeout, remaining agent time - 15s buffer for next model call)
+          const elapsed = Date.now() - startTime;
+          const remainingBudget = agent.timeoutMs - elapsed - 15000; // 15s buffer for model response
+          const toolTimeout = Math.min(
+            (tool as any).timeoutMs || DEFAULT_TOOL_TIMEOUT_MS,
+            Math.max(remainingBudget, 5000) // At least 5s per tool
+          );
           let result: ToolResult;
           try {
             result = await Promise.race([
@@ -508,7 +514,13 @@ export class AgentOrchestrator {
             });
 
             const toolStartTime = Date.now();
-            const toolTimeout = (tool as any).timeoutMs || DEFAULT_TOOL_TIMEOUT_MS;
+            // Budget-aware timeout: min(tool timeout, remaining agent time - 15s buffer)
+            const elapsed = Date.now() - agentStartTime;
+            const remainingBudget = agent.timeoutMs - elapsed - 15000;
+            const toolTimeout = Math.min(
+              (tool as any).timeoutMs || DEFAULT_TOOL_TIMEOUT_MS,
+              Math.max(remainingBudget, 5000) // At least 5s per tool
+            );
 
             let result: ToolResult;
             try {

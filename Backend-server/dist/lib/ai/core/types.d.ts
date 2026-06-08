@@ -2,6 +2,7 @@ export interface Tool {
     name: string;
     description: string;
     category: 'verification' | 'search' | 'analysis' | 'safety' | 'data' | 'learning' | 'career' | 'code' | 'web' | 'memory';
+    timeoutMs?: number;
     parameters: {
         type: 'object';
         properties: Record<string, {
@@ -31,15 +32,11 @@ export interface ToolCall {
     name: string;
     arguments: Record<string, any>;
 }
-export interface AgentResponse {
-    thinking?: string;
-    tool_call?: ToolCall;
-    answer?: string;
-}
 export interface AgentDefinition {
     id: string;
     name: string;
     description: string;
+    role: string;
     model: string;
     temperature: number;
     maxTokens: number;
@@ -47,7 +44,6 @@ export interface AgentDefinition {
     timeoutMs: number;
     tools: string[];
     systemPrompt: string;
-    outputFormat: 'json' | 'text' | 'streaming';
 }
 export interface AgentContext {
     userId: string;

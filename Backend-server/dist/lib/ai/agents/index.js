@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.safetyGuardAgent = exports.portfolioScorerAgent = exports.learningPathAgent = exports.opportunityMatcherAgent = exports.skillAnalysisAgent = exports.chatAgent = exports.coachAgent = exports.verificationAgent = void 0;
+exports.safetyGuardAgent = exports.portfolioScorerAgent = exports.learningPathAgent = exports.opportunityMatcherAgent = exports.skillAnalysisAgent = exports.chatAgent = exports.coachAgent = exports.verificationAgent = exports.routerAgent = void 0;
 exports.getAgent = getAgent;
 exports.getAllAgents = getAllAgents;
 exports.getAgentIds = getAgentIds;
@@ -20,8 +20,11 @@ const portfolio_scorer_agent_js_1 = require("./portfolio-scorer.agent.js");
 Object.defineProperty(exports, "portfolioScorerAgent", { enumerable: true, get: function () { return portfolio_scorer_agent_js_1.portfolioScorerAgent; } });
 const safety_guard_agent_js_1 = require("./safety-guard.agent.js");
 Object.defineProperty(exports, "safetyGuardAgent", { enumerable: true, get: function () { return safety_guard_agent_js_1.safetyGuardAgent; } });
+const router_agent_js_1 = require("./router.agent.js");
+Object.defineProperty(exports, "routerAgent", { enumerable: true, get: function () { return router_agent_js_1.routerAgent; } });
 const agentRegistry = new Map();
 const allAgents = [
+    router_agent_js_1.routerAgent,
     verification_agent_js_1.verificationAgent,
     coach_agent_js_1.coachAgent,
     chat_agent_js_1.chatAgent,

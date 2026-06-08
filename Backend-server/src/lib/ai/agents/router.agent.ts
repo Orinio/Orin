@@ -15,7 +15,7 @@ export const routerAgent: AgentDefinition = {
   temperature: 0.1,
   maxTokens: 100,
   maxIterations: 1,
-  timeoutMs: 10000,
+  timeoutMs: 15000,
   tools: [],
   systemPrompt: `You are an intent classifier. Your ONLY job is to classify the user's message into ONE of these categories:
 

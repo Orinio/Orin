@@ -11,6 +11,8 @@ const rate_limit_js_1 = require("../lib/rate-limit.js");
 const validations_js_1 = require("../lib/validations.js");
 const context_js_1 = require("../lib/context.js");
 const nvidia_js_1 = require("../lib/ai/core/nvidia.js");
+const rate_limit_js_2 = require("../middleware/rate-limit.js");
+const validate_js_1 = require("../middleware/validate.js");
 exports.aiRouter = (0, express_1.Router)();
 // Simple in-memory cache for opportunities (shared across users, rarely changes)
 const opportunityCache = { data: null, expiresAt: 0 };
@@ -65,24 +67,14 @@ function getFallbackResponse(operation, context) {
     }
 }
 // POST /ai/verify — Verify a proof
-exports.aiRouter.post('/verify', async (req, res) => {
+exports.aiRouter.post('/verify', (0, rate_limit_js_2.userRateLimitMiddleware)('ai-verify'), (0, validate_js_1.validate)(validations_js_1.verifyRequestSchema), async (req, res) => {
     try {
         const userId = req.user?.id;
         if (!userId) {
             res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } });
             return;
         }
-        const rateLimitResult = await (0, rate_limit_js_1.checkAIRateLimit)(supabase_js_1.supabase, userId, 'ai-verify');
-        if (!rateLimitResult.allowed) {
-            res.status(429).json({ error: { code: 'RATE_LIMITED', message: rateLimitResult.reason, nextAllowedAt: rateLimitResult.nextAllowedAt } });
-            return;
-        }
-        const validation = (0, validations_js_1.validateRequest)(validations_js_1.verifyRequestSchema, req.body);
-        if (!validation.success) {
-            res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: validation.error } });
-            return;
-        }
-        const { action, proofId, proofUrl, sourceType, proofData, text, username, url, query } = validation.data;
+        const { action, proofId, proofUrl, sourceType, proofData, text, username, url, query } = req.body;
         const context = await (0, context_js_1.buildAgentContext)(req.user.id);
         const agent = (0, index_js_1.getAgent)('verification');
         let result;
@@ -175,26 +167,16 @@ exports.aiRouter.post('/verify', async (req, res) => {
     }
 });
 // POST /ai/chat — Non-streaming chat
-exports.aiRouter.post('/chat', async (req, res) => {
+exports.aiRouter.post('/chat', (0, rate_limit_js_2.userRateLimitMiddleware)('ai-chat'), (0, validate_js_1.validate)(validations_js_1.chatMessageSchema), async (req, res) => {
     try {
         const userId = req.user?.id;
         if (!userId) {
             res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } });
             return;
         }
-        const rateLimitResult = await (0, rate_limit_js_1.checkAIRateLimit)(supabase_js_1.supabase, userId, 'ai-chat');
-        if (!rateLimitResult.allowed) {
-            res.status(429).json({ error: { code: 'RATE_LIMITED', message: rateLimitResult.reason } });
-            return;
-        }
-        const validation = (0, validations_js_1.validateRequest)(validations_js_1.chatMessageSchema, req.body);
-        if (!validation.success) {
-            res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: validation.error } });
-            return;
-        }
-        const { message, history } = validation.data;
+        const { message, history } = req.body;
         const context = await (0, context_js_1.buildAgentContext)(req.user.id);
-        context.conversationHistory = history?.slice(-6).map((m) => ({ role: m.role, content: m.content }));
+        context.conversationHistory = (history || []).slice(-6).map((m) => ({ role: m.role, content: m.content }));
         // Graceful degradation: return fallback if AI is unavailable
         if (!(0, nvidia_js_1.isNvidiaConfigured)()) {
             const fallback = getFallbackResponse('chat', context);
@@ -212,26 +194,20 @@ exports.aiRouter.post('/chat', async (req, res) => {
     }
 });
 // POST /ai/chat-stream — Streaming chat with full agentic behavior
-exports.aiRouter.post('/chat-stream', async (req, res) => {
+exports.aiRouter.post('/chat-stream', (0, rate_limit_js_2.userRateLimitMiddleware)('ai-chat-stream'), async (req, res) => {
     try {
         const userId = req.user?.id;
         if (!userId) {
             res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } });
             return;
         }
-        const rateLimitResult = await (0, rate_limit_js_1.checkAIRateLimit)(supabase_js_1.supabase, userId, 'ai-chat');
-        if (!rateLimitResult.allowed) {
-            res.status(429).json({ error: { code: 'RATE_LIMITED', message: rateLimitResult.reason } });
+        const { message, history } = req.body;
+        if (!message) {
+            res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'Message is required' } });
             return;
         }
-        const streamValidation = (0, validations_js_1.validateRequest)(validations_js_1.chatStreamSchema, req.body);
-        if (!streamValidation.success) {
-            res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: streamValidation.error } });
-            return;
-        }
-        const { message, history } = streamValidation.data;
         const context = await (0, context_js_1.buildAgentContext)(req.user.id);
-        context.conversationHistory = history.slice(-6).map((m) => ({ role: m.role, content: m.content }));
+        context.conversationHistory = (history || []).slice(-6).map((m) => ({ role: m.role, content: m.content }));
         const acceptHeader = req.headers.accept;
         const wantsStreaming = acceptHeader?.includes('text/event-stream');
         if (wantsStreaming) {
@@ -277,16 +253,11 @@ exports.aiRouter.post('/chat-stream', async (req, res) => {
     }
 });
 // GET /ai/skills — Skill analysis
-exports.aiRouter.get('/skills', async (req, res) => {
+exports.aiRouter.get('/skills', (0, rate_limit_js_2.userRateLimitMiddleware)('ai-skills'), async (req, res) => {
     try {
         const userId = req.user?.id;
         if (!userId) {
             res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } });
-            return;
-        }
-        const rateLimitResult = await (0, rate_limit_js_1.checkAIRateLimit)(supabase_js_1.supabase, userId, 'ai-skills');
-        if (!rateLimitResult.allowed) {
-            res.status(429).json({ error: { code: 'RATE_LIMITED', message: rateLimitResult.reason } });
             return;
         }
         const context = await (0, context_js_1.buildAgentContext)(req.user.id);
@@ -316,21 +287,22 @@ exports.aiRouter.get('/skills', async (req, res) => {
     }
 });
 // POST /ai/match — Match opportunities
-exports.aiRouter.post('/match', async (req, res) => {
+exports.aiRouter.post('/match', (0, rate_limit_js_2.userRateLimitMiddleware)('ai-match'), async (req, res) => {
     try {
         const userId = req.user?.id;
         if (!userId) {
             res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } });
             return;
         }
-        const rateLimitResult = await (0, rate_limit_js_1.checkAIRateLimit)(supabase_js_1.supabase, userId, 'ai-match-opportunities');
-        if (!rateLimitResult.allowed) {
-            res.status(429).json({ error: { code: 'RATE_LIMITED', message: rateLimitResult.reason } });
+        // Check response cache (deterministic: same skills + same opportunities = same result)
+        const cacheKey = `match:${userId}`;
+        const cached = (0, rate_limit_js_2.getCached)(cacheKey);
+        if (cached) {
+            res.json(cached);
             return;
         }
         const context = await (0, context_js_1.buildAgentContext)(req.user.id);
-        const matchValidation = (0, validations_js_1.validateRequest)(validations_js_1.matchRequestSchema, req.body);
-        const { limit } = matchValidation.success ? matchValidation.data : { limit: 10 };
+        const { limit = 10 } = req.body || {};
         const opportunities = await getCachedOpportunities();
         const userSkillsSet = new Set((0, skills_js_1.extractSkillsFromProofs)(context.proofs).map(s => s.toLowerCase()));
         const matches = (opportunities || []).map(opp => {
@@ -349,8 +321,10 @@ exports.aiRouter.post('/match', async (req, res) => {
                 reasoning: `Matches ${matchedRequired.length}/${required.length} required skills`,
             };
         }).sort((a, b) => b.matchScore - a.matchScore).slice(0, limit);
+        const response = { success: true, matches, skillAnalysis: { topSkills: context.skillAnalysis?.topSkills.slice(0, 10), uniqueSkills: context.skillAnalysis?.uniqueSkills } };
+        (0, rate_limit_js_2.setCache)(cacheKey, response, 120_000); // Cache for 2 minutes
         await (0, rate_limit_js_1.logAIUsage)(supabase_js_1.supabase, userId, 'ai-match-opportunities', 0);
-        res.json({ success: true, matches, skillAnalysis: { topSkills: context.skillAnalysis?.topSkills.slice(0, 10), uniqueSkills: context.skillAnalysis?.uniqueSkills } });
+        res.json(response);
     }
     catch (err) {
         logger_js_1.logger.error({ err }, 'Match opportunities error');
@@ -358,16 +332,11 @@ exports.aiRouter.post('/match', async (req, res) => {
     }
 });
 // POST /ai/learning-path — Generate learning path
-exports.aiRouter.post('/learning-path', async (req, res) => {
+exports.aiRouter.post('/learning-path', (0, rate_limit_js_2.userRateLimitMiddleware)('ai-learning-path'), async (req, res) => {
     try {
         const userId = req.user?.id;
         if (!userId) {
             res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } });
-            return;
-        }
-        const rateLimitResult = await (0, rate_limit_js_1.checkAIRateLimit)(supabase_js_1.supabase, userId, 'ai-match-opportunities');
-        if (!rateLimitResult.allowed) {
-            res.status(429).json({ error: { code: 'RATE_LIMITED', message: rateLimitResult.reason } });
             return;
         }
         const context = await (0, context_js_1.buildAgentContext)(req.user.id);
@@ -395,7 +364,7 @@ exports.aiRouter.post('/learning-path', async (req, res) => {
     }
 });
 // POST /ai/score — Score portfolio
-exports.aiRouter.post('/score', async (req, res) => {
+exports.aiRouter.post('/score', (0, rate_limit_js_2.userRateLimitMiddleware)('ai-score'), async (req, res) => {
     try {
         const userId = req.user?.id;
         if (!userId) {
@@ -414,19 +383,14 @@ exports.aiRouter.post('/score', async (req, res) => {
     }
 });
 // POST /ai/safety — Check safety
-exports.aiRouter.post('/safety', async (req, res) => {
+exports.aiRouter.post('/safety', (0, rate_limit_js_2.userRateLimitMiddleware)('ai-safety'), async (req, res) => {
     try {
         const userId = req.user?.id;
         if (!userId) {
             res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } });
             return;
         }
-        const safetyValidation = (0, validations_js_1.validateRequest)(validations_js_1.safetyCheckSchema, req.body);
-        if (!safetyValidation.success) {
-            res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: safetyValidation.error } });
-            return;
-        }
-        const { url, email } = safetyValidation.data;
+        const { url, email } = req.body;
         if (!url && !email) {
             res.status(400).json({ error: { code: 'MISSING_FIELDS', message: 'Either url or email is required' } });
             return;

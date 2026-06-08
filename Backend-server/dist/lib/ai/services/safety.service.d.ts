@@ -2,6 +2,8 @@
  * Orin AI - Safety Service
  * Uses NVIDIA NeMo Guard models for content moderation
  */
+import { sanitizeAnswer } from '../core/utils.js';
+export declare const sanitizeResponse: typeof sanitizeAnswer;
 export interface SafetyCheckResult {
     isSafe: boolean;
     userSafety: 'safe' | 'unsafe';
@@ -41,10 +43,6 @@ export declare function checkTopic(text: string, _allowedTopics?: string[], mode
  * Sanitize user input before processing
  */
 export declare function sanitizeInput(input: string): string;
-/**
- * Sanitize AI response before sending to user
- */
-export declare function sanitizeResponse(response: string): string;
 /**
  * Full safety pipeline - check input and output
  */

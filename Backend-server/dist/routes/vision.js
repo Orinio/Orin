@@ -5,13 +5,13 @@ const express_1 = require("express");
 const logger_js_1 = require("../lib/logger.js");
 const nvidia_js_1 = require("../lib/ai/core/nvidia.js");
 const vision_service_js_1 = require("../lib/ai/services/vision.service.js");
-const auth_js_1 = require("../middleware/auth.js");
 const supabase_js_1 = require("../lib/supabase.js");
+const rate_limit_js_1 = require("../middleware/rate-limit.js");
 exports.visionRouter = (0, express_1.Router)();
 /**
  * POST /ai/vision/analyze - Analyze an image
  */
-exports.visionRouter.post('/analyze', auth_js_1.authMiddleware, async (req, res) => {
+exports.visionRouter.post('/analyze', (0, rate_limit_js_1.userRateLimitMiddleware)('ai-vision'), async (req, res) => {
     try {
         if (!(0, nvidia_js_1.isNvidiaConfigured)()) {
             res.status(503).json({ error: { code: 'AI_NOT_CONFIGURED', message: 'AI service not available' } });
@@ -40,7 +40,7 @@ exports.visionRouter.post('/analyze', auth_js_1.authMiddleware, async (req, res)
 /**
  * POST /ai/vision/certificate/extract - Extract certificate information
  */
-exports.visionRouter.post('/certificate/extract', auth_js_1.authMiddleware, async (req, res) => {
+exports.visionRouter.post('/certificate/extract', (0, rate_limit_js_1.userRateLimitMiddleware)('ai-vision-extract'), async (req, res) => {
     try {
         if (!(0, nvidia_js_1.isNvidiaConfigured)()) {
             res.status(503).json({ error: { code: 'AI_NOT_CONFIGURED', message: 'AI service not available' } });
@@ -65,7 +65,7 @@ exports.visionRouter.post('/certificate/extract', auth_js_1.authMiddleware, asyn
 /**
  * POST /ai/vision/certificate/verify - Verify a certificate
  */
-exports.visionRouter.post('/certificate/verify', auth_js_1.authMiddleware, async (req, res) => {
+exports.visionRouter.post('/certificate/verify', (0, rate_limit_js_1.userRateLimitMiddleware)('ai-vision-verify'), async (req, res) => {
     try {
         if (!(0, nvidia_js_1.isNvidiaConfigured)()) {
             res.status(503).json({ error: { code: 'AI_NOT_CONFIGURED', message: 'AI service not available' } });
@@ -81,13 +81,21 @@ exports.visionRouter.post('/certificate/verify', auth_js_1.authMiddleware, async
         if (proofId) {
             const userId = req.user?.id;
             if (userId) {
+                const { data: existingProof } = await supabase_js_1.supabase
+                    .from('proof_cards')
+                    .select('metadata')
+                    .eq('id', proofId)
+                    .eq('user_id', userId)
+                    .single();
                 await supabase_js_1.supabase
                     .from('proof_cards')
                     .update({
                     verification_status: result.verified ? 'verified' : 'rejected',
                     verified_at: result.verified ? new Date().toISOString() : null,
                     metadata: {
+                        ...(existingProof?.metadata || {}),
                         verification: {
+                            ...(existingProof?.metadata?.verification || {}),
                             verified: result.verified,
                             confidence: result.confidence,
                             certificateInfo: result.certificateInfo,
@@ -119,7 +127,7 @@ exports.visionRouter.post('/certificate/verify', auth_js_1.authMiddleware, async
 /**
  * POST /ai/vision/screenshot - Analyze a screenshot for proof
  */
-exports.visionRouter.post('/screenshot', auth_js_1.authMiddleware, async (req, res) => {
+exports.visionRouter.post('/screenshot', (0, rate_limit_js_1.userRateLimitMiddleware)('ai-vision-screenshot'), async (req, res) => {
     try {
         if (!(0, nvidia_js_1.isNvidiaConfigured)()) {
             res.status(503).json({ error: { code: 'AI_NOT_CONFIGURED', message: 'AI service not available' } });

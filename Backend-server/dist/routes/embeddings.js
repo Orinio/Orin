@@ -5,12 +5,12 @@ const express_1 = require("express");
 const logger_js_1 = require("../lib/logger.js");
 const nvidia_js_1 = require("../lib/ai/core/nvidia.js");
 const embedding_service_js_1 = require("../lib/ai/services/embedding.service.js");
-const auth_js_1 = require("../middleware/auth.js");
+const rate_limit_js_1 = require("../middleware/rate-limit.js");
 exports.embeddingRouter = (0, express_1.Router)();
 /**
  * POST /ai/embeddings/generate - Generate embedding for text
  */
-exports.embeddingRouter.post('/generate', auth_js_1.authMiddleware, async (req, res) => {
+exports.embeddingRouter.post('/generate', (0, rate_limit_js_1.userRateLimitMiddleware)('ai-embeddings'), async (req, res) => {
     try {
         if (!(0, nvidia_js_1.isNvidiaConfigured)()) {
             res.status(503).json({ error: { code: 'AI_NOT_CONFIGURED', message: 'AI service not available' } });
@@ -39,7 +39,7 @@ exports.embeddingRouter.post('/generate', auth_js_1.authMiddleware, async (req, 
 /**
  * POST /ai/embeddings/batch - Generate embeddings for multiple texts
  */
-exports.embeddingRouter.post('/batch', auth_js_1.authMiddleware, async (req, res) => {
+exports.embeddingRouter.post('/batch', (0, rate_limit_js_1.userRateLimitMiddleware)('ai-embeddings-batch'), async (req, res) => {
     try {
         if (!(0, nvidia_js_1.isNvidiaConfigured)()) {
             res.status(503).json({ error: { code: 'AI_NOT_CONFIGURED', message: 'AI service not available' } });
@@ -72,7 +72,7 @@ exports.embeddingRouter.post('/batch', auth_js_1.authMiddleware, async (req, res
 /**
  * POST /ai/embeddings/similarity - Calculate similarity between texts
  */
-exports.embeddingRouter.post('/similarity', auth_js_1.authMiddleware, async (req, res) => {
+exports.embeddingRouter.post('/similarity', (0, rate_limit_js_1.userRateLimitMiddleware)('ai-embeddings-similarity'), async (req, res) => {
     try {
         if (!(0, nvidia_js_1.isNvidiaConfigured)()) {
             res.status(503).json({ error: { code: 'AI_NOT_CONFIGURED', message: 'AI service not available' } });
@@ -104,7 +104,7 @@ exports.embeddingRouter.post('/similarity', auth_js_1.authMiddleware, async (req
 /**
  * POST /ai/embeddings/skills/extract - Extract skills and generate embeddings
  */
-exports.embeddingRouter.post('/skills/extract', auth_js_1.authMiddleware, async (req, res) => {
+exports.embeddingRouter.post('/skills/extract', (0, rate_limit_js_1.userRateLimitMiddleware)('ai-embeddings-extract'), async (req, res) => {
     try {
         if (!(0, nvidia_js_1.isNvidiaConfigured)()) {
             res.status(503).json({ error: { code: 'AI_NOT_CONFIGURED', message: 'AI service not available' } });

@@ -100,16 +100,6 @@ export declare const MODEL_METADATA: {
         description: string;
     };
 };
-export declare const AGENT_MODELS: {
-    chat: string;
-    coach: string;
-    verification: string;
-    'skill-analysis': string;
-    'opportunity-matcher': string;
-    'learning-path': string;
-    'portfolio-scorer': string;
-    'safety-guard': string;
-};
 /**
  * Get model for a specific use case
  */

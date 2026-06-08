@@ -214,6 +214,7 @@ export declare const verifyRequestSchema: z.ZodObject<{
     action: "custom" | "extract_skills" | "verify" | "analyze" | "check_safety" | "analyze_github";
     url?: string | undefined;
     text?: string | undefined;
+    query?: string | undefined;
     username?: string | undefined;
     sourceType?: "github" | "kaggle" | "certificate" | "hackathon" | "project" | "blog" | "demo" | "other" | undefined;
     proofId?: string | undefined;
@@ -227,11 +228,11 @@ export declare const verifyRequestSchema: z.ZodObject<{
         sourceUrl?: string | undefined;
         whatItProves?: string[] | undefined;
     } | undefined;
-    query?: string | undefined;
 }, {
     action: "custom" | "extract_skills" | "verify" | "analyze" | "check_safety" | "analyze_github";
     url?: string | undefined;
     text?: string | undefined;
+    query?: string | undefined;
     username?: string | undefined;
     sourceType?: "github" | "kaggle" | "certificate" | "hackathon" | "project" | "blog" | "demo" | "other" | undefined;
     proofId?: string | undefined;
@@ -245,7 +246,6 @@ export declare const verifyRequestSchema: z.ZodObject<{
         sourceUrl?: string | undefined;
         whatItProves?: string[] | undefined;
     } | undefined;
-    query?: string | undefined;
 }>;
 export declare const coachNoteType: z.ZodEnum<["daily", "weekly", "milestone", "ad_hoc"]>;
 export declare const generateCoachNoteSchema: z.ZodObject<{

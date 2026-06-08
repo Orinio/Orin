@@ -5,12 +5,12 @@ const express_1 = require("express");
 const logger_js_1 = require("../lib/logger.js");
 const nvidia_js_1 = require("../lib/ai/core/nvidia.js");
 const safety_service_js_1 = require("../lib/ai/services/safety.service.js");
-const auth_js_1 = require("../middleware/auth.js");
+const rate_limit_js_1 = require("../middleware/rate-limit.js");
 exports.safetyRouter = (0, express_1.Router)();
 /**
  * POST /ai/safety/check - Check content safety
  */
-exports.safetyRouter.post('/check', auth_js_1.authMiddleware, async (req, res) => {
+exports.safetyRouter.post('/check', (0, rate_limit_js_1.userRateLimitMiddleware)('ai-safety-check'), async (req, res) => {
     try {
         if (!(0, nvidia_js_1.isNvidiaConfigured)()) {
             res.status(503).json({ error: { code: 'AI_NOT_CONFIGURED', message: 'AI service not available' } });
@@ -35,7 +35,7 @@ exports.safetyRouter.post('/check', auth_js_1.authMiddleware, async (req, res) =
 /**
  * POST /ai/safety/pii - Detect PII in text
  */
-exports.safetyRouter.post('/pii', auth_js_1.authMiddleware, async (req, res) => {
+exports.safetyRouter.post('/pii', (0, rate_limit_js_1.userRateLimitMiddleware)('ai-safety-pii'), async (req, res) => {
     try {
         if (!(0, nvidia_js_1.isNvidiaConfigured)()) {
             res.status(503).json({ error: { code: 'AI_NOT_CONFIGURED', message: 'AI service not available' } });
@@ -60,7 +60,7 @@ exports.safetyRouter.post('/pii', auth_js_1.authMiddleware, async (req, res) => 
 /**
  * POST /ai/safety/topic - Check if content is on-topic
  */
-exports.safetyRouter.post('/topic', auth_js_1.authMiddleware, async (req, res) => {
+exports.safetyRouter.post('/topic', (0, rate_limit_js_1.userRateLimitMiddleware)('ai-safety-topic'), async (req, res) => {
     try {
         if (!(0, nvidia_js_1.isNvidiaConfigured)()) {
             res.status(503).json({ error: { code: 'AI_NOT_CONFIGURED', message: 'AI service not available' } });
@@ -85,7 +85,7 @@ exports.safetyRouter.post('/topic', auth_js_1.authMiddleware, async (req, res) =
 /**
  * POST /ai/safety/sanitize - Sanitize text
  */
-exports.safetyRouter.post('/sanitize', auth_js_1.authMiddleware, async (req, res) => {
+exports.safetyRouter.post('/sanitize', (0, rate_limit_js_1.userRateLimitMiddleware)('ai-safety-sanitize'), async (req, res) => {
     try {
         const { text, type } = req.body;
         if (!text) {
@@ -112,7 +112,7 @@ exports.safetyRouter.post('/sanitize', auth_js_1.authMiddleware, async (req, res
 /**
  * POST /ai/safety/full-check - Full safety pipeline
  */
-exports.safetyRouter.post('/full-check', auth_js_1.authMiddleware, async (req, res) => {
+exports.safetyRouter.post('/full-check', (0, rate_limit_js_1.userRateLimitMiddleware)('ai-safety-full'), async (req, res) => {
     try {
         if (!(0, nvidia_js_1.isNvidiaConfigured)()) {
             res.status(503).json({ error: { code: 'AI_NOT_CONFIGURED', message: 'AI service not available' } });

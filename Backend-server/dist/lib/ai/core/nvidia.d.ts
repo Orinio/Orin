@@ -1,6 +1,33 @@
 export interface ChatMessage {
     role: string;
-    content: string;
+    content: string | null;
+    tool_calls?: ToolCallResponse[];
+    tool_call_id?: string;
+    name?: string;
+}
+export interface ToolCallResponse {
+    id: string;
+    type: 'function';
+    function: {
+        name: string;
+        arguments: string;
+    };
+}
+export interface ToolDefinition {
+    type: 'function';
+    function: {
+        name: string;
+        description: string;
+        parameters: {
+            type: 'object';
+            properties: Record<string, {
+                type: string;
+                description: string;
+                enum?: string[];
+            }>;
+            required: string[];
+        };
+    };
 }
 export interface ChatCompletionOptions {
     model: string;
@@ -8,13 +35,22 @@ export interface ChatCompletionOptions {
     temperature?: number;
     max_tokens?: number;
     stream?: boolean;
+    tools?: ToolDefinition[];
+    tool_choice?: 'auto' | 'none' | {
+        type: 'function';
+        function: {
+            name: string;
+        };
+    };
+    timeoutMs?: number;
 }
 export interface ChatCompletionResponse {
     id: string;
     choices: Array<{
         message: {
             role: string;
-            content: string;
+            content: string | null;
+            tool_calls?: ToolCallResponse[];
         };
         finish_reason: string;
     }>;

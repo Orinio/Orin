@@ -335,6 +335,11 @@ export class AgentOrchestrator {
       ]);
     }
 
+    // Extract visual specs from render_visual tool calls
+    const visualSpecs = toolCalls
+      .filter(tc => tc.tool === 'render_visual' && tc.result.success && tc.result.data?.visualSpec)
+      .map(tc => tc.result.data.visualSpec);
+
     return {
       agentId,
       answer: finalAnswer,
@@ -342,7 +347,8 @@ export class AgentOrchestrator {
       toolCalls,
       iterations,
       tokensUsed: totalTokens,
-      durationMs
+      durationMs,
+      ...(visualSpecs.length > 0 ? { visualSpecs } : {}),
     };
   }
 
@@ -545,6 +551,11 @@ export class AgentOrchestrator {
               durationMs: toolDurationMs,
               step: toolCalls.length,
             });
+
+            // Emit visual_spec event when render_visual tool produces a spec
+            if (tool.name === 'render_visual' && result.success && result.data?.visualSpec) {
+              onEvent('visual_spec', { spec: result.data.visualSpec });
+            }
 
             // Feed tool result back to the model as a tool message
             const resultStr = JSON.stringify(result).substring(0, MAX_TOOL_RESULT_LENGTH);

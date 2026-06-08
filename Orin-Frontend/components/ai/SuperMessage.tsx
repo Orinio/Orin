@@ -13,6 +13,7 @@ import { MarkdownRenderer } from './MarkdownRenderer';
 import { SourcesDisplay } from './SourcesDisplay';
 import { MessageRating } from './MessageRating';
 import StepIndicator, { type ToolStep } from './StepIndicator';
+import { VisualRenderer } from '@/components/visuals/VisualRenderer';
 
 export interface SuperMessageData {
   id: string;
@@ -24,6 +25,7 @@ export interface SuperMessageData {
   steps?: ToolStep[];
   sources?: Array<{ title: string; url: string; snippet?: string }>;
   artifacts?: Array<{ id: string; type: string; title: string; content: string }>;
+  visualSpecs?: Array<Record<string, any>>;
   isStreaming?: boolean;
   timestamp: Date;
   tokensUsed?: number;
@@ -215,6 +217,15 @@ export default function SuperMessage({ message, onRate, onRetry }: { message: Su
                 {message.sources && message.sources.length > 0 && (
                   <div className="mt-3">
                     <SourcesDisplay sources={message.sources} />
+                  </div>
+                )}
+
+                {/* Visual Specs */}
+                {message.visualSpecs && message.visualSpecs.length > 0 && !isStreaming && (
+                  <div className="mt-4 space-y-4">
+                    {message.visualSpecs.map((spec, i) => (
+                      <VisualRenderer key={i} spec={spec as any} />
+                    ))}
                   </div>
                 )}
 

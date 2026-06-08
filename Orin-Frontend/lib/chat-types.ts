@@ -11,6 +11,7 @@ export interface ChatMessage {
   thinking?: string;
   rating?: 'positive' | 'negative' | 'flagged';
   ratingFeedback?: string;
+  visualSpecs?: Array<Record<string, any>>;
 }
 
 export interface ChatConversation {

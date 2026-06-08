@@ -51,6 +51,7 @@ export default function SuperAgentChat() {
           args: tc.args,
           result: tc.result,
         })),
+        visualSpecs: m.visualSpecs,
         timestamp: new Date(m.timestamp),
       })));
     }
@@ -141,6 +142,7 @@ export default function SuperAgentChat() {
     let tokensUsed = 0;
     let durationMs = 0;
     const steps: ToolStep[] = [];
+    const visualSpecs: Array<Record<string, any>> = [];
 
     try {
       abortRef.current = new AbortController();
@@ -234,6 +236,13 @@ export default function SuperAgentChat() {
               }
               break;
 
+            case 'visual_spec':
+              if (data.spec) {
+                visualSpecs.push(data.spec);
+                updateAssistant(assistantId, { visualSpecs: [...visualSpecs] });
+              }
+              break;
+
             case 'complete':
               if (data.answer) fullContent = data.answer;
               if (data.thinking) thinking = data.thinking;
@@ -241,6 +250,10 @@ export default function SuperAgentChat() {
               if (data.agentName) agentName = data.agentName;
               if (data.tokensUsed) tokensUsed = data.tokensUsed;
               if (data.durationMs) durationMs = data.durationMs;
+              if (data.visualSpecs) {
+                visualSpecs.length = 0;
+                data.visualSpecs.forEach((spec: any) => visualSpecs.push(spec));
+              }
               if (data.toolCalls) {
                 steps.length = 0;
                 data.toolCalls.forEach((tc: any) => {
@@ -261,6 +274,7 @@ export default function SuperAgentChat() {
                 tokensUsed,
                 durationMs,
                 steps: [...steps],
+                visualSpecs: visualSpecs.length > 0 ? [...visualSpecs] : undefined,
                 isStreaming: false,
               });
               break;
@@ -315,6 +329,7 @@ export default function SuperAgentChat() {
         tokensUsed,
         durationMs,
         steps: steps.length > 0 ? [...steps] : undefined,
+        visualSpecs: visualSpecs.length > 0 ? [...visualSpecs] : undefined,
       });
 
       // Save to conversation
@@ -326,6 +341,7 @@ export default function SuperAgentChat() {
         agentId,
         thinking: thinking || undefined,
         toolCalls: steps.map(tc => ({ tool: tc.name, args: tc.args || {}, result: tc.result })),
+        visualSpecs: visualSpecs.length > 0 ? visualSpecs : undefined,
       });
       conv.updatedAt = new Date().toISOString();
       conv.messageCount = conv.messages.length;

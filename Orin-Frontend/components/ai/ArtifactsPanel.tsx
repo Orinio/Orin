@@ -1,14 +1,16 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { Code2, Eye, Copy, Check, X, Maximize2, Minimize2, FileCode, FileText, Image } from 'lucide-react';
+import { Code2, Eye, Copy, Check, X, Maximize2, Minimize2, FileCode, FileText, Image, BarChart3 } from 'lucide-react';
+import { VisualRenderer } from '@/components/visuals/VisualRenderer';
 
 export interface Artifact {
   id: string;
-  type: 'code' | 'html' | 'markdown' | 'mermaid';
+  type: 'code' | 'html' | 'markdown' | 'mermaid' | 'visual';
   title: string;
   content: string;
   language?: string;
+  visualSpec?: Record<string, any>;
 }
 
 interface ArtifactsPanelProps {
@@ -47,6 +49,7 @@ export function ArtifactsPanel({
       case 'html': return FileCode;
       case 'markdown': return FileText;
       case 'mermaid': return Image;
+      case 'visual': return BarChart3;
       default: return Code2;
     }
   };
@@ -144,6 +147,10 @@ export function ArtifactsPanel({
             title={activeArtifact.title}
             sandbox="allow-scripts allow-same-origin"
           />
+        ) : activeArtifact.type === 'visual' && activeArtifact.visualSpec ? (
+          <div className="p-4">
+            <VisualRenderer spec={activeArtifact.visualSpec as any} />
+          </div>
         ) : activeArtifact.type === 'markdown' ? (
           <div className="p-4 text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>
             <pre className="whitespace-pre-wrap font-sans">{activeArtifact.content}</pre>

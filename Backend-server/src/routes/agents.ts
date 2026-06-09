@@ -83,7 +83,7 @@ agentRouter.post('/agents/chat', userRateLimitMiddleware('ai-agents-chat'), asyn
     }
 
     const { query, conversationHistory } = req.body;
-    const userId = (req as any).internalUserId || (req as any).user?.id;
+    const userId = (req as any).user?.id;
 
     if (!query) {
       res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'Query is required' } });
@@ -115,7 +115,7 @@ agentRouter.post('/agents/chat/stream', userRateLimitMiddleware('ai-agents-strea
     }
 
     const { query, conversationHistory, attachments } = req.body;
-    const userId = (req as any).internalUserId || (req as any).user?.id;
+    const userId = (req as any).user?.id;
 
     if (!query) {
       res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'Query is required' } });
@@ -207,7 +207,7 @@ agentRouter.post('/agents/:id/run', userRateLimitMiddleware('ai-agent-run'), asy
     }
 
     const { query, conversationHistory } = req.body;
-    const userId = (req as any).internalUserId || (req as any).user?.id;
+    const userId = (req as any).user?.id;
 
     if (!query) {
       res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'Query is required' } });
@@ -242,7 +242,7 @@ agentRouter.post('/workflows/career-analysis', userRateLimitMiddleware('ai-workf
     }
 
     const { query } = req.body;
-    const userId = (req as any).internalUserId || (req as any).user?.id;
+    const userId = (req as any).user?.id;
 
     if (!query) {
       res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'Query is required' } });
@@ -276,7 +276,7 @@ agentRouter.post('/workflows/verify-proof', userRateLimitMiddleware('ai-workflow
     }
 
     const { proofUrl, sourceType } = req.body;
-    const userId = (req as any).internalUserId || (req as any).user?.id;
+    const userId = (req as any).user?.id;
 
     if (!proofUrl || !sourceType) {
       res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'proofUrl and sourceType are required' } });
@@ -349,7 +349,7 @@ agentRouter.get('/tools/:category', async (req, res) => {
  */
 agentRouter.post('/memory/save', async (req, res) => {
   try {
-    const userId = (req as any).internalUserId || (req as any).user?.id;
+    const userId = (req as any).user?.id;
     if (!userId) {
       res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } });
       return;
@@ -388,7 +388,7 @@ agentRouter.post('/memory/save', async (req, res) => {
  */
 agentRouter.get('/memory/search', async (req, res) => {
   try {
-    const userId = (req as any).internalUserId || (req as any).user?.id;
+    const userId = (req as any).user?.id;
     if (!userId) {
       res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } });
       return;
@@ -410,7 +410,7 @@ agentRouter.get('/memory/search', async (req, res) => {
  */
 agentRouter.get('/memory/preferences', async (req, res) => {
   try {
-    const userId = (req as any).internalUserId || (req as any).user?.id;
+    const userId = (req as any).user?.id;
     if (!userId) {
       res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } });
       return;
@@ -431,7 +431,7 @@ agentRouter.get('/memory/preferences', async (req, res) => {
  */
 agentRouter.get('/memory/skills', async (req, res) => {
   try {
-    const userId = (req as any).internalUserId || (req as any).user?.id;
+    const userId = (req as any).user?.id;
     if (!userId) {
       res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } });
       return;
@@ -452,7 +452,7 @@ agentRouter.get('/memory/skills', async (req, res) => {
  */
 agentRouter.get('/memory/goals', async (req, res) => {
   try {
-    const userId = (req as any).internalUserId || (req as any).user?.id;
+    const userId = (req as any).user?.id;
     if (!userId) {
       res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } });
       return;

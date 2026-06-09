@@ -15,21 +15,11 @@ const saveConversationSchema = z.object({
   updatedAt: z.string().optional(),
 });
 
-async function resolveUserId(authUserId: string): Promise<string | null> {
-  const { data } = await supabase
-    .from('users')
-    .select('id')
-    .eq('auth_user_id', authUserId)
-    .maybeSingle();
-  return data?.id || null;
-}
-
 chatRouter.get('/', async (req, res) => {
   try {
-    const authUserId = (req as any).user?.id;
-    const userId = await resolveUserId(authUserId);
+    const userId = (req as any).user?.id;
     if (!userId) {
-      res.status(404).json({ error: { code: 'NOT_FOUND', message: 'User profile not found' } });
+      res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } });
       return;
     }
     const { data, error } = await supabase
@@ -65,10 +55,9 @@ chatRouter.get('/', async (req, res) => {
 
 chatRouter.get('/:id', async (req, res) => {
   try {
-    const authUserId = (req as any).user?.id;
-    const userId = await resolveUserId(authUserId);
+    const userId = (req as any).user?.id;
     if (!userId) {
-      res.status(404).json({ error: { code: 'NOT_FOUND', message: 'User profile not found' } });
+      res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } });
       return;
     }
     const { id } = req.params;
@@ -107,10 +96,9 @@ chatRouter.get('/:id', async (req, res) => {
 
 chatRouter.post('/', async (req, res) => {
   try {
-    const authUserId = (req as any).user?.id;
-    const userId = await resolveUserId(authUserId);
+    const userId = (req as any).user?.id;
     if (!userId) {
-      res.status(404).json({ error: { code: 'NOT_FOUND', message: 'User profile not found' } });
+      res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } });
       return;
     }
     const parsed = saveConversationSchema.safeParse(req.body);
@@ -148,10 +136,9 @@ chatRouter.post('/', async (req, res) => {
 
 chatRouter.delete('/:id', async (req, res) => {
   try {
-    const authUserId = (req as any).user?.id;
-    const userId = await resolveUserId(authUserId);
+    const userId = (req as any).user?.id;
     if (!userId) {
-      res.status(404).json({ error: { code: 'NOT_FOUND', message: 'User profile not found' } });
+      res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } });
       return;
     }
     const { id } = req.params;

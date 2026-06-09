@@ -321,7 +321,7 @@ aiRouter.post('/chat-stream', userRateLimitMiddleware('ai-chat-stream'), async (
 
       // Use orchestrator with memory, tool calling, and full user context
       const { createOrchestrator } = await import('../lib/ai/orchestrator/agent-orchestrator.js');
-      const orchestrator = createOrchestrator(userId);
+      const orchestrator = createOrchestrator(authUserId);
 
       sendEvent('start', { agentId: 'chat', query: message });
 

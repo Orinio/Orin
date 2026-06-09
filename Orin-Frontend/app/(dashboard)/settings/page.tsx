@@ -20,6 +20,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { formatRelativeTime } from '@/lib/utils';
+import ThemeToggle from '@/components/ThemeToggle';
 
 function GithubIcon({ size = 20, className = '' }: { size?: number; className?: string }) {
   return (
@@ -62,7 +63,7 @@ function KaggleIcon({ size = 20, className = '' }: { size?: number; className?: 
   );
 }
 
-type Section = 'account' | 'notifications' | 'privacy' | 'integrations' | 'billing';
+type Section = 'account' | 'appearance' | 'notifications' | 'privacy' | 'integrations' | 'billing';
 
 function Toggle({ enabled, onToggle, id, saving }: { enabled: boolean; onToggle: () => void; id: string; saving?: boolean }) {
   return (
@@ -85,6 +86,7 @@ function Toggle({ enabled, onToggle, id, saving }: { enabled: boolean; onToggle:
 
 const navItems: { id: Section; label: string; icon: React.ReactNode }[] = [
   { id: 'account', label: 'Account', icon: <User size={18} /> },
+  { id: 'appearance', label: 'Appearance', icon: <span className="text-lg">🎨</span> },
   { id: 'notifications', label: 'Notifications', icon: <Bell size={18} /> },
   { id: 'privacy', label: 'Privacy', icon: <Shield size={18} /> },
   { id: 'integrations', label: 'Integrations', icon: <Plug size={18} /> },
@@ -652,6 +654,24 @@ export default function SettingsPage() {
     </div>
   );
 
+  const renderAppearance = () => (
+    <div className="card-premium p-6">
+      <h2 className="text-lg font-semibold" style={{ color: 'var(--color-ink)' }}>Appearance</h2>
+      <p className="mt-1 text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
+        Choose how ORIN looks on your device.
+      </p>
+      <div className="mt-6 space-y-4">
+        <div>
+          <label className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>Theme</label>
+          <p className="text-xs mb-3" style={{ color: 'var(--color-text-tertiary)' }}>
+            Select light, dark, or follow your system preference.
+          </p>
+          <ThemeToggle />
+        </div>
+      </div>
+    </div>
+  );
+
   const renderBilling = () => (
     <div className="card-premium p-6">
       <h2 className="text-lg font-semibold" style={{ color: 'var(--color-ink)' }}>Plan & billing</h2>
@@ -685,6 +705,7 @@ export default function SettingsPage() {
 
   const sectionRenderers: Record<Section, () => React.ReactNode> = {
     account: renderAccount,
+    appearance: renderAppearance,
     notifications: renderNotifications,
     privacy: renderPrivacy,
     integrations: renderIntegrations,
@@ -693,6 +714,7 @@ export default function SettingsPage() {
 
   const sectionTitles: Record<Section, { title: string; subtitle: string }> = {
     account: { title: 'Account settings', subtitle: 'Control how your profile appears and how ORIN communicates with you.' },
+    appearance: { title: 'Appearance', subtitle: 'Customize how ORIN looks on your device.' },
     notifications: { title: 'Notification preferences', subtitle: 'Choose when and how ORIN should reach you.' },
     privacy: { title: 'Privacy & data', subtitle: 'Control your profile visibility and manage your data.' },
     integrations: { title: 'Integrations', subtitle: 'Connect external services to import your work automatically.' },

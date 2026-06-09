@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateSession, getSessionCookieName } from '@/lib/admin-auth';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getSupabaseAdmin } from '@/lib/supabase-admin';
 
 async function requireAdmin(request: NextRequest) {
   const token = request.cookies.get(getSessionCookieName())?.value;
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const supabase = await getServerSupabase();
+    const supabase = getSupabaseAdmin();
 
     const [
       { count: totalUsers },

@@ -45,7 +45,7 @@ export default function Logo({
 
   const logoMark = (
     <Image
-      src="/logo.svg"
+      src="/logo.png"
       alt="ORIN"
       width={responsive ? 256 : s.mark}
       height={responsive ? 256 : s.height}

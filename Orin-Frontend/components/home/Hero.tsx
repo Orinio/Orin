@@ -372,7 +372,7 @@ function AppHeader() {
         <div
           className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center shadow-sm overflow-hidden"
         >
-          <Image src="/logo.svg" alt="ORIN" width={48} height={48} className="object-contain w-full h-full" />
+          <Image src="/logo.png" alt="ORIN" width={48} height={48} className="object-contain w-full h-full" />
         </div>
         <div>
           <p

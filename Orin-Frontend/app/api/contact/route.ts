@@ -1,11 +1,12 @@
 ﻿import { NextRequest, NextResponse } from 'next/server';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getSupabaseAdmin } from '@/lib/supabase-admin';
 import type { Database } from '@/lib/supabase';
 
 type ContactInsert = Database['public']['Tables']['contact_messages']['Insert'];
 
 export async function POST(request: NextRequest) {
-  const supabase = await getServerSupabase();
+
+  const supabase = getSupabaseAdmin();
 
   if (!supabase) {
     return NextResponse.json({ error: 'Supabase not configured' }, { status: 500 });

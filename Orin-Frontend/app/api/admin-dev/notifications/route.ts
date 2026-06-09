@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateSession, getSessionCookieName } from '@/lib/admin-auth';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getSupabaseAdmin } from '@/lib/supabase-admin';
 
 async function requireAdmin(request: NextRequest) {
   const token = request.cookies.get(getSessionCookieName())?.value;
@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
   const admin = await requireAdmin(request);
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const supabase = await getServerSupabase();
+  const supabase = getSupabaseAdmin();
   const body = await request.json();
   const { userId, title, body: notifBody, type, link } = body;
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateSession, getSessionCookieName } from '@/lib/admin-auth';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getSupabaseAdmin } from '@/lib/supabase-admin';
 
 async function requireAdmin(request: NextRequest) {
   const token = request.cookies.get(getSessionCookieName())?.value;
@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   const admin = await requireAdmin(request);
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const supabase = await getServerSupabase();
+  const supabase = getSupabaseAdmin();
   const { searchParams } = new URL(request.url);
   const page = parseInt(searchParams.get('page') || '1');
   const limit = parseInt(searchParams.get('limit') || '20');
@@ -39,7 +39,7 @@ export async function PATCH(request: NextRequest) {
   const admin = await requireAdmin(request);
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const supabase = await getServerSupabase();
+  const supabase = getSupabaseAdmin();
   const body = await request.json();
   const { userId, action, value } = body;
 
@@ -85,7 +85,7 @@ export async function DELETE(request: NextRequest) {
   const admin = await requireAdmin(request);
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const supabase = await getServerSupabase();
+  const supabase = getSupabaseAdmin();
   const { searchParams } = new URL(request.url);
   const userId = searchParams.get('userId');
 

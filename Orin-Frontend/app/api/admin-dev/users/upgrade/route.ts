@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateSession, getSessionCookieName } from '@/lib/admin-auth';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getSupabaseAdmin } from '@/lib/supabase-admin';
 
 async function requireAdmin(request: NextRequest) {
   const token = request.cookies.get(getSessionCookieName())?.value;
@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
   const admin = await requireAdmin(request);
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const supabase = await getServerSupabase();
+  const supabase = getSupabaseAdmin();
 
   let body: { targetUserId?: string; targetEmail?: string; plan?: string; status?: string; expiresAt?: string };
   try {
@@ -105,7 +105,7 @@ export async function GET(request: NextRequest) {
   const admin = await requireAdmin(request);
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const supabase = await getServerSupabase();
+  const supabase = getSupabaseAdmin();
   const { searchParams } = new URL(request.url);
   const search = searchParams.get('search') || '';
 

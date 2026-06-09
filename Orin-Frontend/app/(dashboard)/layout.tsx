@@ -1,9 +1,26 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/footer";
+import CommandPalette from "@/components/CommandPalette";
 
 export default function DashboardLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const [cmdOpen, setCmdOpen] = useState(false);
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setCmdOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, []);
+
   return (
     <div className="min-h-screen">
       <Navigation />
@@ -20,7 +37,8 @@ export default function DashboardLayout({
         <Footer />
       </div>
       {/* Mobile bottom bar spacer */}
-      <div className="lg:hidden h-[76px]" />
+      <div className="lg:hidden h-[76px]}" />
+      <CommandPalette open={cmdOpen} onClose={() => setCmdOpen(false)} />
     </div>
   );
 }

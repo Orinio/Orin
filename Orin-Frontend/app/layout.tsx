@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Lora } from "next/font/google";
 import { AuthProvider } from "@/lib/auth-context";
 import { PlanProvider } from "@/lib/plan-context";
+import { ThemeProvider } from "@/lib/theme-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { Toaster } from "@/components/ui/toast";
 import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
@@ -63,9 +64,11 @@ export default function RootLayout({
       <body className="flex min-h-screen flex-col antialiased bg-[var(--color-paper)] text-[var(--color-ink)] overflow-x-hidden">
         <a href="#main-content" className="skip-link">Skip to main content</a>
         <QueryProvider>
-          <AuthProvider>
-            <PlanProvider>{children}</PlanProvider>
-          </AuthProvider>
+          <ThemeProvider>
+            <AuthProvider>
+              <PlanProvider>{children}</PlanProvider>
+            </AuthProvider>
+          </ThemeProvider>
         </QueryProvider>
         <Toaster />
         <ServiceWorkerRegistration />

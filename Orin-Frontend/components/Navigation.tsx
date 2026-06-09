@@ -159,6 +159,7 @@ export default function Navigation() {
   ];
 
   const bottomLinks = [
+    { href: '/employer/portal', label: 'Employer Portal', icon: Briefcase },
     { href: '/notifications', label: 'Notifications', icon: Bell, badge: unreadCount },
     { href: '/settings', label: 'Settings', icon: Settings },
   ];

@@ -48,34 +48,46 @@ export interface RateLimitConfig {
   cooldownHours: number;
 }
 
-// General AI endpoint rate limits
-export const AI_RATE_LIMITS: Record<string, RateLimitConfig> = {
-  'ai-verify': {
-    maxPerDay: 10,
-    maxPerWeek: 50,
-    cooldownHours: 0.5,
+// Plan-aware AI endpoint rate limits
+// Free gets basic limits, Pro gets 5x, Team gets 20x
+export const AI_RATE_LIMITS_BY_PLAN: Record<string, Record<string, RateLimitConfig>> = {
+  free: {
+    'ai-verify': { maxPerDay: 10, maxPerWeek: 50, cooldownHours: 0.5 },
+    'ai-chat': { maxPerDay: 15, maxPerWeek: 75, cooldownHours: 0.25 },
+    'ai-chat-stream': { maxPerDay: 15, maxPerWeek: 75, cooldownHours: 0.25 },
+    'ai-match-opportunities': { maxPerDay: 5, maxPerWeek: 20, cooldownHours: 1 },
+    'ai-skills': { maxPerDay: 10, maxPerWeek: 50, cooldownHours: 0.5 },
+    'coach-notes-generate': { maxPerDay: 3, maxPerWeek: 10, cooldownHours: 4 },
+    // Default for unknown endpoints
+    _default: { maxPerDay: 10, maxPerWeek: 50, cooldownHours: 0.5 },
   },
-  'ai-chat': {
-    maxPerDay: 30,
-    maxPerWeek: 150,
-    cooldownHours: 0.1,
+  pro: {
+    'ai-verify': { maxPerDay: 50, maxPerWeek: 250, cooldownHours: 0.1 },
+    'ai-chat': { maxPerDay: 100, maxPerWeek: 500, cooldownHours: 0.05 },
+    'ai-chat-stream': { maxPerDay: 100, maxPerWeek: 500, cooldownHours: 0.05 },
+    'ai-match-opportunities': { maxPerDay: 25, maxPerWeek: 100, cooldownHours: 0.25 },
+    'ai-skills': { maxPerDay: 50, maxPerWeek: 250, cooldownHours: 0.1 },
+    'coach-notes-generate': { maxPerDay: 15, maxPerWeek: 50, cooldownHours: 1 },
+    _default: { maxPerDay: 50, maxPerWeek: 250, cooldownHours: 0.1 },
   },
-  'ai-match-opportunities': {
-    maxPerDay: 5,
-    maxPerWeek: 20,
-    cooldownHours: 1,
-  },
-  'ai-skills': {
-    maxPerDay: 10,
-    maxPerWeek: 50,
-    cooldownHours: 0.5,
-  },
-  'coach-notes-generate': {
-    maxPerDay: 3,
-    maxPerWeek: 10,
-    cooldownHours: 4,
+  team: {
+    'ai-verify': { maxPerDay: 200, maxPerWeek: 1000, cooldownHours: 0.025 },
+    'ai-chat': { maxPerDay: 300, maxPerWeek: 1500, cooldownHours: 0.02 },
+    'ai-chat-stream': { maxPerDay: 300, maxPerWeek: 1500, cooldownHours: 0.02 },
+    'ai-match-opportunities': { maxPerDay: 100, maxPerWeek: 400, cooldownHours: 0.1 },
+    'ai-skills': { maxPerDay: 200, maxPerWeek: 1000, cooldownHours: 0.025 },
+    'coach-notes-generate': { maxPerDay: 50, maxPerWeek: 200, cooldownHours: 0.5 },
+    _default: { maxPerDay: 200, maxPerWeek: 1000, cooldownHours: 0.025 },
   },
 };
+
+// Legacy export for backwards compatibility
+export const AI_RATE_LIMITS = AI_RATE_LIMITS_BY_PLAN.free;
+
+export function getRateLimitConfigForPlan(endpoint: string, plan: string = 'free'): RateLimitConfig {
+  const planLimits = AI_RATE_LIMITS_BY_PLAN[plan] || AI_RATE_LIMITS_BY_PLAN.free;
+  return planLimits[endpoint] || planLimits._default;
+}
 
 export const RATE_LIMITS: Record<CoachNoteType, RateLimitConfig> = {
   daily: {
@@ -104,6 +116,12 @@ export interface RateLimitResult {
   allowed: boolean;
   reason?: string;
   nextAllowedAt?: Date;
+  usage?: {
+    used: number;
+    limit: number;
+    resetsAt: Date;
+  };
+  plan?: string;
 }
 
 export async function checkRateLimit(
@@ -233,13 +251,10 @@ export async function logAIUsage(
 export async function checkAIRateLimit(
   supabase: SupabaseClient,
   userId: string,
-  endpoint: string
+  endpoint: string,
+  plan: string = 'free'
 ): Promise<RateLimitResult> {
-  const config = AI_RATE_LIMITS[endpoint] || {
-    maxPerDay: 20,
-    maxPerWeek: 100,
-    cooldownHours: 0.5,
-  };
+  const config = getRateLimitConfigForPlan(endpoint, plan);
 
   const now = new Date();
   const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
@@ -266,7 +281,12 @@ export async function checkAIRateLimit(
 
   const usageLast7d = recentUsage || [];
 
-  logger.debug({ userId, endpoint, usageLast24h: usageLast24h.length, usageLast7d: usageLast7d.length, maxPerDay: config.maxPerDay }, 'AI rate limit check');
+  logger.debug({ userId, endpoint, plan, usageLast24h: usageLast24h.length, usageLast7d: usageLast7d.length, maxPerDay: config.maxPerDay }, 'AI rate limit check');
+
+  // Calculate when the daily window resets (24h from first usage in window)
+  const dailyResetsAt = usageLast24h.length > 0
+    ? new Date(new Date(usageLast24h[usageLast24h.length - 1].created_at).getTime() + 24 * 60 * 60 * 1000)
+    : new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
   // Check daily limit
   if (usageLast24h.length >= config.maxPerDay) {
@@ -277,6 +297,8 @@ export async function checkAIRateLimit(
       allowed: false,
       reason: `Daily limit reached for ${endpoint}`,
       nextAllowedAt: nextAllowed,
+      usage: { used: usageLast24h.length, limit: config.maxPerDay, resetsAt: dailyResetsAt },
+      plan,
     };
   }
 
@@ -286,6 +308,8 @@ export async function checkAIRateLimit(
       allowed: false,
       reason: `Weekly limit reached for ${endpoint}`,
       nextAllowedAt: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000),
+      usage: { used: usageLast7d.length, limit: config.maxPerWeek, resetsAt: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000) },
+      plan,
     };
   }
 
@@ -299,11 +323,17 @@ export async function checkAIRateLimit(
         allowed: false,
         reason: `Cooldown period active for ${endpoint}`,
         nextAllowedAt: cooldownEnd,
+        usage: { used: usageLast24h.length, limit: config.maxPerDay, resetsAt: dailyResetsAt },
+        plan,
       };
     }
   }
 
-  return { allowed: true };
+  return {
+    allowed: true,
+    usage: { used: usageLast24h.length, limit: config.maxPerDay, resetsAt: dailyResetsAt },
+    plan,
+  };
 }
 
 // ============================================================

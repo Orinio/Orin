@@ -11,6 +11,8 @@ export type ErrorCode =
   | 'MISSING_FIELDS'
   | 'RATE_LIMITED'
   | 'GLOBAL_RATE_LIMITED'
+  | 'PLAN_RATE_LIMITED'
+  | 'TOKEN_BUDGET_EXCEEDED'
   | 'CONFLICT'
   | 'DEPENDENCY_FAILED'
   | 'TIMEOUT'
@@ -78,8 +80,31 @@ export const Errors = {
     return new AppError('RATE_LIMITED', reason, 429, { retryAfterMs });
   },
 
+  tokenBudgetExceeded(plan: string, limit: number, retryAfterMs: number) {
+    return new AppError('TOKEN_BUDGET_EXCEEDED', `Daily token budget of ${limit.toLocaleString()} exceeded on ${plan.toUpperCase()} plan.`, 429, {
+      plan,
+      tokenBudget: { limit, remaining: 0 },
+      retryAfterMs,
+      retryAfterDisplay: '24 hours (resets daily)',
+    });
+  },
+
   globalRateLimited(retryAfterMs: number) {
     return new AppError('GLOBAL_RATE_LIMITED', `AI rate limit exceeded. Retry in ${Math.ceil(retryAfterMs / 1000)}s.`, 429, { retryAfterMs });
+  },
+
+  planRateLimited(plan: string, endpoint: string, used: number, limit: number, retryAfterMs: number, upgradeMessage?: string) {
+    const waitMinutes = Math.ceil(retryAfterMs / 60000);
+    const waitDisplay = waitMinutes > 60
+      ? `${Math.ceil(waitMinutes / 60)} hour${Math.ceil(waitMinutes / 60) > 1 ? 's' : ''}`
+      : `${waitMinutes} minute${waitMinutes > 1 ? 's' : ''}`;
+    return new AppError('PLAN_RATE_LIMITED', `${plan.toUpperCase()} plan limit reached for ${endpoint}. Try again in ${waitDisplay}.`, 429, {
+      plan,
+      endpoint,
+      usage: { used, limit, remaining: Math.max(0, limit - used) },
+      retryAfterMs,
+      upgradeMessage,
+    });
   },
 
   conflict(message: string) {

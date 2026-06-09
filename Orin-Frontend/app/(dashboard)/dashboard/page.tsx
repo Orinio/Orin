@@ -180,16 +180,15 @@ export default function DashboardPage() {
   const { user: authUser, initialized } = useAuth();
   const { data: user, isLoading: userLoading } = useCurrentUser();
   const { data: stats, isLoading: statsLoading, error: statsError, refetch } = useDashboardStats(user?.id ?? null);
-  const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
     if (user && !userLoading) {
       const hasCompletedOnboarding = typeof window !== 'undefined' && localStorage.getItem('orin.onboarded');
       if (!hasCompletedOnboarding && !user.fullName && !user.headline && !user.bio) {
-        setShowOnboarding(true);
+        router.push('/onboarding');
       }
     }
-  }, [user, userLoading]);
+  }, [user, userLoading, router]);
 
   if (!initialized || userLoading) {
     return <DashboardSkeleton />;

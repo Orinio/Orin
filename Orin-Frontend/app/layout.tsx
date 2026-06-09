@@ -4,6 +4,7 @@ import { AuthProvider } from "@/lib/auth-context";
 import { PlanProvider } from "@/lib/plan-context";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { Toaster } from "@/components/ui/toast";
+import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
 import "./globals.css";
 
 const sans = Inter({
@@ -19,7 +20,12 @@ const serif = Lora({
 });
 
 export const metadata: Metadata = {
-  viewport: "width=device-width, initial-scale=1",
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 5,
+    themeColor: '#0BAB77',
+  },
 
   title: "ORIN - Turn Work Into Career Proof",
   description:
@@ -27,7 +33,7 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       { url: '/favicon.png', sizes: '32x32', type: 'image/png' },
-      { url: '/favicon.png', sizes: '192x192', type: 'image/png' },
+      { url: '/pwa-192.png', sizes: '192x192', type: 'image/png' },
       { url: '/logo.png', sizes: '512x512', type: 'image/png' },
     ],
     apple: '/logo.png',
@@ -36,6 +42,13 @@ export const metadata: Metadata = {
     title: "ORIN - Turn Work Into Career Proof",
     description: "Transform your scattered work into verified career proof. AI coach, proof cards, and real opportunities.",
     images: ['/logo.png'],
+  },
+  manifest: '/manifest.json',
+  other: {
+    'mobile-web-app-capable': 'yes',
+    'apple-mobile-web-app-capable': 'yes',
+    'apple-mobile-web-app-status-bar-style': 'black-translucent',
+    'apple-mobile-web-app-title': 'ORIN',
   },
 };
 
@@ -54,6 +67,7 @@ export default function RootLayout({
           </AuthProvider>
         </QueryProvider>
         <Toaster />
+        <ServiceWorkerRegistration />
       </body>
     </html>
   );

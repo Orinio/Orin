@@ -13,6 +13,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import TypeBadge from './TypeBadge';
+import ShareableProofCard from './ShareableProofCard';
 import Image from 'next/image';
 
 interface ProofCardProps {
@@ -171,13 +172,16 @@ export default function ProofCard({ proof, variant = 'dashboard' }: ProofCardPro
               )}
             </div>
 
-            <Link
-              href={`/dashboard/proof/${id}`}
-              className="text-xs font-semibold px-3 py-1.5 rounded-[var(--radius-md)] transition-all duration-200 hover:bg-[var(--color-surface-dim)]"
-              style={{ color: 'var(--color-pulse)' }}
-            >
-              {variant === 'dashboard' ? 'View Details' : 'View Full Proof'}
-            </Link>
+            <div className="flex items-center gap-2">
+              <ShareableProofCard proof={proof} />
+              <Link
+                href={`/dashboard/proof/${id}`}
+                className="text-xs font-semibold px-3 py-1.5 rounded-[var(--radius-md)] transition-all duration-200 hover:bg-[var(--color-surface-dim)]"
+                style={{ color: 'var(--color-pulse)' }}
+              >
+                {variant === 'dashboard' ? 'View Details' : 'View Full Proof'}
+              </Link>
+            </div>
           </div>
         </div>
       </div>

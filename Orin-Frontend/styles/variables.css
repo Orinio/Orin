@@ -105,3 +105,34 @@
   --color-bg-pulse-light: rgba(238, 66, 102, 0.06);
   --color-bg-spark-light: rgba(244, 228, 9, 0.12);
 }
+
+/* ═══════════════════════════════════════════
+   DARK MODE — Override tokens
+   ═══════════════════════════════════════════ */
+.dark {
+  --color-ink: #E8E8E8;
+  --color-paper: #0D0D0D;
+  --color-mist: #6B7280;
+  --color-spark: #F4E409;
+  --color-pulse: #FF6B8A;
+  --color-ember: #FFB366;
+  --color-bloom: #34D399;
+
+  --color-text-secondary: #D1D5DB;
+  --color-text-tertiary: #6B7280;
+  --color-border: #1F2937;
+  --color-border-strong: #374151;
+  --color-surface: #111111;
+  --color-surface-dim: #1A1A1A;
+  --color-surface-hover: #1F1F1F;
+
+  --color-bg-primary: #0D0D0D;
+  --color-bg-alt: #111111;
+
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.2);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.3), 0 2px 4px -2px rgba(0,0,0,0.2);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.4), 0 4px 6px -4px rgba(0,0,0,0.3);
+  --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.5), 0 8px 10px -6px rgba(0,0,0,0.4);
+  --shadow-2xl: 0 25px 50px -12px rgba(0,0,0,0.6);
+}

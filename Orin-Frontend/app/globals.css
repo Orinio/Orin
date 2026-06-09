@@ -178,6 +178,11 @@ img, svg, video {
   50% { box-shadow: 0 0 36px rgba(238,66,102,0.28); }
 }
 
+@keyframes popIn {
+  0% { opacity: 0; transform: scale(0.95) translateY(-4px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
 /* ═══════════════════════════════════════════
    ANIMATION CLASSES
    ═══════════════════════════════════════════ */
@@ -202,6 +207,7 @@ img, svg, video {
 .animate-pulseSlower { animation: pulseSlow 9s ease-in-out infinite; }
 
 .animate-glow { animation: glowPulse 3.5s ease-in-out infinite; }
+.animate-pop-in { animation: popIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 .animate-shimmer {
   background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
   background-size: 1000px 100%;

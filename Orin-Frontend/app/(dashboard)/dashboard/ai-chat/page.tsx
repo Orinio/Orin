@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
-import { PanelLeft, ArrowDown, Sparkles } from 'lucide-react';
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
+import { PanelLeftClose, Sparkles, ArrowDown, Loader2, Brain, Zap } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { chatStore } from '@/lib/chat-store';
 import type { ChatConversation } from '@/lib/chat-types';
@@ -10,26 +10,52 @@ import SuperMessage, { type SuperMessageData } from '@/components/ai/SuperMessag
 import type { ToolStep } from '@/components/ai/StepIndicator';
 import ChatHistory from '@/components/ai/ChatHistory';
 import Logo from '@/components/Logo';
+import {
+  ActivityPanel,
+  WorkspacePanel,
+  ProjectHeader,
+  ReasoningSummaryCard,
+  Composer,
+  type ActivityItem,
+  type WorkspaceMode,
+  type WorkspaceArtifact,
+  type AgentState,
+} from '@/components/ai/workspace';
 
 export default function SuperAgentChat() {
   const { user, session } = useAuth();
+
+  // ─── State ───────────────────────────────────────────
   const [messages, setMessages] = useState<SuperMessageData[]>([]);
   const [conversation, setConversation] = useState<ChatConversation | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [activityOpen, setActivityOpen] = useState(false);
   const [showScrollDown, setShowScrollDown] = useState(false);
-  // Default to the optimized GPT‑OSS 120B model unless the user selects another one
+  const [agentState, setAgentState] = useState<AgentState>('idle');
+  const [activities, setActivities] = useState<ActivityItem[]>([]);
+  const [artifacts, setArtifacts] = useState<WorkspaceArtifact[]>([]);
+  const [workspaceMode, setWorkspaceMode] = useState<WorkspaceMode>('chat');
+  const [currentReasoning, setCurrentReasoning] = useState('');
+
+  // Default to GPT-OSS 120B
   const defaultModelId = CHAT_MODELS.find(m => m.id === 'openai/gpt-oss-120b')?.id ?? CHAT_MODELS[0].id;
   const [selectedModel, setSelectedModel] = useState(defaultModelId);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const isUserScrolledRef = useRef(false);
 
+  // ─── Conversation management ──────────────────────────
   const createConversation = useCallback(() => {
     const conv = chatStore.newConversation(user?.id || null, 'chat');
     setConversation(conv);
     setMessages([]);
+    setActivities([]);
+    setArtifacts([]);
+    setCurrentReasoning('');
+    setAgentState('idle');
     return conv;
   }, [user]);
 
@@ -62,6 +88,7 @@ export default function SuperAgentChat() {
     setSidebarOpen(false);
   }, [conversation, user, createConversation]);
 
+  // ─── Scroll management ────────────────────────────────
   const scrollToBottom = useCallback((smooth = true) => {
     if (!isUserScrolledRef.current) {
       messagesEndRef.current?.scrollIntoView({ behavior: smooth ? 'smooth' : 'instant' });
@@ -77,6 +104,7 @@ export default function SuperAgentChat() {
     isUserScrolledRef.current = !atBottom;
   }, []);
 
+  // ─── Message update helper ────────────────────────────
   const updateAssistant = useCallback((id: string, patch: Partial<SuperMessageData>) => {
     setMessages(prev => {
       const updated = [...prev];
@@ -86,6 +114,16 @@ export default function SuperAgentChat() {
     });
   }, []);
 
+  // ─── Activity helpers ─────────────────────────────────
+  const addActivity = useCallback((item: ActivityItem) => {
+    setActivities(prev => [...prev, item]);
+  }, []);
+
+  const updateActivity = useCallback((id: string, patch: Partial<ActivityItem>) => {
+    setActivities(prev => prev.map(a => a.id === id ? { ...a, ...patch } : a));
+  }, []);
+
+  // ─── SSE Streaming with tool activity tracking ────────
   const handleSend = useCallback(async (content: string, files?: File[], modelId?: string) => {
     let conv = conversation;
     if (!conv) conv = createConversation();
@@ -110,6 +148,10 @@ export default function SuperAgentChat() {
 
     setMessages(prev => [...prev, userMsg, assistantMsg]);
     setIsStreaming(true);
+    setAgentState('thinking');
+    setActivities([]);
+    setArtifacts([]);
+    setCurrentReasoning('');
 
     conv.messages.push({
       id: userMsg.id,
@@ -174,15 +216,31 @@ export default function SuperAgentChat() {
           switch (eventType) {
             case 'start':
               if (data.agentId) agentId = data.agentId;
+              setAgentState('planning');
               break;
             case 'thinking':
-              if (data.content) thinking = data.content;
-              updateAssistant(assistantId, { thinking: data.content });
+              if (data.content) {
+                thinking = data.content;
+                setCurrentReasoning(data.content);
+                setAgentState('thinking');
+                updateAssistant(assistantId, { thinking: data.content });
+              }
               break;
             case 'tool_start': {
               const step: ToolStep = { name: data.tool, description: data.description, status: 'running', args: data.args, step: data.step };
               steps.push(step);
+              setAgentState('using_tool');
+              setWorkspaceMode('build');
               updateAssistant(assistantId, { steps: [...steps] });
+              addActivity({
+                id: `act_${Date.now()}_${data.tool}`,
+                type: 'tool_call',
+                name: data.tool,
+                label: data.description || data.tool,
+                status: 'running',
+                description: data.description,
+                timestamp: new Date(),
+              });
               break;
             }
             case 'tool_result': {
@@ -193,13 +251,42 @@ export default function SuperAgentChat() {
                 }
               }
               updateAssistant(assistantId, { steps: [...steps] });
+              // Update the latest matching activity
+              setActivities(prev => {
+                const updated = [...prev];
+                for (let i = updated.length - 1; i >= 0; i--) {
+                  if (updated[i].name === data.tool && updated[i].status === 'running') {
+                    updated[i] = {
+                      ...updated[i],
+                      status: data.success ? 'success' : 'error',
+                      durationMs: data.durationMs,
+                    };
+                    break;
+                  }
+                }
+                return updated;
+              });
               break;
             }
             case 'answer':
-              if (data.content) { fullContent += data.content; updateAssistant(assistantId, { content: fullContent }); }
+              if (data.content) {
+                fullContent += data.content;
+                setAgentState('generating');
+                updateAssistant(assistantId, { content: fullContent });
+              }
               break;
             case 'visual_spec':
-              if (data.spec) { visualSpecs.push(data.spec); updateAssistant(assistantId, { visualSpecs: [...visualSpecs] }); }
+              if (data.spec) {
+                visualSpecs.push(data.spec);
+                updateAssistant(assistantId, { visualSpecs: [...visualSpecs] });
+                setArtifacts(prev => [...prev, {
+                  id: `art_${Date.now()}_${prev.length}`,
+                  type: 'text',
+                  title: data.spec.title || 'Visual Output',
+                  content: JSON.stringify(data.spec, null, 2),
+                  createdAt: new Date(),
+                }]);
+              }
               break;
             case 'complete':
               if (data.answer) fullContent = data.answer;
@@ -213,6 +300,7 @@ export default function SuperAgentChat() {
                 steps.length = 0;
                 data.toolCalls.forEach((tc: any) => { steps.push({ name: tc.tool, status: tc.success ? 'success' : 'error', args: tc.args, result: { success: tc.success, data: tc.data, error: tc.error }, durationMs: tc.durationMs }); });
               }
+              setAgentState('idle');
               updateAssistant(assistantId, {
                 content: fullContent || 'No response generated.', thinking: thinking || undefined, agentId, agentName, tokensUsed, durationMs,
                 steps: [...steps], visualSpecs: visualSpecs.length > 0 ? [...visualSpecs] : undefined, isStreaming: false,
@@ -271,14 +359,16 @@ export default function SuperAgentChat() {
     } catch (err: any) {
       if (err.name === 'AbortError') {
         updateAssistant(assistantId, { content: assistantMsg.content || 'Generation stopped.', isStreaming: false });
+        setAgentState('paused');
       } else {
-        updateAssistant(assistantId, { content: fullContent || undefined, error: 'Something went wrong. Please try again.', isStreaming: false });
+        updateAssistant(assistantId, { content: assistantMsg.content || undefined, error: 'Something went wrong. Please try again.', isStreaming: false });
+        setAgentState('error');
       }
     } finally {
       setIsStreaming(false);
       abortRef.current = null;
     }
-  }, [conversation, user, createConversation, updateAssistant, selectedModel]);
+  }, [conversation, user, createConversation, updateAssistant, selectedModel, addActivity]);
 
   const handleStop = useCallback(() => abortRef.current?.abort(), []);
 
@@ -304,125 +394,136 @@ export default function SuperAgentChat() {
 
   const handleNew = useCallback(() => { createConversation(); setSidebarOpen(false); }, [createConversation]);
 
+  // ─── Derived state ────────────────────────────────────
   const isWelcome = messages.length === 0;
   const currentModel = CHAT_MODELS.find(m => m.id === selectedModel) || CHAT_MODELS[0];
+  const projectTitle = conversation?.title || 'Orin';
+  const runningActivityCount = activities.filter(a => a.status === 'running').length;
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden" style={{ backgroundColor: 'var(--color-paper)' }}>
-      {/* Header */}
-      <header
-        className="flex-shrink-0 flex items-center justify-between px-4 h-12"
-        style={{ borderBottom: '1px solid var(--color-border)', backgroundColor: 'var(--color-paper)' }}
-      >
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="p-1.5 rounded-lg transition-colors hover:bg-black/5"
-            style={{ color: 'var(--color-ink)' }}
-          >
-            <PanelLeft className="w-4 h-4" />
-          </button>
-          <div className="flex items-center gap-2">
-            <Logo size="sm" />
-            <span className="text-sm font-semibold hidden sm:inline" style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-ink)' }}>
-              Orin
-            </span>
-          </div>
-        </div>
-
-        {conversation && (
-          <div className="text-xs opacity-40 truncate max-w-[200px] sm:max-w-[400px]" style={{ fontFamily: 'var(--font-mono)' }}>
-            {conversation.title}
-          </div>
-        )}
-
-        <div className="flex items-center gap-2">
-          <div
-            className="hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px]"
-            style={{ backgroundColor: 'var(--color-surface-dim)', color: currentModel.badgeColor || 'var(--color-mist)', fontFamily: 'var(--font-mono)' }}
-          >
-            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: currentModel.badgeColor || 'var(--color-bloom)' }} />
-            {currentModel.name.split(' ').slice(0, 2).join(' ')}
-          </div>
-          <div
-            className="flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px]"
-            style={{ backgroundColor: 'var(--color-surface-dim)', color: 'var(--color-mist)', fontFamily: 'var(--font-mono)' }}
-          >
-            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: 'var(--color-bloom)' }} />
-            Agent
-          </div>
-        </div>
-      </header>
-
-      {/* Sidebar */}
-      <ChatHistory
-        currentConversationId={conversation?.id || null}
-        onSelect={loadConversation}
-        onNew={handleNew}
-        onDelete={deleteConversation}
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
+    <div
+      className="h-screen flex flex-col overflow-hidden -mx-4 -mt-8"
+      style={{ backgroundColor: 'var(--color-paper)' }}
+    >
+      {/* ── Header ── */}
+      <ProjectHeader
+        title={projectTitle}
+        agentState={agentState}
+        selectedModel={selectedModel}
+        onModelChange={setSelectedModel}
+        onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+        onToggleActivity={() => setActivityOpen(!activityOpen)}
+        activityCount={runningActivityCount}
+        isStreaming={isStreaming}
       />
 
-      {/* Chat area */}
-      <div
-        ref={scrollContainerRef}
-        onScroll={handleScroll}
-        className="flex-1 overflow-y-auto"
-        style={{ scrollBehavior: 'smooth' }}
-      >
-        {isWelcome ? (
-          <div className="h-full flex flex-col items-center justify-center px-4">
-            <div
-              className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6"
-              style={{ backgroundColor: 'var(--color-ink)', boxShadow: '0 8px 32px rgba(0,0,0,0.12)' }}
-            >
-              <Sparkles className="w-6 h-6" style={{ color: 'var(--color-spark)' }} />
-            </div>
-            <h1
-              className="text-2xl sm:text-3xl font-bold mb-2 text-center"
-              style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-ink)' }}
-            >
-              What can I help you with?
-            </h1>
-            <p
-              className="text-sm mb-10 text-center max-w-md leading-relaxed"
-              style={{ color: 'var(--color-mist)', fontFamily: 'var(--font-body)' }}
-            >
-              I&apos;m your AI career assistant. Pick a model, then ask me anything about your portfolio, skills, or job search.
-            </p>
-            <ChatInput
-              onSend={handleSend}
-              disabled={isStreaming}
-              selectedModel={selectedModel}
-              onModelChange={setSelectedModel}
-            />
-          </div>
-        ) : (
-          <div className="py-4 max-w-4xl mx-auto">
-            {messages.map((msg) => (
-              <SuperMessage key={msg.id} message={msg} onRate={handleRate} onRetry={handleRetry} />
-            ))}
-            <div ref={messagesEndRef} />
-          </div>
-        )}
+      {/* ── Main content area ── */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Chat history sidebar */}
+        <ChatHistory
+          currentConversationId={conversation?.id || null}
+          onSelect={loadConversation}
+          onNew={handleNew}
+          onDelete={deleteConversation}
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+        />
 
-        {/* Floating scroll-to-bottom */}
-        {showScrollDown && !isWelcome && (
-          <button
-            onClick={() => { isUserScrolledRef.current = false; messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }}
-            className="fixed bottom-24 left-1/2 -translate-x-1/2 z-10 w-9 h-9 rounded-full flex items-center justify-center shadow-lg transition-all duration-200 hover:scale-110"
-            style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-ink)' }}
+        {/* Chat + Workspace panels */}
+        <div className="flex-1 flex overflow-hidden">
+          {/* Chat panel */}
+          <div
+            ref={scrollContainerRef}
+            onScroll={handleScroll}
+            className="flex-1 flex flex-col overflow-y-auto"
+            style={{
+              scrollBehavior: 'smooth',
+              maxWidth: activityOpen ? '50%' : '100%',
+              transition: 'max-width 0.3s ease',
+            }}
           >
-            <ArrowDown className="w-4 h-4" />
-          </button>
-        )}
+            {isWelcome ? (
+              <div className="h-full flex flex-col items-center justify-center px-4">
+                <div
+                  className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6"
+                  style={{ backgroundColor: 'var(--color-ink)', boxShadow: '0 8px 32px rgba(0,0,0,0.12)' }}
+                >
+                  <Sparkles className="w-6 h-6" style={{ color: 'var(--color-spark)' }} />
+                </div>
+                <h1
+                  className="text-2xl sm:text-3xl font-bold mb-2 text-center"
+                  style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-ink)' }}
+                >
+                  What can I help you with?
+                </h1>
+                <p
+                  className="text-sm mb-10 text-center max-w-md leading-relaxed"
+                  style={{ color: 'var(--color-mist)', fontFamily: 'var(--font-body)' }}
+                >
+                  I&apos;m your AI career assistant. Pick a model, then ask me anything about your portfolio, skills, or job search.
+                </p>
+                <Composer
+                  onSend={handleSend}
+                  disabled={isStreaming}
+                  selectedModel={selectedModel}
+                  onModelChange={setSelectedModel}
+                />
+              </div>
+            ) : (
+              <div className="py-4 max-w-4xl mx-auto w-full">
+                {messages.map((msg) => (
+                  <SuperMessage key={msg.id} message={msg} onRate={handleRate} onRetry={handleRetry} />
+                ))}
+
+                {/* Live reasoning card during streaming */}
+                {isStreaming && currentReasoning && (
+                  <div className="max-w-4xl mx-auto px-4 py-2">
+                    <ReasoningSummaryCard content={currentReasoning} />
+                  </div>
+                )}
+
+                <div ref={messagesEndRef} />
+              </div>
+            )}
+
+            {/* Floating scroll-to-bottom */}
+            {showScrollDown && !isWelcome && (
+              <button
+                onClick={() => { isUserScrolledRef.current = false; messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }}
+                className="fixed bottom-24 left-1/2 -translate-x-1/2 z-10 w-9 h-9 rounded-full flex items-center justify-center shadow-lg transition-all duration-200 hover:scale-110"
+                style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-ink)' }}
+              >
+                <ArrowDown className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+
+          {/* Activity panel (right side, collapsible) */}
+          {activityOpen && (
+            <div
+              className="flex-shrink-0 border-l overflow-hidden"
+              style={{
+                width: '280px',
+                borderColor: 'var(--color-border)',
+                backgroundColor: 'var(--color-surface)',
+              }}
+            >
+              <ActivityPanel
+                activities={activities}
+                isStreaming={isStreaming}
+              />
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Input (non-welcome) */}
+      {/* ── Composer (bottom, non-welcome) ── */}
       {!isWelcome && (
-        <div className="flex-shrink-0" style={{ borderTop: '1px solid var(--color-border)' }}>
-          <ChatInput
+        <div
+          className="flex-shrink-0"
+          style={{ borderTop: '1px solid var(--color-border)' }}
+        >
+          <Composer
             onSend={handleSend}
             onStop={handleStop}
             disabled={isStreaming}
@@ -430,6 +531,26 @@ export default function SuperAgentChat() {
             selectedModel={selectedModel}
             onModelChange={setSelectedModel}
           />
+        </div>
+      )}
+
+      {/* ── Activity drawer for mobile ── */}
+      {activityOpen && (
+        <div
+          className="fixed inset-0 z-50 md:hidden"
+          onClick={() => setActivityOpen(false)}
+        >
+          <div className="absolute inset-0 bg-black/30" />
+          <div
+            className="absolute right-0 top-12 bottom-0 w-72 shadow-xl"
+            style={{ backgroundColor: 'var(--color-surface)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <ActivityPanel
+              activities={activities}
+              isStreaming={isStreaming}
+            />
+          </div>
         </div>
       )}
     </div>

@@ -5,12 +5,22 @@ export default function DashboardLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="min-h-screen">
       <Navigation />
-      <main id="main-content" className="mx-auto w-full max-w-[1200px] flex-1 px-4 py-8 md:px-6 lg:px-8">
-        {children}
+      {/* Desktop: offset by sidebar width (260px default). Mobile: normal flow with header + bottom bar */}
+      <main
+        id="main-content"
+        className="lg:ml-[260px] min-h-screen px-4 py-8 md:px-6 lg:px-8 transition-all duration-300"
+      >
+        <div className="mx-auto max-w-[1100px]">
+          {children}
+        </div>
       </main>
-      <Footer />
+      <div className="lg:ml-[260px]">
+        <Footer />
+      </div>
+      {/* Mobile bottom bar spacer */}
+      <div className="lg:hidden h-[76px]" />
     </div>
   );
 }

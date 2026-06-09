@@ -79,9 +79,9 @@ function FeedPostCard({ post, currentUserId }: { post: any; currentUserId: strin
             {post.description}
           </p>
         )}
-        {post.skills && post.skills.length > 0 && (
+        {post.skills_extracted && post.skills_extracted.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mt-3">
-            {post.skills.map((skill: string) => (
+            {post.skills_extracted.map((skill: string) => (
               <span key={skill} className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium" style={{ backgroundColor: 'var(--color-surface-dim)', color: 'var(--color-text-secondary)' }}>
                 {skill}
               </span>

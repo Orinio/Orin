@@ -252,7 +252,8 @@ export interface FeedPost {
   user_id: string;
   title: string;
   description: string | null;
-  skills: string[] | null;
+  skills_extracted: string[];
+  skills_user_added: string[];
   source_type: string;
   verification_status: string;
   source_url: string | null;

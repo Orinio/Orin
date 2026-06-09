@@ -22,6 +22,102 @@ import {
   type AgentState,
 } from '@/components/ai/workspace';
 
+// ─── Usage Bar ───────────────────────────────────────────
+interface UsageData {
+  plan: string;
+  planName: string;
+  usage: Record<string, { used: number; limit: number; remaining: number; resetsAt: string }>;
+  tokenBudget: { used: number; limit: number; remaining: number };
+}
+
+function UsageBar({ session, onRefreshRef }: { session: any; onRefreshRef?: React.MutableRefObject<(() => void) | null> }) {
+  const [usage, setUsage] = useState<UsageData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchUsage = useCallback(async () => {
+    if (!session?.access_token) return;
+    try {
+      const res = await fetch('/api/ai/usage', {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) setUsage(data.data);
+      }
+    } catch {}
+    setLoading(false);
+  }, [session?.access_token]);
+
+  useEffect(() => {
+    fetchUsage();
+    const interval = setInterval(fetchUsage, 30000); // Refresh every 30s
+    if (onRefreshRef) onRefreshRef.current = fetchUsage;
+    return () => { clearInterval(interval); if (onRefreshRef) onRefreshRef.current = null; };
+  }, [fetchUsage, onRefreshRef]);
+
+  if (loading || !usage) return null;
+
+  const chatUsage = usage.usage['ai-chat-stream'] || usage.usage['ai-chat'] || { used: 0, limit: 15, remaining: 15 };
+  const percent = Math.min(100, (chatUsage.used / chatUsage.limit) * 100);
+  const isLow = percent > 80;
+  const isExhausted = percent >= 100;
+
+  return (
+    <div
+      className="flex items-center gap-3 px-4 py-1.5 text-xs"
+      style={{
+        backgroundColor: isExhausted ? 'rgba(239,68,68,0.08)' : 'var(--color-surface)',
+        borderBottom: '1px solid var(--color-border)',
+        color: 'var(--color-mist)',
+      }}
+    >
+      <span
+        className="px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider"
+        style={{
+          backgroundColor: usage.plan === 'pro' ? 'rgba(139,92,246,0.12)' : usage.plan === 'team' ? 'rgba(59,130,246,0.12)' : 'rgba(107,114,128,0.12)',
+          color: usage.plan === 'pro' ? '#8b5cf6' : usage.plan === 'team' ? '#3b82f6' : '#6b7280',
+        }}
+      >
+        {usage.planName}
+      </span>
+
+      <div className="flex-1 max-w-[200px]">
+        <div className="flex items-center justify-between mb-0.5">
+          <span style={{ color: 'var(--color-mist)' }}>AI Messages</span>
+          <span style={{ color: isExhausted ? '#ef4444' : isLow ? '#f59e0b' : 'var(--color-mist)' }}>
+            {chatUsage.used}/{chatUsage.limit}
+          </span>
+        </div>
+        <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--color-border)' }}>
+          <div
+            className="h-full rounded-full transition-all duration-500"
+            style={{
+              width: `${percent}%`,
+              backgroundColor: isExhausted ? '#ef4444' : isLow ? '#f59e0b' : '#22c55e',
+            }}
+          />
+        </div>
+      </div>
+
+      {isExhausted && usage.plan === 'free' && (
+        <a
+          href="/settings?tab=billing"
+          className="px-2 py-1 rounded text-[10px] font-semibold hover:opacity-80 transition-opacity"
+          style={{ backgroundColor: 'var(--color-ink)', color: 'var(--color-paper)' }}
+        >
+          Upgrade
+        </a>
+      )}
+
+      {isExhausted && usage.plan !== 'free' && chatUsage.resetsAt && (
+        <span className="text-[10px]" style={{ color: 'var(--color-mist)' }}>
+          Resets {new Date(chatUsage.resetsAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+        </span>
+      )}
+    </div>
+  );
+}
+
 export default function SuperAgentChat() {
   const { user, session } = useAuth();
 
@@ -46,6 +142,7 @@ export default function SuperAgentChat() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const isUserScrolledRef = useRef(false);
+  const usageRefreshRef = useRef<(() => void) | null>(null);
 
   // ─── Conversation management ──────────────────────────
   const createConversation = useCallback(() => {
@@ -202,7 +299,28 @@ export default function SuperAgentChat() {
         signal: abortRef.current.signal,
       });
 
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        const details = errorData?.error?.details;
+        if (res.status === 429 && details) {
+          const waitDisplay = details.retryAfterDisplay || 'a few minutes';
+          const planName = details.planName || 'Free';
+          const used = details.usage?.used ?? '?';
+          const limit = details.usage?.limit ?? '?';
+          throw new Error(
+            `RATE_LIMITED:${JSON.stringify({
+              message: errorData.error.message,
+              planName,
+              used,
+              limit,
+              waitDisplay,
+              upgradeMessage: details.upgradeMessage,
+              upgradeUrl: details.upgradeUrl,
+            })}`
+          );
+        }
+        throw new Error(errorData?.error?.message || `HTTP ${res.status}`);
+      }
 
       const reader = res.body?.getReader();
       if (!reader) throw new Error('No reader');
@@ -360,6 +478,24 @@ export default function SuperAgentChat() {
       if (err.name === 'AbortError') {
         updateAssistant(assistantId, { content: assistantMsg.content || 'Generation stopped.', isStreaming: false });
         setAgentState('paused');
+      } else if (err.message?.startsWith('RATE_LIMITED:')) {
+        try {
+          const details = JSON.parse(err.message.slice('RATE_LIMITED:'.length));
+          const errorMessage = [
+            `**Rate Limit Reached** — ${details.planName} plan`,
+            ``,
+            `You've used **${details.used}/${details.limit}** AI messages today.`,
+            `Please wait **${details.waitDisplay}** before trying again.`,
+            details.upgradeMessage ? `\n💡 ${details.upgradeMessage}` : '',
+          ].filter(Boolean).join('\n');
+          updateAssistant(assistantId, { content: errorMessage, isStreaming: false });
+          setAgentState('idle');
+        } catch {
+          updateAssistant(assistantId, { content: 'Rate limit reached. Please try again shortly.', isStreaming: false });
+          setAgentState('idle');
+        }
+        // Refresh usage bar
+        usageRefreshRef.current?.();
       } else {
         updateAssistant(assistantId, { content: assistantMsg.content || undefined, error: 'Something went wrong. Please try again.', isStreaming: false });
         setAgentState('error');
@@ -416,6 +552,9 @@ export default function SuperAgentChat() {
         activityCount={runningActivityCount}
         isStreaming={isStreaming}
       />
+
+      {/* ── Usage Bar ── */}
+      <UsageBar session={session} onRefreshRef={usageRefreshRef} />
 
       {/* ── Main content area ── */}
       <div className="flex-1 flex overflow-hidden">

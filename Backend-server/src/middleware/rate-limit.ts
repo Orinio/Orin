@@ -219,14 +219,27 @@ export function userRateLimitMiddleware(endpoint: string) {
       (req as any).tokenBudget = budget;
       (req as any).userPlan = plan;
 
-      // Capture response to log usage
+      // Capture response to log usage ONLY on success (2xx)
       const originalJson = res.json.bind(res);
+      const originalStatus = res.status.bind(res);
+      let responseStatusCode = 200;
+
+      res.status = function (code: number) {
+        responseStatusCode = code;
+        return originalStatus(code);
+      };
+
       res.json = function (body: any) {
-        const tokensUsed = (body as any)?.tokensUsed || 0;
-        if (tokensUsed > 0) {
-          consumeTokens(authUserId, tokensUsed, tier);
+        // Only count successful responses toward rate limit
+        if (responseStatusCode >= 200 && responseStatusCode < 300) {
+          const tokensUsed = (body as any)?.tokensUsed || 0;
+          if (tokensUsed > 0) {
+            consumeTokens(authUserId, tokensUsed, tier);
+          }
+          rateLimit.logAIUsage(supabase, userId, endpoint, tokensUsed).catch(() => {});
+        } else {
+          logger.debug({ userId, endpoint, status: responseStatusCode }, 'Skipping rate limit count — error response');
         }
-        rateLimit.logAIUsage(supabase, userId, endpoint, tokensUsed).catch(() => {});
         return originalJson(body);
       };
 

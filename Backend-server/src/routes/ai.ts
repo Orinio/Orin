@@ -5,12 +5,13 @@ import { getAgent } from '../lib/ai/agents/index.js';
 import { runAgent } from '../lib/ai/core/agent-runner.js';
 import type { AgentMessage } from '../lib/ai/orchestrator/agent-orchestrator.js';
 import { analyzeSkills, identifySkillGaps, getSkillRecommendations, extractSkillsFromProofs } from '../lib/skills.js';
-import { logAIUsage } from '../lib/rate-limit.js';
+import { logAIUsage, getRateLimitConfigForPlan } from '../lib/rate-limit.js';
 import { chatMessageSchema, verifyRequestSchema } from '../lib/validations.js';
 import { buildAgentContext } from '../lib/context.js';
 import { isNvidiaConfigured } from '../lib/ai/core/nvidia.js';
-import { userRateLimitMiddleware, getCached, setCache } from '../middleware/rate-limit.js';
+import { userRateLimitMiddleware, getCached, setCache, checkTokenBudget } from '../middleware/rate-limit.js';
 import { validate } from '../middleware/validate.js';
+import type { SubscriptionPlan } from '../lib/types.js';
 
 export const aiRouter = Router();
 
@@ -34,6 +35,91 @@ async function getCachedOpportunities(): Promise<any[]> {
   opportunityCache.expiresAt = now + OPPORTUNITY_CACHE_TTL_MS;
   return opportunityCache.data;
 }
+
+// GET /ai/usage — Return live usage/limits for the current user
+aiRouter.get('/usage', async (req, res) => {
+  try {
+    const authUserId = (req as any).user?.id;
+    if (!authUserId) {
+      res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'Authentication required' } });
+      return;
+    }
+
+    // Resolve internal user
+    const { data: userRow } = await supabase
+      .from('users')
+      .select('id')
+      .eq('auth_user_id', authUserId)
+      .maybeSingle();
+    const userId = userRow?.id;
+    if (!userId) {
+      res.status(404).json({ error: { code: 'NOT_FOUND', message: 'User profile not found' } });
+      return;
+    }
+
+    // Fetch subscription plan
+    let plan: SubscriptionPlan = 'free';
+    const { data: sub } = await supabase
+      .from('subscriptions')
+      .select('plan, status')
+      .eq('user_id', userId)
+      .in('status', ['active', 'trialing'])
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (sub?.plan) plan = sub.plan as SubscriptionPlan;
+
+    // Get usage for each endpoint
+    const now = new Date();
+    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+    const endpoints = ['ai-chat', 'ai-chat-stream', 'ai-verify', 'ai-skills', 'ai-match-opportunities', 'coach-notes-generate'];
+    const usage: Record<string, { used: number; limit: number; remaining: number; resetsAt: string }> = {};
+
+    for (const endpoint of endpoints) {
+      const config = getRateLimitConfigForPlan(endpoint, plan);
+      const { data: logs } = await supabase
+        .from('ai_usage_log')
+        .select('created_at')
+        .eq('user_id', userId)
+        .eq('endpoint', endpoint)
+        .gte('created_at', twentyFourHoursAgo.toISOString());
+
+      const used = (logs || []).length;
+      const resetsAt = logs && logs.length > 0
+        ? new Date(new Date(logs[logs.length - 1].created_at).getTime() + 24 * 60 * 60 * 1000).toISOString()
+        : new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString();
+
+      usage[endpoint] = {
+        used,
+        limit: config.maxPerDay,
+        remaining: Math.max(0, config.maxPerDay - used),
+        resetsAt,
+      };
+    }
+
+    // Token budget
+    const budget = checkTokenBudget(authUserId, plan);
+
+    res.json({
+      success: true,
+      data: {
+        plan,
+        planName: plan === 'free' ? 'Free' : plan === 'pro' ? 'Pro' : 'Team',
+        endpoints,
+        usage,
+        tokenBudget: {
+          used: budget.limit - budget.remaining,
+          limit: budget.limit,
+          remaining: budget.remaining,
+        },
+      },
+    });
+  } catch (err) {
+    logger.error({ err }, 'Usage endpoint error');
+    res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch usage' } });
+  }
+});
 
 /**
  * Graceful degradation: return a helpful fallback when AI is unavailable.

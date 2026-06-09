@@ -207,7 +207,16 @@ aiRouter.post('/chat-stream', userRateLimitMiddleware('ai-chat-stream'), async (
       .maybeSingle();
     const userId = userRow?.id || authUserId;
 
-    const { message, history, model } = req.body;
+    // Support both formats: { message, history } (workspace) and { messages } (legacy)
+    const bodyMessage = req.body.message;
+    const bodyMessages = req.body.messages;
+    const message = bodyMessage || (bodyMessages?.length
+      ? [...bodyMessages].reverse().find((m: any) => m.role === 'user')?.content || ''
+      : '');
+    const history = req.body.history || (bodyMessages?.length
+      ? bodyMessages.slice(0, -1).map((m: any) => ({ role: m.role, content: m.content }))
+      : []);
+    const model = req.body.model;
     if (!message) { res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'Message is required' } }); return; }
 
     const context = await buildAgentContext(authUserId);

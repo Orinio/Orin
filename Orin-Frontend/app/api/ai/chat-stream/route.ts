@@ -48,7 +48,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
   }
 
-  const { messages, model, conversationId, files } = body;
+  const { messages, model, message: directMessage, history: directHistory, conversationId, files } = body;
+
+  // Support two formats:
+  // 1. Workspace sends: { message, model, history } — pass through directly
+  // 2. Legacy sends: { messages, model } — transform to { message, history }
+  const message = directMessage || (messages?.length
+    ? [...messages].reverse().find((m: any) => m.role === 'user')?.content || ''
+    : '');
+  const history = directHistory || (messages?.length
+    ? messages.slice(0, -1).map((m: any) => ({ role: m.role, content: m.content }))
+    : []);
 
   // Try to inject memory context into the system prompt
   try {
@@ -93,12 +103,6 @@ export async function POST(req: NextRequest) {
     // Memory injection is best-effort — don't break the chat
     console.warn('Memory injection failed:', e);
   }
-
-  // Transform messages array into backend format: { message, history, model }
-  // Backend expects: message (latest user message string), history (previous messages array)
-  const lastUserMsg = [...(messages || [])].reverse().find((m: any) => m.role === 'user');
-  const message = lastUserMsg?.content || '';
-  const history = (messages || []).slice(0, -1).map((m: any) => ({ role: m.role, content: m.content }));
 
   // Forward to backend with correct field names
   const headers: Record<string, string> = {

@@ -24,6 +24,7 @@ import { usePlan } from '@/lib/plan-context';
 import { useAuth } from '@/lib/auth-context';
 import { LimitReached, UpgradePrompt } from '@/components/UpgradePrompt';
 import { supabase } from '@/lib/supabase';
+import UrlImport from '@/components/UrlImport';
 
 interface Step {
   id: number;
@@ -84,6 +85,7 @@ export default function NewProofPage() {
   const [customSkill, setCustomSkill] = useState('');
   const [autoVerify, setAutoVerify] = useState(true);
   const [verifying, setVerifying] = useState(false);
+  const [urlImportMode, setUrlImportMode] = useState(false);
 
   const selectedSource = sourceTypes.find((s) => s.value === sourceType);
   const suggestedForType = suggestedSkills[sourceType];
@@ -211,6 +213,28 @@ export default function NewProofPage() {
           compact
         />
       )}
+
+      {/* URL Import option */}
+      {!urlImportMode ? (
+        <div className="animate-fadeInUp" style={{ animationDelay: '75ms' }}>
+          <UrlImport
+            onProofGenerated={(proof) => {
+              setSourceType(proof.sourceType as ProofSourceType);
+              setTitle(proof.title);
+              setDescription(proof.description);
+              setSourceUrl(proof.sourceUrl);
+              setSkills(proof.skills);
+              setUrlImportMode(false);
+              setCurrentStep(4); // Skip to review
+            }}
+          />
+          <div className="mt-4 flex items-center gap-3">
+            <div className="h-px flex-1" style={{ backgroundColor: 'var(--color-border)' }} />
+            <span className="text-xs font-medium" style={{ color: 'var(--color-text-tertiary)' }}>or create manually</span>
+            <div className="h-px flex-1" style={{ backgroundColor: 'var(--color-border)' }} />
+          </div>
+        </div>
+      ) : null}
 
       {/* Step indicator */}
       <div className="flex items-center gap-2 animate-fadeInUp" style={{ animationDelay: '50ms' }}>

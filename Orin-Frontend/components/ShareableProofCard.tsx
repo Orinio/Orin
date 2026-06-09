@@ -143,8 +143,8 @@ export default function ShareableProofCard({ proof, username, userFullName }: Sh
       if (!cardEl) return;
 
       // Dynamic import of html-to-image
-      const { toPng } = await import('html-to-image');
-      const dataUrl = await toPng(cardEl, {
+      const htmlToImage = await import('html-to-image');
+      const dataUrl = await htmlToImage.toPng(cardEl, {
         width: 600,
         height: 400,
         pixelRatio: 2,
@@ -155,8 +155,8 @@ export default function ShareableProofCard({ proof, username, userFullName }: Sh
       link.download = `orin-proof-${proof.title.toLowerCase().replace(/\s+/g, '-')}.png`;
       link.href = dataUrl;
       link.click();
-    } catch (e) {
-      console.error('Failed to download card:', e);
+    } catch (err) {
+      console.error('Failed to download card:', err);
     } finally {
       setDownloading(false);
     }
@@ -201,7 +201,7 @@ export default function ShareableProofCard({ proof, username, userFullName }: Sh
               transition={{ duration: 0.2 }}
               className="relative w-full max-w-[680px] overflow-hidden rounded-3xl shadow-2xl"
               style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e: React.MouseEvent) => e.stopPropagation()}
             >
               {/* Close button */}
               <button

@@ -86,7 +86,7 @@ export default function OnboardingPage() {
       }
       const { data: userData } = await supabase
         .from('users')
-        .select('id, full_name, headline, onboarding_completed')
+        .select('id, full_name, headline')
         .eq('auth_user_id', authUserData.id)
         .maybeSingle();
 
@@ -94,8 +94,8 @@ export default function OnboardingPage() {
         setDbUserId(userData.id);
         setFullName(userData.full_name || '');
         setHeadline(userData.headline || '');
-        // Skip onboarding if already completed
-        if (userData.onboarding_completed) {
+        // Check if user already has a profile (skip onboarding)
+        if (userData.full_name && userData.headline) {
           router.push('/dashboard');
         }
       }
@@ -138,7 +138,6 @@ export default function OnboardingPage() {
         await supabase.from('users').update({
           full_name: fullName || undefined,
           headline: headline || `${role} · ${skills.slice(0, 3).join(', ')}`,
-          onboarding_completed: true,
         }).eq('id', dbUserId);
       }
       if (typeof window !== 'undefined') {

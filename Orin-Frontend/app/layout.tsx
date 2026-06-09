@@ -20,13 +20,6 @@ const serif = Lora({
 });
 
 export const metadata: Metadata = {
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 5,
-    themeColor: '#0BAB77',
-  },
-
   title: "ORIN - Turn Work Into Career Proof",
   description:
     "Transform your scattered work into verified career proof. AI coach, proof cards, and real opportunities.",
@@ -49,7 +42,15 @@ export const metadata: Metadata = {
     'apple-mobile-web-app-capable': 'yes',
     'apple-mobile-web-app-status-bar-style': 'black-translucent',
     'apple-mobile-web-app-title': 'ORIN',
+    'theme-color': '#0BAB77',
   },
+};
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: '#0BAB77',
 };
 
 export default function RootLayout({

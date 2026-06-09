@@ -12,6 +12,7 @@ import { formatNumber, getProofTypeColor } from "@/lib/utils";
 import ProofCard from "@/components/ProofCard";
 import CoachNote from "@/components/CoachNote";
 import { PlanCard } from "@/components/PlanCard";
+import ActivityTimeline from "@/components/ActivityTimeline";
 
 function AnimatedCounter({ value }: { value: number }) {
   const count = useMotionValue(0);
@@ -464,6 +465,13 @@ export default function DashboardPage() {
           <div className="animate-fadeInUp" style={{ animationDelay: '230ms' }}>
             <PlanCard />
           </div>
+
+          {/* Activity Timeline */}
+          {user && (
+            <div className="animate-fadeInUp" style={{ animationDelay: '240ms' }}>
+              <ActivityTimeline dbUserId={user.id} />
+            </div>
+          )}
 
           {/* Proof by Type */}
           {Object.keys(sourceTypeCounts).length > 0 && (

@@ -53,18 +53,17 @@ export interface RateLimitConfig {
 export const AI_RATE_LIMITS_BY_PLAN: Record<string, Record<string, RateLimitConfig>> = {
   free: {
     'ai-verify': { maxPerDay: 10, maxPerWeek: 50, cooldownHours: 0.5 },
-    'ai-chat': { maxPerDay: 15, maxPerWeek: 75, cooldownHours: 0.25 },
-    'ai-chat-stream': { maxPerDay: 15, maxPerWeek: 75, cooldownHours: 0.25 },
+    'ai-chat': { maxPerDay: 15, maxPerWeek: 75, cooldownHours: 0.0167 },
+    'ai-chat-stream': { maxPerDay: 15, maxPerWeek: 75, cooldownHours: 0.0167 },
     'ai-match-opportunities': { maxPerDay: 5, maxPerWeek: 20, cooldownHours: 1 },
     'ai-skills': { maxPerDay: 10, maxPerWeek: 50, cooldownHours: 0.5 },
     'coach-notes-generate': { maxPerDay: 3, maxPerWeek: 10, cooldownHours: 4 },
-    // Default for unknown endpoints
     _default: { maxPerDay: 10, maxPerWeek: 50, cooldownHours: 0.5 },
   },
   pro: {
     'ai-verify': { maxPerDay: 50, maxPerWeek: 250, cooldownHours: 0.1 },
-    'ai-chat': { maxPerDay: 100, maxPerWeek: 500, cooldownHours: 0.05 },
-    'ai-chat-stream': { maxPerDay: 100, maxPerWeek: 500, cooldownHours: 0.05 },
+    'ai-chat': { maxPerDay: 100, maxPerWeek: 500, cooldownHours: 0.00139 },
+    'ai-chat-stream': { maxPerDay: 100, maxPerWeek: 500, cooldownHours: 0.00139 },
     'ai-match-opportunities': { maxPerDay: 25, maxPerWeek: 100, cooldownHours: 0.25 },
     'ai-skills': { maxPerDay: 50, maxPerWeek: 250, cooldownHours: 0.1 },
     'coach-notes-generate': { maxPerDay: 15, maxPerWeek: 50, cooldownHours: 1 },
@@ -72,8 +71,8 @@ export const AI_RATE_LIMITS_BY_PLAN: Record<string, Record<string, RateLimitConf
   },
   team: {
     'ai-verify': { maxPerDay: 200, maxPerWeek: 1000, cooldownHours: 0.025 },
-    'ai-chat': { maxPerDay: 300, maxPerWeek: 1500, cooldownHours: 0.02 },
-    'ai-chat-stream': { maxPerDay: 300, maxPerWeek: 1500, cooldownHours: 0.02 },
+    'ai-chat': { maxPerDay: 300, maxPerWeek: 1500, cooldownHours: 0.00056 },
+    'ai-chat-stream': { maxPerDay: 300, maxPerWeek: 1500, cooldownHours: 0.00056 },
     'ai-match-opportunities': { maxPerDay: 100, maxPerWeek: 400, cooldownHours: 0.1 },
     'ai-skills': { maxPerDay: 200, maxPerWeek: 1000, cooldownHours: 0.025 },
     'coach-notes-generate': { maxPerDay: 50, maxPerWeek: 200, cooldownHours: 0.5 },

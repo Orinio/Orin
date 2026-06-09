@@ -15,9 +15,23 @@ const saveConversationSchema = z.object({
   updatedAt: z.string().optional(),
 });
 
+async function resolveUserId(authUserId: string): Promise<string | null> {
+  const { data } = await supabase
+    .from('users')
+    .select('id')
+    .eq('auth_user_id', authUserId)
+    .maybeSingle();
+  return data?.id || null;
+}
+
 chatRouter.get('/', async (req, res) => {
   try {
-    const userId = (req as any).user?.id;
+    const authUserId = (req as any).user?.id;
+    const userId = await resolveUserId(authUserId);
+    if (!userId) {
+      res.status(404).json({ error: { code: 'NOT_FOUND', message: 'User profile not found' } });
+      return;
+    }
     const { data, error } = await supabase
       .from('chat_conversations')
       .select('*')
@@ -51,7 +65,12 @@ chatRouter.get('/', async (req, res) => {
 
 chatRouter.get('/:id', async (req, res) => {
   try {
-    const userId = (req as any).user?.id;
+    const authUserId = (req as any).user?.id;
+    const userId = await resolveUserId(authUserId);
+    if (!userId) {
+      res.status(404).json({ error: { code: 'NOT_FOUND', message: 'User profile not found' } });
+      return;
+    }
     const { id } = req.params;
 
     const { data, error } = await supabase
@@ -88,7 +107,12 @@ chatRouter.get('/:id', async (req, res) => {
 
 chatRouter.post('/', async (req, res) => {
   try {
-    const userId = (req as any).user?.id;
+    const authUserId = (req as any).user?.id;
+    const userId = await resolveUserId(authUserId);
+    if (!userId) {
+      res.status(404).json({ error: { code: 'NOT_FOUND', message: 'User profile not found' } });
+      return;
+    }
     const parsed = saveConversationSchema.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({ error: { code: 'INVALID_INPUT', message: parsed.error.errors[0].message } });
@@ -124,7 +148,12 @@ chatRouter.post('/', async (req, res) => {
 
 chatRouter.delete('/:id', async (req, res) => {
   try {
-    const userId = (req as any).user?.id;
+    const authUserId = (req as any).user?.id;
+    const userId = await resolveUserId(authUserId);
+    if (!userId) {
+      res.status(404).json({ error: { code: 'NOT_FOUND', message: 'User profile not found' } });
+      return;
+    }
     const { id } = req.params;
 
     const { error } = await supabase

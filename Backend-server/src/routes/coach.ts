@@ -11,6 +11,15 @@ import { userRateLimitMiddleware } from '../middleware/rate-limit.js';
 
 export const coachRouter = Router();
 
+async function resolveUserId(authUserId: string): Promise<string | null> {
+  const { data } = await supabase
+    .from('users')
+    .select('id')
+    .eq('auth_user_id', authUserId)
+    .maybeSingle();
+  return data?.id || null;
+}
+
 const generateNoteSchema = z.object({
   noteType: z.enum(['daily', 'weekly', 'milestone', 'ad_hoc']),
   milestone: z.string().optional(),
@@ -20,9 +29,15 @@ const generateNoteSchema = z.object({
 // POST /coach/generate — Generate a coach note
 coachRouter.post('/generate', userRateLimitMiddleware('coach-generate'), async (req, res) => {
   try {
-    const userId = (req as any).user?.id;
-    if (!userId) {
+    const authUserId = (req as any).user?.id;
+    if (!authUserId) {
       res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } });
+      return;
+    }
+
+    const userId = (req as any).internalUserId || await resolveUserId(authUserId);
+    if (!userId) {
+      res.status(404).json({ error: { code: 'NOT_FOUND', message: 'User profile not found' } });
       return;
     }
 
@@ -40,7 +55,7 @@ coachRouter.post('/generate', userRateLimitMiddleware('coach-generate'), async (
       return;
     }
 
-    const context = await buildAgentContext((req as any).user.id);
+    const context = await buildAgentContext(authUserId);
     const agent = getAgent('coach')!;
 
     // Build the prompt using the prompts library

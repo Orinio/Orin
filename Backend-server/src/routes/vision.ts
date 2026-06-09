@@ -12,6 +12,15 @@ import { userRateLimitMiddleware } from '../middleware/rate-limit.js';
 
 export const visionRouter = Router();
 
+async function resolveUserId(authUserId: string): Promise<string | null> {
+  const { data } = await supabase
+    .from('users')
+    .select('id')
+    .eq('auth_user_id', authUserId)
+    .maybeSingle();
+  return data?.id || null;
+}
+
 /**
  * POST /ai/vision/analyze - Analyze an image
  */
@@ -95,7 +104,8 @@ visionRouter.post('/certificate/verify', userRateLimitMiddleware('ai-vision-veri
 
     // Update proof status if proofId provided
     if (proofId) {
-      const userId = (req as any).user?.id;
+      const authUserId = (req as any).user?.id;
+      const userId = (req as any).internalUserId || (authUserId ? await resolveUserId(authUserId) : null);
       if (userId) {
         const { data: existingProof } = await supabase
           .from('proof_cards')

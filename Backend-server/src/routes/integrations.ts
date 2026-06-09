@@ -4,6 +4,15 @@ import { logger } from '../lib/logger.js';
 
 export const integrationsRouter = Router();
 
+async function resolveUserId(authUserId: string): Promise<string | null> {
+  const { data } = await supabase
+    .from('users')
+    .select('id')
+    .eq('auth_user_id', authUserId)
+    .maybeSingle();
+  return data?.id || null;
+}
+
 const PROVIDERS: Record<string, { name: string; description: string; authUrl: string }> = {
   github: {
     name: 'GitHub',
@@ -49,7 +58,12 @@ const PROVIDERS: Record<string, { name: string; description: string; authUrl: st
 
 integrationsRouter.get('/', async (req, res) => {
   try {
-    const userId = (req as any).user?.id;
+    const authUserId = (req as any).user?.id;
+    const userId = (req as any).internalUserId || await resolveUserId(authUserId);
+    if (!userId) {
+      res.status(404).json({ error: { code: 'NOT_FOUND', message: 'User profile not found' } });
+      return;
+    }
 
     const { data: connections } = await supabase
       .from('user_integrations')
@@ -102,7 +116,12 @@ integrationsRouter.get('/:provider/connect', async (req, res) => {
 
 integrationsRouter.delete('/:provider', async (req, res) => {
   try {
-    const userId = (req as any).user?.id;
+    const authUserId = (req as any).user?.id;
+    const userId = (req as any).internalUserId || await resolveUserId(authUserId);
+    if (!userId) {
+      res.status(404).json({ error: { code: 'NOT_FOUND', message: 'User profile not found' } });
+      return;
+    }
     const { provider } = req.params;
 
     const { error } = await supabase
@@ -125,7 +144,12 @@ integrationsRouter.delete('/:provider', async (req, res) => {
 
 integrationsRouter.post('/:provider/import', async (req, res) => {
   try {
-    const userId = (req as any).user?.id;
+    const authUserId = (req as any).user?.id;
+    const userId = (req as any).internalUserId || await resolveUserId(authUserId);
+    if (!userId) {
+      res.status(404).json({ error: { code: 'NOT_FOUND', message: 'User profile not found' } });
+      return;
+    }
     const { provider } = req.params;
 
     const { data: connection } = await supabase

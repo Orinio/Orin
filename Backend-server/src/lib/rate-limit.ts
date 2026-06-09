@@ -256,7 +256,7 @@ export async function checkAIRateLimit(
 
   if (error) {
     // Fail closed: deny if we can't check rate limits
-    logger.error({ error }, 'AI rate limit check failed — denying request (fail-closed)');
+    logger.error({ error, userId, endpoint }, 'AI rate limit check failed — denying request (fail-closed)');
     return { allowed: false, reason: 'Rate limit check unavailable' };
   }
 
@@ -265,6 +265,8 @@ export async function checkAIRateLimit(
   );
 
   const usageLast7d = recentUsage || [];
+
+  logger.debug({ userId, endpoint, usageLast24h: usageLast24h.length, usageLast7d: usageLast7d.length, maxPerDay: config.maxPerDay }, 'AI rate limit check');
 
   // Check daily limit
   if (usageLast24h.length >= config.maxPerDay) {
@@ -314,6 +316,7 @@ export function globalAIRateLimitMiddleware(_req: Request, res: Response, next: 
   const result = checkGlobalAIRateLimit();
   if (!result.allowed) {
     const retryAfterSec = Math.ceil(result.retryAfterMs / 1000);
+    logger.warn({ retryAfterMs: result.retryAfterMs, current: getGlobalAIRateInfo().current, limit: GLOBAL_AI_RPM_LIMIT }, 'Global AI rate limit denied');
     res.setHeader('Retry-After', retryAfterSec.toString());
     res.setHeader('X-RateLimit-Limit', GLOBAL_AI_RPM_LIMIT.toString());
     res.setHeader('X-RateLimit-Remaining', '0');

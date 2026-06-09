@@ -120,6 +120,7 @@ export function userRateLimitMiddleware(endpoint: string) {
 
       const rateResult = await rateLimit.checkAIRateLimit(supabase, userId, endpoint);
       if (!rateResult.allowed) {
+        logger.warn({ userId, endpoint, reason: rateResult.reason }, 'Per-user rate limit denied');
         res.status(429).json({
           error: {
             code: 'RATE_LIMITED',
@@ -134,6 +135,7 @@ export function userRateLimitMiddleware(endpoint: string) {
       const tier = (req as any).user?.tier || 'free';
       const budget = checkTokenBudget(authUserId, tier);
       if (!budget.allowed) {
+        logger.warn({ userId: authUserId, tier, remaining: budget.remaining, limit: budget.limit }, 'Token budget exceeded');
         res.status(429).json({
           error: {
             code: 'TOKEN_BUDGET_EXCEEDED',

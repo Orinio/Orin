@@ -7,7 +7,7 @@ ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES users(id) ON DELETE SET NULL
 CREATE INDEX IF NOT EXISTS idx_opportunities_created_by ON opportunities(created_by);
 
 -- Allow employers to manage their own opportunities
-ALTER POLICY "Allow public read access to opportunities" ON opportunities USING (true);
+ALTER POLICY "opportunities_select_active" ON opportunities USING (true);
 
 -- Employers can insert their own opportunities
 CREATE POLICY "Employers can create opportunities"

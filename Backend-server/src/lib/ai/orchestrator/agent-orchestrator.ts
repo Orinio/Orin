@@ -163,7 +163,7 @@ export class AgentOrchestrator {
   async runAgent(
     agentId: string,
     query: string,
-    context?: { userId?: string; conversationHistory?: AgentMessage[] }
+    context?: { userId?: string; authUserId?: string; conversationHistory?: AgentMessage[] }
   ): Promise<AgentResult> {
     const agent = this.agents.get(agentId);
     if (!agent) {
@@ -185,9 +185,9 @@ export class AgentOrchestrator {
     }
 
     // Add user profile context
-    if (context?.userId) {
+    if (context?.authUserId || context?.userId) {
       try {
-        const userProfile = await buildUserContext(context.userId);
+        const userProfile = await buildUserContext(context.authUserId || context.userId!);
         if (userProfile) {
           messages[0].content += `\n\nUser Profile:\n${JSON.stringify(userProfile, null, 2).substring(0, 2000)}`;
         }
@@ -367,7 +367,7 @@ export class AgentOrchestrator {
   async runAgentStream(
     agentId: string,
     query: string,
-    context: { userId?: string; conversationHistory?: AgentMessage[]; modelOverride?: string },
+    context: { userId?: string; authUserId?: string; conversationHistory?: AgentMessage[]; modelOverride?: string },
     onEvent: (event: string, data: any) => void
   ): Promise<void> {
     const agent = this.agents.get(agentId);
@@ -401,9 +401,9 @@ export class AgentOrchestrator {
     }
 
     // Fetch full user data from Supabase for rich context
-    if (context.userId) {
+    if (context.authUserId || context.userId) {
       try {
-        const userProfile = await buildUserContext(context.userId);
+        const userProfile = await buildUserContext(context.authUserId || context.userId!);
         if (userProfile) {
           systemPrompt += `\n\nFull User Profile from Database:\n${JSON.stringify(userProfile, null, 2).substring(0, 2000)}`;
         }

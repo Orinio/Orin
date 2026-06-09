@@ -15,6 +15,11 @@ import {
 import TypeBadge from './TypeBadge';
 import ShareableProofCard from './ShareableProofCard';
 import Image from 'next/image';
+import { useLikeStatus, useToggleLike, useComments, useAddComment } from '@/lib/social';
+import { useAuth } from '@/lib/auth-context';
+import { supabase } from '@/lib/supabase';
+import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
 
 interface ProofCardProps {
   proof: Proof;
@@ -60,6 +65,40 @@ export default function ProofCard({ proof, variant = 'dashboard' }: ProofCardPro
     thumbnailUrl,
     isHighlighted,
   } = proof;
+
+  const { user: authUser } = useAuth();
+  const [showComments, setShowComments] = useState(false);
+  const [commentText, setCommentText] = useState('');
+
+  const { data: currentDbUser } = useQuery({
+    queryKey: ['current-db-user', authUser?.id],
+    queryFn: async () => {
+      if (!supabase || !authUser?.id) return null;
+      const { data } = await supabase
+        .from('users')
+        .select('id')
+        .eq('auth_user_id', authUser.id)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!authUser?.id,
+  });
+
+  const { data: likeData } = useLikeStatus(id, currentDbUser?.id || null);
+  const toggleLike = useToggleLike();
+  const { data: comments } = useComments(id);
+  const addComment = useAddComment();
+
+  const handleLike = () => {
+    if (!currentDbUser?.id) return;
+    toggleLike.mutate({ userId: currentDbUser.id, proofCardId: id, hasLiked: likeData?.hasLiked || false });
+  };
+
+  const handleComment = () => {
+    if (!currentDbUser?.id || !commentText.trim()) return;
+    addComment.mutate({ userId: currentDbUser.id, proofCardId: id, content: commentText.trim() });
+    setCommentText('');
+  };
 
   const status = statusConfig[verificationStatus];
 
@@ -149,30 +188,40 @@ export default function ProofCard({ proof, variant = 'dashboard' }: ProofCardPro
             </div>
           )}
 
-          <div
-            className="flex items-center justify-between mt-3 pt-3 border-t border-[var(--color-border)]"
-          >
-            <div className="flex items-center gap-3">
-              <span className="flex items-center gap-1 text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>
-                <Eye className="w-3 h-3" />
-                {viewCount}
-              </span>
-              {proof.sourceUrl && (
-                <a
-                  href={proof.sourceUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1 text-[11px] transition-colors hover:opacity-80"
-                  style={{ color: 'var(--color-pulse)' }}
-                  aria-label="Open source URL"
-                >
-                  <ExternalLink className="w-3 h-3" />
-                  Source
-                </a>
-              )}
-            </div>
-
-            <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3 mt-3 pt-3 border-t border-[var(--color-border)]">
+            <span className="flex items-center gap-1 text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>
+              <Eye className="w-3 h-3" />
+              {viewCount}
+            </span>
+            <button
+              onClick={handleLike}
+              disabled={toggleLike.isPending}
+              className="flex items-center gap-1 text-[11px] font-medium transition-colors"
+              style={{ color: likeData?.hasLiked ? 'var(--color-pulse)' : 'var(--color-text-tertiary)' }}
+            >
+              {likeData?.hasLiked ? '❤️' : '🤍'} {likeData?.likeCount || 0}
+            </button>
+            <button
+              onClick={() => setShowComments(!showComments)}
+              className="flex items-center gap-1 text-[11px] font-medium transition-colors"
+              style={{ color: showComments ? 'var(--color-bloom)' : 'var(--color-text-tertiary)' }}
+            >
+              💬 {comments?.length || 0}
+            </button>
+            {proof.sourceUrl && (
+              <a
+                href={proof.sourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 text-[11px] transition-colors hover:opacity-80"
+                style={{ color: 'var(--color-pulse)' }}
+                aria-label="Open source URL"
+              >
+                <ExternalLink className="w-3 h-3" />
+                Source
+              </a>
+            )}
+            <div className="flex items-center gap-2 ml-auto">
               <ShareableProofCard proof={proof} />
               <Link
                 href={`/dashboard/proof/${id}`}
@@ -185,6 +234,52 @@ export default function ProofCard({ proof, variant = 'dashboard' }: ProofCardPro
           </div>
         </div>
       </div>
+
+      {/* Comments section */}
+      {showComments && (
+        <div className="mt-3 pt-3 border-t border-[var(--color-border)]">
+          {comments && comments.length > 0 && (
+            <div className="space-y-2 mb-3 max-h-40 overflow-y-auto">
+              {comments.map((comment: any) => (
+                <div key={comment.id} className="flex gap-2">
+                  <div className="h-6 w-6 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0" style={{ backgroundColor: 'var(--color-surface-dim)', color: 'var(--color-text-secondary)' }}>
+                    {(comment.users?.full_name || comment.users?.username)?.[0]?.toUpperCase() || '?'}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] font-semibold" style={{ color: 'var(--color-ink)' }}>
+                        {comment.users?.full_name || comment.users?.username}
+                      </span>
+                    </div>
+                    <p className="text-[11px] mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>
+                      {comment.content}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleComment()}
+              placeholder="Write a comment..."
+              className="flex-1 rounded-lg border bg-[var(--color-surface)] px-3 py-1.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-[var(--color-bloom)]/30"
+              style={{ borderColor: 'var(--color-border)' }}
+            />
+            <button
+              onClick={handleComment}
+              disabled={!commentText.trim() || addComment.isPending}
+              className="rounded-lg px-3 py-1.5 text-[11px] font-semibold text-white transition-colors disabled:opacity-50"
+              style={{ backgroundColor: 'var(--color-bloom)' }}
+            >
+              Post
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

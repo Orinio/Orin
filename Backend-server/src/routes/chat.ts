@@ -5,6 +5,15 @@ import { logger } from '../lib/logger.js';
 
 export const chatRouter = Router();
 
+async function resolveInternalUserId(authUserId: string): Promise<string> {
+  const { data: userRow } = await supabase
+    .from('users')
+    .select('id')
+    .eq('auth_user_id', authUserId)
+    .maybeSingle();
+  return userRow?.id || authUserId;
+}
+
 const saveConversationSchema = z.object({
   id: z.string().min(1),
   title: z.string().optional(),
@@ -17,7 +26,8 @@ const saveConversationSchema = z.object({
 
 chatRouter.get('/', async (req, res) => {
   try {
-    const userId = (req as any).user?.id;
+    const authUserId = (req as any).user?.id;
+    const userId = await resolveInternalUserId(authUserId);
     const { data, error } = await supabase
       .from('chat_conversations')
       .select('*')
@@ -51,7 +61,8 @@ chatRouter.get('/', async (req, res) => {
 
 chatRouter.get('/:id', async (req, res) => {
   try {
-    const userId = (req as any).user?.id;
+    const authUserId = (req as any).user?.id;
+    const userId = await resolveInternalUserId(authUserId);
     const { id } = req.params;
 
     const { data, error } = await supabase
@@ -88,7 +99,8 @@ chatRouter.get('/:id', async (req, res) => {
 
 chatRouter.post('/', async (req, res) => {
   try {
-    const userId = (req as any).user?.id;
+    const authUserId = (req as any).user?.id;
+    const userId = await resolveInternalUserId(authUserId);
     const parsed = saveConversationSchema.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({ error: { code: 'INVALID_INPUT', message: parsed.error.errors[0].message } });
@@ -124,7 +136,8 @@ chatRouter.post('/', async (req, res) => {
 
 chatRouter.delete('/:id', async (req, res) => {
   try {
-    const userId = (req as any).user?.id;
+    const authUserId = (req as any).user?.id;
+    const userId = await resolveInternalUserId(authUserId);
     const { id } = req.params;
 
     const { error } = await supabase

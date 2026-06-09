@@ -197,6 +197,7 @@ export type Database = {
           is_active: boolean;
           posted_at: string | null;
           metadata: Record<string, unknown>;
+          created_by: string | null;
           created_at: string;
           updated_at: string;
           deleted_at: string | null;
@@ -223,6 +224,7 @@ export type Database = {
           is_active?: boolean;
           posted_at?: string | null;
           metadata?: Record<string, unknown>;
+          created_by?: string | null;
           created_at?: string;
           updated_at?: string;
           deleted_at?: string | null;

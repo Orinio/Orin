@@ -333,15 +333,23 @@ export default function SettingsPage() {
     if (deleteConfirm !== 'DELETE') return;
     setDeleting(true);
     try {
-      if (supabase) {
-        const { data: { user: authUser } } = await supabase.auth.getUser();
-        if (authUser) {
-          await supabase.from('users').update({ deleted_at: new Date().toISOString() }).eq('auth_user_id', authUser.id);
-          await supabase.auth.signOut();
-        }
+      if (supabase && dbUserId) {
+        // Soft-delete user
+        const { error: deleteError } = await supabase
+          .from('users')
+          .update({ deleted_at: new Date().toISOString(), account_status: 'deactivated' })
+          .eq('id', dbUserId);
+
+        if (deleteError) throw deleteError;
+
+        // Sign out
+        await supabase.auth.signOut();
       }
       router.push('/');
-    } catch { setDeleting(false); }
+    } catch (e) {
+      console.error('Account deletion failed:', e);
+      setDeleting(false);
+    }
   };
 
   const handleCopy = () => {
@@ -377,15 +385,22 @@ export default function SettingsPage() {
 
   const initials = fullName ? fullName.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2) : 'U';
 
-  const toggleNotif = (key: keyof typeof notifs) => {
-    setNotifs((prev) => {
-      const next = { ...prev, [key]: !prev[key] };
-      if (supabase && dbUserId) {
-        const dbKey = key === 'weeklySummary' ? 'weekly_summary' : key === 'recruiterViews' ? 'recruiter_views' : key === 'verificationStatus' ? 'verification_changes' : key === 'opportunityMatch' ? 'opportunity_matches' : key === 'coachTips' ? 'coach_tips' : 'product_updates';
-        void supabase.from('notification_preferences').upsert({ user_id: dbUserId, [dbKey]: next[key] } as Database['public']['Tables']['notification_preferences']['Insert'], { onConflict: 'user_id' });
+  const toggleNotif = async (key: keyof typeof notifs) => {
+    const newValue = !notifs[key];
+    setNotifs((prev) => ({ ...prev, [key]: newValue }));
+
+    if (supabase && dbUserId) {
+      const dbKey = key === 'weeklySummary' ? 'weekly_summary' : key === 'recruiterViews' ? 'recruiter_views' : key === 'verificationStatus' ? 'verification_changes' : key === 'opportunityMatch' ? 'opportunity_matches' : key === 'coachTips' ? 'coach_tips' : 'product_updates';
+      const { error } = await supabase
+        .from('notification_preferences')
+        .upsert({ user_id: dbUserId, [dbKey]: newValue } as Database['public']['Tables']['notification_preferences']['Insert'], { onConflict: 'user_id' });
+
+      if (error) {
+        // Revert on error
+        setNotifs((prev) => ({ ...prev, [key]: !newValue }));
+        console.error('Failed to save notification preference:', error);
       }
-      return next;
-    });
+    }
   };
 
   if (loading) {
@@ -592,13 +607,29 @@ export default function SettingsPage() {
 
       <div className="card-premium p-6">
         <h2 className="text-lg font-semibold" style={{ color: 'var(--color-ink)' }}>Your data</h2>
-        <p className="mt-1 text-sm" style={{ color: 'var(--color-text-tertiary)' }}>Export all your proof data as a JSON file.</p>
+        <p className="mt-1 text-sm" style={{ color: 'var(--color-text-tertiary)' }}>Export all your data as a JSON file.</p>
         <button
           type="button"
           onClick={async () => {
             if (!supabase || !dbUserId) return;
-            const { data: proofs } = await supabase.from('proof_cards').select('*').eq('user_id', dbUserId).is('deleted_at', null);
-            const blob = new Blob([JSON.stringify(proofs || [], null, 2)], { type: 'application/json' });
+
+            // Fetch all user data in parallel
+            const [profileRes, proofsRes, notifRes, integrationsRes] = await Promise.all([
+              supabase.from('users').select('*').eq('id', dbUserId).single(),
+              supabase.from('proof_cards').select('*').eq('user_id', dbUserId).is('deleted_at', null),
+              supabase.from('notification_preferences').select('*').eq('user_id', dbUserId).maybeSingle(),
+              supabase.from('user_integrations').select('*').eq('user_id', dbUserId),
+            ]);
+
+            const exportData = {
+              exported_at: new Date().toISOString(),
+              profile: profileRes.data,
+              proof_cards: proofsRes.data || [],
+              notification_preferences: notifRes.data,
+              integrations: integrationsRes.data || [],
+            };
+
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;

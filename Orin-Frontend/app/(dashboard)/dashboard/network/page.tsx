@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useUserSearch, useFollowStatus, useToggleFollow, useStartConversation } from '@/lib/social';
 import { useAuth } from '@/lib/auth-context';
@@ -9,6 +10,7 @@ import { supabase } from '@/lib/supabase';
 import { useQuery } from '@tanstack/react-query';
 
 function UserCard({ user, currentUserId }: { user: any; currentUserId: string }) {
+  const router = useRouter();
   const { data: followData } = useFollowStatus(user.id, currentUserId);
   const toggleFollow = useToggleFollow();
   const startConvo = useStartConversation();
@@ -26,8 +28,7 @@ function UserCard({ user, currentUserId }: { user: any; currentUserId: string })
   const handleMessage = async () => {
     if (!currentUserId) return;
     const convId = await startConvo.mutateAsync({ senderId: currentUserId, receiverId: user.id });
-    setMessageSent(true);
-    setTimeout(() => setMessageSent(false), 2000);
+    router.push(`/dashboard/messages?conv=${convId}`);
   };
 
   return (

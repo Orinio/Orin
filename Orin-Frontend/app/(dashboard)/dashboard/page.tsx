@@ -503,12 +503,19 @@ export default function DashboardPage() {
               </p>
               <div className="mt-3 space-y-2">
                 {opportunities.slice(0, 3).map((opportunity) => (
-                  <div key={opportunity.id} className="rounded-xl p-3 transition-colors hover:bg-[var(--color-surface)]/60" style={{ border: '1px solid var(--color-border)' }}>
+                  <Link
+                    key={opportunity.id}
+                    href={opportunity.link || `/opportunities`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block rounded-xl p-3 transition-colors hover:bg-[var(--color-surface)]/60"
+                    style={{ border: '1px solid var(--color-border)' }}
+                  >
                     <p className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{opportunity.company}</p>
                     <p className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
                       {opportunity.title}
                     </p>
-                  </div>
+                  </Link>
                 ))}
               </div>
               <Link href="/opportunities" className="btn-outline mt-4 block w-full px-4 py-2 text-center text-sm">

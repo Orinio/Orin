@@ -130,7 +130,7 @@ export function PlanCard() {
 
         {(isPro || isTeam) && (
           <Link
-            href="/billing"
+            href="/pricing"
             className="flex items-center justify-center gap-1 w-full py-2 rounded-[var(--radius-md)] text-xs font-semibold transition-all border"
             style={{ borderColor: 'var(--color-border)', color: 'var(--color-ink)' }}
           >

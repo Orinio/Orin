@@ -21,8 +21,11 @@ interface CommandPaletteProps {
 
 const NAVIGATION_ITEMS: Omit<CommandItem, 'id' | 'action'>[] = [
   { label: 'Dashboard', description: 'View your career overview', icon: '🏠', shortcut: ['G', 'D'], category: 'navigation' },
+  { label: 'Feed', description: 'See proof cards from people you follow', icon: '📰', shortcut: ['G', 'F'], category: 'navigation' },
   { label: 'Proof Cards', description: 'Manage your proof portfolio', icon: '🃏', shortcut: ['G', 'P'], category: 'navigation' },
   { label: 'AI Coach', description: 'Chat with your career coach', icon: '🤖', shortcut: ['G', 'C'], category: 'navigation' },
+  { label: 'Network', description: 'Find and connect with professionals', icon: '🌐', shortcut: ['G', 'N'], category: 'navigation' },
+  { label: 'Messages', description: 'Direct messages from your network', icon: '💬', shortcut: ['G', 'M'], category: 'navigation' },
   { label: 'Analytics', description: 'View your profile insights', icon: '📊', shortcut: ['G', 'A'], category: 'navigation' },
   { label: 'Opportunities', description: 'Browse jobs and gigs', icon: '💼', shortcut: ['G', 'O'], category: 'navigation' },
   { label: 'Settings', description: 'Manage your account', icon: '⚙️', shortcut: ['G', 'S'], category: 'navigation' },
@@ -51,8 +54,11 @@ export default function CommandPalette({ open, onClose }: CommandPaletteProps) {
       action: () => {
         const routes: Record<string, string> = {
           'Dashboard': '/dashboard',
+          'Feed': '/dashboard/feed',
           'Proof Cards': '/dashboard/proof',
           'AI Coach': '/dashboard/ai',
+          'Network': '/dashboard/network',
+          'Messages': '/dashboard/messages',
           'Analytics': '/dashboard/analytics',
           'Opportunities': '/dashboard/opportunities',
           'Settings': '/dashboard/settings',

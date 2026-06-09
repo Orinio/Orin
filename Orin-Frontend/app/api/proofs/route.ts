@@ -100,6 +100,26 @@ const userId = await resolvePublicUserId(supabase);
     // Notification creation is best-effort
   }
 
+  // Trigger AI auto-verification in the background (fire-and-forget)
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) {
+      const origin = request.nextUrl.origin;
+      // Non-blocking call — verification runs asynchronously
+      fetch(`${origin}/api/proofs/${proof.id}/verify`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      }).catch(() => {
+        // Auto-verification is best-effort — proof stays 'pending' if it fails
+      });
+    }
+  } catch {
+    // Verification trigger is best-effort
+  }
+
   return NextResponse.json({ proof }, { status: 201 });
 }
 

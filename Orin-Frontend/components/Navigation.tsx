@@ -151,14 +151,17 @@ export default function Navigation() {
 
   const navLinks = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutGrid },
+    { href: '/dashboard/feed', label: 'Feed', icon: Home },
     { href: '/dashboard/ai-chat', label: 'AI Chat', icon: Sparkles },
     { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart3 },
+    { href: '/dashboard/network', label: 'Network', icon: User },
     { href: '/opportunities', label: 'Opportunities', icon: Briefcase },
     { href: '/dashboard/proof/new', label: 'Add Proofs', icon: ShieldCheck },
     { href: '/dashboard/sources/new', label: 'Add Source', icon: PlusCircle },
   ];
 
   const bottomLinks = [
+    { href: '/dashboard/messages', label: 'Messages', icon: Bell, badge: 0 },
     { href: '/employer/portal', label: 'Employer Portal', icon: Briefcase },
     { href: '/notifications', label: 'Notifications', icon: Bell, badge: unreadCount },
     { href: '/settings', label: 'Settings', icon: Settings },
@@ -567,10 +570,10 @@ export default function Navigation() {
         <div className="flex items-center justify-around h-[68px] px-2">
           {[
             { href: '/dashboard', label: 'Home', icon: Home },
-            { href: '/dashboard/ai-chat', label: 'AI Chat', icon: Sparkles },
+            { href: '/dashboard/feed', label: 'Feed', icon: BarChart3 },
             { href: '/dashboard/proof/new', label: 'Add', icon: PlusCircle, isCenter: true },
-            { href: '/opportunities', label: 'Jobs', icon: Briefcase },
-            { href: '/settings', label: 'More', icon: Settings },
+            { href: '/dashboard/network', label: 'Network', icon: User },
+            { href: '/dashboard/messages', label: 'Chat', icon: Sparkles },
           ].map((tab) => {
             const Icon = tab.icon;
             const active = isActive(tab.href);

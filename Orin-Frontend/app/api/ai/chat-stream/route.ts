@@ -94,7 +94,13 @@ export async function POST(req: NextRequest) {
     console.warn('Memory injection failed:', e);
   }
 
-  // Forward to backend with enriched messages
+  // Transform messages array into backend format: { message, history, model }
+  // Backend expects: message (latest user message string), history (previous messages array)
+  const lastUserMsg = [...(messages || [])].reverse().find((m: any) => m.role === 'user');
+  const message = lastUserMsg?.content || '';
+  const history = (messages || []).slice(0, -1).map((m: any) => ({ role: m.role, content: m.content }));
+
+  // Forward to backend with correct field names
   const headers: Record<string, string> = {
     'Authorization': authHeader,
     'Content-Type': 'application/json',
@@ -104,7 +110,7 @@ export async function POST(req: NextRequest) {
     const backendRes = await fetch(`${BACKEND_URL}/ai/chat-stream`, {
       method: 'POST',
       headers,
-      body: JSON.stringify({ messages, model, conversationId, files }),
+      body: JSON.stringify({ message, history, model }),
     });
 
     if (!backendRes.ok) {

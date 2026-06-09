@@ -99,13 +99,22 @@ setInterval(() => {
 
 export function userRateLimitMiddleware(endpoint: string) {
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const userId = (req as any).user?.id;
-    if (!userId) {
+    const authUserId = (req as any).user?.id;
+    if (!authUserId) {
       next();
       return;
     }
 
     try {
+      // Resolve internal users.id from auth UUID (ai_usage_log FK requires users.id)
+      const { data: userRow } = await supabase
+        .from('users')
+        .select('id')
+        .eq('auth_user_id', authUserId)
+        .maybeSingle();
+      const userId = userRow?.id || authUserId;
+      (req as any).internalUserId = userId;
+
       // Check Supabase-based rate limit
       const rateLimit = await import('../lib/rate-limit.js');
 
@@ -123,7 +132,7 @@ export function userRateLimitMiddleware(endpoint: string) {
 
       // Check token budget
       const tier = (req as any).user?.tier || 'free';
-      const budget = checkTokenBudget(userId, tier);
+      const budget = checkTokenBudget(authUserId, tier);
       if (!budget.allowed) {
         res.status(429).json({
           error: {
@@ -144,7 +153,7 @@ export function userRateLimitMiddleware(endpoint: string) {
       res.json = function (body: any) {
         const tokensUsed = (body as any)?.tokensUsed || 0;
         if (tokensUsed > 0) {
-          consumeTokens(userId, tokensUsed, tier);
+          consumeTokens(authUserId, tokensUsed, tier);
         }
         rateLimit.logAIUsage(supabase, userId, endpoint, tokensUsed).catch(() => {});
         return originalJson(body);

@@ -196,13 +196,21 @@ aiRouter.post('/chat', userRateLimitMiddleware('ai-chat'), validate(chatMessageS
 aiRouter.post('/chat-stream', userRateLimitMiddleware('ai-chat-stream'), async (req, res) => {
   let headersSent = false;
   try {
-    const userId = (req as any).user?.id;
-    if (!userId) { res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } }); return; }
+    const authUserId = (req as any).user?.id;
+    if (!authUserId) { res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } }); return; }
+
+    // Resolve internal users.id from auth UUID (ai_usage_log FK requires users.id, not auth UUID)
+    const { data: userRow } = await supabase
+      .from('users')
+      .select('id')
+      .eq('auth_user_id', authUserId)
+      .maybeSingle();
+    const userId = userRow?.id || authUserId;
 
     const { message, history, model } = req.body;
     if (!message) { res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'Message is required' } }); return; }
 
-    const context = await buildAgentContext((req as any).user.id);
+    const context = await buildAgentContext(authUserId);
     context.conversationHistory = (history || []).slice(-6).map((m: any) => ({ role: m.role, content: m.content }));
 
     const acceptHeader = req.headers.accept;

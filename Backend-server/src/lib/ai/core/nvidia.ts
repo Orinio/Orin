@@ -12,8 +12,15 @@ const API_TIMEOUT_MS = 90000; // 90s for large models (397B+ params need more ti
 // When primary model is unavailable (rate limited, overloaded), try fallbacks.
 // Ordered by capability: best → acceptable → emergency.
 const MODEL_FALLBACKS: Record<string, string[]> = {
+  // GPT OSS 120B — primary for non-chat AI features
+  'openai/gpt-oss-120b': [
+    'qwen/qwen3.5-397b-a17b',
+    'nvidia/llama-3.3-nemotron-super-49b-v1',
+    'meta/llama-3.3-70b-instruct',
+  ],
   // Qwen models — large, high quality
   'qwen/qwen3.5-397b-a17b': [
+    'openai/gpt-oss-120b',
     'qwen/qwen3.5-122b-a10b',
     'nvidia/llama-3.3-nemotron-super-49b-v1',
     'meta/llama-3.3-70b-instruct',

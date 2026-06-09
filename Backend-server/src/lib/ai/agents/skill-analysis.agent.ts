@@ -6,7 +6,7 @@ export const skillAnalysisAgent: AgentDefinition = {
   name: 'Skill Analysis Agent',
   description: 'Deep skill extraction, categorization, and market demand analysis',
   role: 'skill_analyst',
-  model: MODELS.fast.chat,
+  model: MODELS.ai.skillAnalysis,
   temperature: 0.3,
   maxTokens: 1500,
   maxIterations: 4,

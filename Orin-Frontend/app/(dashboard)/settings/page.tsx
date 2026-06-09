@@ -348,6 +348,31 @@ export default function SettingsPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !supabase) return;
+    setAvatarUploading(true);
+    try {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) return;
+      const ext = file.name.split('.').pop() || 'jpg';
+      const path = `${authUser.id}/avatar.${ext}`;
+      const { error } = await supabase.storage.from('avatars').upload(path, file, { upsert: true });
+      if (error) throw error;
+      const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path);
+      const cacheBustedUrl = `${publicUrl}?t=${Date.now()}`;
+      await supabase.from('users').update({ avatar_url: cacheBustedUrl }).eq('auth_user_id', authUser.id);
+      setAvatarPreview(cacheBustedUrl);
+    } catch (err) {
+      console.error('Failed to upload photo:', err);
+    } finally {
+      setAvatarUploading(false);
+    }
+  };
+
   const initials = fullName ? fullName.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2) : 'U';
 
   const toggleNotif = (key: keyof typeof notifs) => {
@@ -375,16 +400,34 @@ export default function SettingsPage() {
         <h2 className="text-lg font-semibold" style={{ color: 'var(--color-ink)' }}>Profile photo</h2>
         <div className="mt-4 flex items-center gap-6">
           <div className="relative">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full text-2xl font-bold text-white" style={{ background: 'linear-gradient(135deg, var(--color-bloom), var(--color-ember))' }}>
-              {initials}
-            </div>
-            <button type="button" aria-label="Upload photo" className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white shadow-sm transition hover:scale-110" style={{ backgroundColor: 'var(--color-surface)' }}>
-              <Camera size={14} style={{ color: 'var(--color-text-tertiary)' }} />
+            {avatarPreview ? (
+              <img src={avatarPreview} alt="Avatar" className="h-20 w-20 rounded-full object-cover" />
+            ) : (
+              <div className="flex h-20 w-20 items-center justify-center rounded-full text-2xl font-bold text-white" style={{ background: 'linear-gradient(135deg, var(--color-bloom), var(--color-ember))' }}>
+                {initials}
+              </div>
+            )}
+            <button
+              type="button"
+              aria-label="Upload photo"
+              onClick={() => document.getElementById('photo-upload')?.click()}
+              disabled={avatarUploading}
+              className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white shadow-sm transition hover:scale-110 disabled:opacity-50"
+              style={{ backgroundColor: 'var(--color-surface)' }}
+            >
+              {avatarUploading ? <Loader2 size={14} className="animate-spin" /> : <Camera size={14} style={{ color: 'var(--color-text-tertiary)' }} />}
             </button>
+            <input
+              type="file"
+              id="photo-upload"
+              accept="image/jpeg,image/png,image/gif"
+              className="hidden"
+              onChange={handlePhotoUpload}
+            />
           </div>
           <div>
-            <button type="button" className="btn-outline px-4 py-2 text-sm">
-              Upload new photo
+            <button type="button" onClick={() => document.getElementById('photo-upload')?.click()} className="btn-outline px-4 py-2 text-sm">
+              {avatarUploading ? 'Uploading...' : 'Upload new photo'}
             </button>
             <p className="mt-1.5 text-xs" style={{ color: 'var(--color-text-tertiary)' }}>JPG, PNG or GIF. Max 2 MB.</p>
           </div>
@@ -632,7 +675,7 @@ export default function SettingsPage() {
           </div>
         </div>
         {subscription.plan === 'free' && (
-          <button type="button" className="btn-success mt-4 rounded-xl px-5 py-2.5 text-sm font-semibold text-white">
+          <button type="button" onClick={() => router.push('/pricing')} className="btn-success mt-4 rounded-xl px-5 py-2.5 text-sm font-semibold text-white">
             Upgrade plan
           </button>
         )}

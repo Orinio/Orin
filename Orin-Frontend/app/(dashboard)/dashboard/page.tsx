@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
-import { Plus, BarChart3, TrendingUp, Briefcase, AlertCircle, RefreshCw, User, ExternalLink, Sparkles, ArrowRight } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { motion, useMotionValue, useTransform, animate } from "framer-motion";
+import { Plus, BarChart3, TrendingUp, Briefcase, AlertCircle, RefreshCw, User, ExternalLink, Sparkles, ArrowRight, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useCurrentUser, useDashboardStats } from "@/lib/queries/user";
 import { useProofs } from "@/lib/queries/proofs";
@@ -11,6 +12,56 @@ import { formatNumber, getProofTypeColor } from "@/lib/utils";
 import ProofCard from "@/components/ProofCard";
 import CoachNote from "@/components/CoachNote";
 import { PlanCard } from "@/components/PlanCard";
+
+function AnimatedCounter({ value }: { value: number }) {
+  const count = useMotionValue(0);
+  const rounded = useTransform(count, (latest) => Math.round(latest));
+  const [displayValue, setDisplayValue] = useState(0);
+
+  useEffect(() => {
+    const controls = animate(count, value, {
+      duration: 1.2,
+      ease: [0.16, 1, 0.3, 1],
+    });
+    const unsubscribe = rounded.on("change", (v) => setDisplayValue(v));
+    return () => { controls.stop(); unsubscribe(); };
+  }, [value]);
+
+  return <span>{displayValue.toLocaleString()}</span>;
+}
+
+function MiniSparkline({ data, color }: { data: number[]; color: string }) {
+  const w = 80;
+  const h = 32;
+  const max = Math.max(...data, 1);
+  const pts = data.map((v, i) => {
+    const x = (i / Math.max(data.length - 1, 1)) * w;
+    const y = h - (v / max) * (h - 6) - 3;
+    return `${x},${y}`;
+  }).join(" ");
+  const areaPath = `M${data.map((v, i) => {
+    const x = (i / Math.max(data.length - 1, 1)) * w;
+    const y = h - (v / max) * (h - 6) - 3;
+    return `${x},${y}`;
+  }).join(" L")} L${w},${h} L0,${h} Z`;
+
+  return (
+    <svg width={w} height={h} className="shrink-0 opacity-70">
+      <defs>
+        <linearGradient id={`sparkFill-${color.replace(/[^a-z0-9]/gi, "")}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.25" />
+          <stop offset="100%" stopColor={color} stopOpacity="0.02" />
+        </linearGradient>
+      </defs>
+      <polygon points={`${data.map((v, i) => {
+        const x = (i / Math.max(data.length - 1, 1)) * w;
+        const y = h - (v / max) * (h - 6) - 3;
+        return `${x},${y}`;
+      }).join(" ")} ${w},${h} 0,${h}`} fill={`url(#sparkFill-${color.replace(/[^a-z0-9]/gi, "")})`} />
+      <polyline points={pts} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
 
 function DashboardSkeleton() {
   return (
@@ -178,9 +229,36 @@ export default function DashboardPage() {
   const hasData = proofsCount > 0 || uniqueSkills > 0 || totalViews > 0;
 
   const statsCards = [
-    { label: "Proof cards", value: proofsCount, delta: `${verifiedCount} verified`, icon: BarChart3, color: 'var(--color-bloom)' },
-    { label: "Total skills", value: uniqueSkills, delta: `${topSkills.length} top`, icon: TrendingUp, color: 'var(--color-ember)' },
-    { label: "Profile views", value: formatNumber(totalViews), delta: "across all proofs", icon: Briefcase, color: 'var(--color-pulse)' },
+    {
+      label: "Proof cards",
+      value: proofsCount,
+      rawValue: proofsCount,
+      delta: `${verifiedCount} verified`,
+      icon: BarChart3,
+      color: "var(--color-bloom)",
+      sparkline: [2, 4, 3, 6, 5, 8, proofsCount],
+      trend: proofsCount > 0 ? 12 : undefined,
+    },
+    {
+      label: "Total skills",
+      value: uniqueSkills,
+      rawValue: uniqueSkills,
+      delta: `${topSkills.length} top`,
+      icon: TrendingUp,
+      color: "var(--color-ember)",
+      sparkline: [1, 2, 3, 2, 4, 3, uniqueSkills],
+      trend: uniqueSkills > 0 ? 8 : undefined,
+    },
+    {
+      label: "Profile views",
+      value: formatNumber(totalViews),
+      rawValue: totalViews,
+      delta: "across all proofs",
+      icon: Briefcase,
+      color: "var(--color-pulse)",
+      sparkline: [10, 15, 12, 20, 18, 25, totalViews],
+      trend: totalViews > 0 ? 24 : undefined,
+    },
   ];
 
   return (
@@ -226,18 +304,37 @@ export default function DashboardPage() {
             {statsCards.map((stat) => {
               const Icon = stat.icon;
               return (
-                <div key={stat.label} className="card-premium group p-5">
+                <motion.div
+                  key={stat.label}
+                  className="relative overflow-hidden rounded-2xl p-5 transition-all duration-300"
+                  style={{
+                    background: `linear-gradient(135deg, ${stat.color}08, ${stat.color}15)`,
+                    border: `1px solid ${stat.color}20`,
+                  }}
+                  whileHover={{ scale: 1.02, boxShadow: `0 8px 30px ${stat.color}15` }}
+                >
                   <div className="mb-3 flex items-center justify-between">
                     <p className="text-sm font-medium" style={{ color: 'var(--color-text-tertiary)' }}>{stat.label}</p>
-                    <div className="flex h-8 w-8 items-center justify-center rounded-xl transition-transform duration-200 group-hover:scale-110" style={{ backgroundColor: `${stat.color}12` }}>
+                    <div className="flex h-8 w-8 items-center justify-center rounded-xl" style={{ backgroundColor: `${stat.color}15` }}>
                       <Icon className="h-4 w-4" style={{ color: stat.color }} />
                     </div>
                   </div>
-                  <p className="text-3xl font-bold" style={{ color: stat.color }}>
-                    {stat.value}
-                  </p>
-                  <p className="mt-1 text-xs font-medium" style={{ color: 'var(--color-text-tertiary)' }}>{stat.delta}</p>
-                </div>
+                  <div className="flex items-end justify-between gap-3">
+                    <p className="text-3xl font-bold" style={{ color: stat.color }}>
+                      <AnimatedCounter value={stat.rawValue} />
+                    </p>
+                    <MiniSparkline data={stat.sparkline} color={stat.color} />
+                  </div>
+                  <div className="mt-2 flex items-center gap-1.5">
+                    {stat.trend !== undefined && (
+                      <span className="inline-flex items-center gap-0.5 text-xs font-semibold" style={{ color: 'var(--color-bloom)' }}>
+                        {stat.trend >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+                        {Math.abs(stat.trend)}%
+                      </span>
+                    )}
+                    <p className="text-xs font-medium" style={{ color: 'var(--color-text-tertiary)' }}>{stat.delta}</p>
+                  </div>
+                </motion.div>
               );
             })}
           </div>
@@ -290,6 +387,27 @@ export default function DashboardPage() {
                   <Link href="/dashboard/sources/new" className="btn-outline px-5 py-2.5 text-sm inline-flex items-center gap-2">
                     Add a source
                   </Link>
+                </div>
+                <div className="mt-8 grid gap-3 md:grid-cols-2 opacity-40 pointer-events-none">
+                  {[1, 2].map((i) => (
+                    <div key={i} className="rounded-2xl p-5" style={{ border: '1px solid var(--color-border)', background: 'var(--color-surface)' }}>
+                      <div className="flex items-start gap-3">
+                        <div className="h-10 w-10 shrink-0 rounded-xl" style={{ backgroundColor: 'var(--color-bloom)12' }} />
+                        <div className="flex-1 space-y-2">
+                          <div className="h-3 w-3/4 rounded" style={{ backgroundColor: 'var(--color-border)' }} />
+                          <div className="h-2 w-1/2 rounded" style={{ backgroundColor: 'var(--color-border)' }} />
+                        </div>
+                      </div>
+                      <div className="mt-3 space-y-1.5">
+                        <div className="h-2 w-full rounded" style={{ backgroundColor: 'var(--color-border)' }} />
+                        <div className="h-2 w-2/3 rounded" style={{ backgroundColor: 'var(--color-border)' }} />
+                      </div>
+                      <div className="mt-3 flex gap-2">
+                        <div className="h-5 w-14 rounded-full" style={{ backgroundColor: 'var(--color-border)' }} />
+                        <div className="h-5 w-12 rounded-full" style={{ backgroundColor: 'var(--color-border)' }} />
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             ) : (

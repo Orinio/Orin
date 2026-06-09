@@ -30,6 +30,7 @@ import { chatRouter } from './routes/chat.js';
 import { integrationsRouter } from './routes/integrations.js';
 import { billingRouter } from './routes/billing.js';
 import { initTools } from './lib/ai/tools/index.js';
+import { configureVapid } from './lib/push.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -37,6 +38,9 @@ const isDev = process.env.NODE_ENV === 'development';
 
 // Initialize AI tools once at startup
 initTools();
+
+// Initialize VAPID for push notifications
+configureVapid();
 
 // Request ID (first — propagates to all downstream middleware)
 app.use(requestIdMiddleware);

@@ -6,7 +6,7 @@ export const learningPathAgent: AgentDefinition = {
   name: 'Learning Path Agent',
   description: 'Generates personalized learning paths with real resources from the web',
   role: 'learning_advisor',
-  model: MODELS.primary.learning,
+  model: MODELS.ai.learningPath,
   temperature: 0.5,
   maxTokens: 2000,
   maxIterations: 4,

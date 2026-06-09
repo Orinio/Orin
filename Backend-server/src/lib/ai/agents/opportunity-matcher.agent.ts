@@ -6,7 +6,7 @@ export const opportunityMatcherAgent: AgentDefinition = {
   name: 'Opportunity Matcher Agent',
   description: 'Matches developer skills to real job/internship/scholarship opportunities with scoring',
   role: 'opportunity_matcher',
-  model: MODELS.toolCalling.primary,
+  model: MODELS.ai.opportunityMatching,
   temperature: 0.3,
   maxTokens: 2000,
   maxIterations: 4,

@@ -1,58 +1,189 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { BarChart3, TrendingUp, Eye, Shield, Plus, AlertCircle, ExternalLink } from 'lucide-react';
+import { motion } from 'framer-motion';
+import {
+  PieChart as RechartsPieChart,
+  Pie,
+  Cell,
+  BarChart as RechartsBarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from 'recharts';
+import { BarChart3, TrendingUp, Eye, Shield, Plus, ExternalLink, ArrowUpRight } from 'lucide-react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
-import { mapDbProofToProof, formatNumber, getProofTypeColor } from '@/lib/utils';
+import { mapDbProofToProof, formatNumber } from '@/lib/utils';
 import type { Proof } from '@/lib/types';
 import { useAuth } from '@/lib/auth-context';
 
-function StatCard({ label, value, sub, icon: Icon, color }: { label: string; value: string | number; sub?: string; icon: typeof BarChart3; color: string }) {
+const PIE_COLORS = [
+  'var(--color-bloom)',
+  'var(--color-pulse)',
+  'var(--color-ember)',
+  'var(--color-spark)',
+  '#6366f1',
+  '#8b5cf6',
+];
+
+const VERIFICATION_COLORS: Record<string, string> = {
+  verified: 'var(--color-bloom)',
+  pending: 'var(--color-ember)',
+  draft: '#94a3b8',
+  rejected: 'var(--color-pulse)',
+};
+
+function StatCard({ label, value, sub, icon: Icon, color, trend }: {
+  label: string;
+  value: string | number;
+  sub?: string;
+  icon: typeof BarChart3;
+  color: string;
+  trend?: number;
+}) {
   return (
-    <div className="card-premium group p-5">
+    <motion.div
+      className="relative overflow-hidden rounded-2xl p-5"
+      style={{
+        background: `linear-gradient(135deg, ${color}08, ${color}15)`,
+        border: `1px solid ${color}20`,
+      }}
+      whileHover={{ scale: 1.02, boxShadow: `0 8px 30px ${color}15` }}
+    >
       <div className="mb-3 flex items-center justify-between">
         <p className="text-sm font-medium" style={{ color: 'var(--color-text-tertiary)' }}>{label}</p>
-        <div className="flex h-8 w-8 items-center justify-center rounded-xl transition-transform duration-200 group-hover:scale-110" style={{ backgroundColor: `${color}12` }}>
+        <div className="flex h-8 w-8 items-center justify-center rounded-xl" style={{ backgroundColor: `${color}15` }}>
           <Icon className="h-4 w-4" style={{ color }} />
         </div>
       </div>
       <p className="text-3xl font-bold" style={{ color }}>{value}</p>
-      {sub && <p className="mt-1 text-xs font-medium" style={{ color: 'var(--color-text-tertiary)' }}>{sub}</p>}
-    </div>
+      <div className="mt-1 flex items-center gap-1.5">
+        {trend !== undefined && (
+          <span className="inline-flex items-center gap-0.5 text-xs font-semibold" style={{ color: 'var(--color-bloom)' }}>
+            <ArrowUpRight className="h-3 w-3" />
+            {trend}%
+          </span>
+        )}
+        {sub && <p className="text-xs font-medium" style={{ color: 'var(--color-text-tertiary)' }}>{sub}</p>}
+      </div>
+    </motion.div>
   );
 }
 
 function SourceBreakdown({ proofs }: { proofs: Proof[] }) {
   const counts: Record<string, number> = {};
-  proofs.forEach((p) => {
-    counts[p.sourceType] = (counts[p.sourceType] || 0) + 1;
-  });
+  proofs.forEach((p) => { counts[p.sourceType] = (counts[p.sourceType] || 0) + 1; });
 
-  const total = proofs.length;
-  const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  const data = Object.entries(counts)
+    .sort((a, b) => b[1] - a[1])
+    .map(([type, count]) => ({ name: type, value: count }));
 
   return (
     <div className="card-premium p-5">
       <h2 className="text-lg font-semibold" style={{ color: 'var(--color-ink)', fontFamily: 'var(--font-heading)' }}>Source Breakdown</h2>
-      <div className="mt-4 space-y-3">
-        {entries.map(([type, count]) => (
-          <div key={type} className="flex items-center gap-3">
-            <span
-              className="h-3 w-3 shrink-0 rounded-full"
-              style={{ backgroundColor: getProofTypeColor(type) }}
-            />
-            <span className="flex-1 text-sm capitalize" style={{ color: 'var(--color-ink)' }}>{type}</span>
-            <span className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{count}</span>
-            <span className="w-16 text-right text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
-              {Math.round((count / total) * 100)}%
-            </span>
-          </div>
-        ))}
-        {entries.length === 0 && (
-          <p className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>No sources yet.</p>
-        )}
-      </div>
+      {data.length === 0 ? (
+        <p className="mt-4 text-sm" style={{ color: 'var(--color-text-tertiary)' }}>No sources yet.</p>
+      ) : (
+        <div className="mt-4" style={{ height: 260 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <RechartsPieChart>
+              <Pie
+                data={data}
+                cx="50%"
+                cy="45%"
+                innerRadius={55}
+                outerRadius={85}
+                paddingAngle={3}
+                dataKey="value"
+                stroke="none"
+                animationBegin={0}
+                animationDuration={800}
+              >
+                {data.map((_, i) => (
+                  <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip
+                contentStyle={{
+                  borderRadius: 12,
+                  border: '1px solid var(--color-border)',
+                  background: 'var(--color-surface)',
+                  fontSize: 12,
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                }}
+              />
+              <Legend
+                verticalAlign="bottom"
+                height={36}
+                formatter={(value: string) => (
+                  <span style={{ color: 'var(--color-ink)', fontSize: 12, textTransform: 'capitalize' }}>{value}</span>
+                )}
+              />
+            </RechartsPieChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function VerificationPie({ proofs }: { proofs: Proof[] }) {
+  const counts: Record<string, number> = { verified: 0, pending: 0, draft: 0, rejected: 0 };
+  proofs.forEach((p) => { counts[p.verificationStatus] = (counts[p.verificationStatus] || 0) + 1; });
+
+  const data = Object.entries(counts)
+    .filter(([_, count]) => count > 0)
+    .map(([status, count]) => ({ name: status, value: count }));
+
+  return (
+    <div className="card-premium p-5">
+      <h2 className="text-lg font-semibold" style={{ color: 'var(--color-ink)', fontFamily: 'var(--font-heading)' }}>Verification Status</h2>
+      {data.length === 0 ? (
+        <p className="mt-4 text-sm" style={{ color: 'var(--color-text-tertiary)' }}>No verification data.</p>
+      ) : (
+        <div className="mt-4" style={{ height: 260 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <RechartsPieChart>
+              <Pie
+                data={data}
+                cx="50%"
+                cy="45%"
+                innerRadius={55}
+                outerRadius={85}
+                paddingAngle={3}
+                dataKey="value"
+                stroke="none"
+                animationBegin={0}
+                animationDuration={800}
+              >
+                {data.map((entry) => (
+                  <Cell key={entry.name} fill={VERIFICATION_COLORS[entry.name] || '#94a3b8'} />
+                ))}
+              </Pie>
+              <Tooltip
+                contentStyle={{
+                  borderRadius: 12,
+                  border: '1px solid var(--color-border)',
+                  background: 'var(--color-surface)',
+                  fontSize: 12,
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                }}
+              />
+              <Legend
+                verticalAlign="bottom"
+                height={36}
+                formatter={(value: string) => (
+                  <span style={{ color: 'var(--color-ink)', fontSize: 12, textTransform: 'capitalize' }}>{value}</span>
+                )}
+              />
+            </RechartsPieChart>
+          </ResponsiveContainer>
+        </div>
+      )}
     </div>
   );
 }
@@ -65,67 +196,58 @@ function SkillChart({ proofs }: { proofs: Proof[] }) {
     });
   });
 
-  const entries = Array.from(skillMap.entries())
+  const data = Array.from(skillMap.entries())
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 15);
-
-  const maxCount = entries.length > 0 ? entries[0][1] : 1;
+    .slice(0, 10)
+    .map(([skill, count]) => ({ name: skill, count }));
 
   return (
     <div className="card-premium p-5">
       <h2 className="text-lg font-semibold" style={{ color: 'var(--color-ink)', fontFamily: 'var(--font-heading)' }}>Top Skills</h2>
-      <div className="mt-4 space-y-2.5">
-        {entries.map(([skill, count]) => (
-          <div key={skill} className="flex items-center gap-3">
-            <span className="w-28 truncate text-sm" style={{ color: 'var(--color-ink)' }}>{skill}</span>
-            <div className="flex-1 h-2 rounded-full" style={{ backgroundColor: 'var(--color-surface-dim)' }}>
-              <div
-                className="h-2 rounded-full transition-all duration-500"
-                style={{ width: `${(count / maxCount) * 100}%`, backgroundColor: 'var(--color-bloom)' }}
+      {data.length === 0 ? (
+        <p className="mt-4 text-sm" style={{ color: 'var(--color-text-tertiary)' }}>No skills data available yet.</p>
+      ) : (
+        <div className="mt-4" style={{ height: 320 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <RechartsBarChart data={data} layout="vertical" margin={{ left: 20, right: 20, top: 5, bottom: 5 }}>
+              <XAxis
+                type="number"
+                tick={{ fontSize: 11, fill: 'var(--color-text-tertiary)' }}
+                axisLine={false}
+                tickLine={false}
               />
-            </div>
-            <span className="w-8 text-right text-xs" style={{ color: 'var(--color-text-tertiary)' }}>{count}</span>
-          </div>
-        ))}
-      </div>
-      {entries.length === 0 && (
-        <p className="mt-4 text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
-          No skills data available yet.
-        </p>
+              <YAxis
+                type="category"
+                dataKey="name"
+                tick={{ fontSize: 12, fill: 'var(--color-ink)' }}
+                width={100}
+                axisLine={false}
+                tickLine={false}
+              />
+              <Tooltip
+                contentStyle={{
+                  borderRadius: 12,
+                  border: '1px solid var(--color-border)',
+                  background: 'var(--color-surface)',
+                  fontSize: 12,
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                }}
+              />
+              <Bar
+                dataKey="count"
+                radius={[0, 8, 8, 0]}
+                maxBarSize={28}
+                animationBegin={0}
+                animationDuration={800}
+              >
+                {data.map((_, i) => (
+                  <Cell key={i} fill={i % 2 === 0 ? 'var(--color-bloom)' : 'var(--color-bloom)CC'} />
+                ))}
+              </Bar>
+            </RechartsBarChart>
+          </ResponsiveContainer>
+        </div>
       )}
-    </div>
-  );
-}
-
-function VerificationPie({ proofs }: { proofs: Proof[] }) {
-  const counts: Record<string, number> = { verified: 0, pending: 0, draft: 0, rejected: 0 };
-  proofs.forEach((p) => {
-    counts[p.verificationStatus] = (counts[p.verificationStatus] || 0) + 1;
-  });
-
-  const total = proofs.length;
-  const colors: Record<string, string> = {
-    verified: 'var(--color-bloom)',
-    pending: 'var(--color-ember)',
-    draft: 'var(--color-mist)',
-    rejected: 'var(--color-pulse)',
-  };
-
-  return (
-    <div className="card-premium p-5">
-      <h2 className="text-lg font-semibold" style={{ color: 'var(--color-ink)', fontFamily: 'var(--font-heading)' }}>Verification Status</h2>
-      <div className="mt-4 space-y-3">
-        {Object.entries(counts).map(([status, count]) => (
-          <div key={status} className="flex items-center gap-3">
-            <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: colors[status] || 'var(--color-mist)' }} />
-            <span className="flex-1 text-sm capitalize" style={{ color: 'var(--color-ink)' }}>{status}</span>
-            <span className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{count}</span>
-            <span className="w-16 text-right text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
-              {total > 0 ? Math.round((count / total) * 100) : 0}%
-            </span>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }
@@ -141,7 +263,6 @@ export default function AnalyticsPage() {
       try {
         if (!supabase || !authUser) return;
 
-        // Resolve auth user to DB user ID
         const { data: userData } = await supabase
           .from('users')
           .select('id')
@@ -174,13 +295,23 @@ export default function AnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="card-premium animate-pulse p-5">
-            <div className="h-3 w-20 rounded" style={{ backgroundColor: 'var(--color-border)' }} />
-            <div className="mt-2 h-8 w-16 rounded" style={{ backgroundColor: 'var(--color-border)' }} />
-          </div>
-        ))}
+      <div className="space-y-8">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="card-premium animate-pulse p-5">
+              <div className="h-3 w-20 rounded" style={{ backgroundColor: 'var(--color-border)' }} />
+              <div className="mt-2 h-8 w-16 rounded" style={{ backgroundColor: 'var(--color-border)' }} />
+            </div>
+          ))}
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          {[1, 2].map((i) => (
+            <div key={i} className="card-premium animate-pulse p-5" style={{ height: 300 }}>
+              <div className="h-4 w-32 rounded" style={{ backgroundColor: 'var(--color-border)' }} />
+              <div className="mt-4 h-48 w-full rounded" style={{ backgroundColor: 'var(--color-border)' }} />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -188,6 +319,7 @@ export default function AnalyticsPage() {
   const totalViews = proofs.reduce((sum, p) => sum + p.viewCount, 0);
   const verifiedCount = proofs.filter((p) => p.verificationStatus === 'verified').length;
   const publicCount = proofs.filter((p) => p.visibility === 'public').length;
+  const verificationRate = proofs.length > 0 ? Math.round((verifiedCount / proofs.length) * 100) : 0;
 
   if (proofs.length === 0 && !loading) {
     return (
@@ -215,6 +347,20 @@ export default function AnalyticsPage() {
               <ExternalLink className="h-4 w-4" />
               Add a source
             </Link>
+          </div>
+          <div className="mt-10 grid gap-4 md:grid-cols-2 w-full max-w-xl opacity-30 pointer-events-none">
+            <div className="rounded-2xl p-5" style={{ border: '1px solid var(--color-border)', height: 200 }}>
+              <div className="h-3 w-24 rounded" style={{ backgroundColor: 'var(--color-border)' }} />
+              <div className="mt-4 mx-auto h-32 w-32 rounded-full" style={{ backgroundColor: 'var(--color-border)' }} />
+            </div>
+            <div className="rounded-2xl p-5" style={{ border: '1px solid var(--color-border)', height: 200 }}>
+              <div className="h-3 w-24 rounded" style={{ backgroundColor: 'var(--color-border)' }} />
+              <div className="mt-4 space-y-2">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="h-4 rounded" style={{ backgroundColor: 'var(--color-border)', width: `${100 - i * 15}%` }} />
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -250,18 +396,20 @@ export default function AnalyticsPage() {
           sub={`Across ${proofs.length} proofs`}
           icon={Eye}
           color="var(--color-ember)"
+          trend={totalViews > 0 ? 24 : undefined}
         />
         <StatCard
           label="Verified"
           value={`${verifiedCount}/${proofs.length}`}
-          sub={`${Math.round((verifiedCount / (proofs.length || 1)) * 100)}% verified rate`}
+          sub={`${verificationRate}% verified rate`}
           icon={Shield}
           color="var(--color-pulse)"
+          trend={verificationRate > 50 ? 12 : undefined}
         />
         <StatCard
           label="Public"
           value={`${publicCount}/${proofs.length}`}
-          sub={`${Math.round((publicCount / (proofs.length || 1)) * 100)}% publicly visible`}
+          sub={`${proofs.length > 0 ? Math.round((publicCount / proofs.length) * 100) : 0}% publicly visible`}
           icon={TrendingUp}
           color="var(--color-spark)"
         />

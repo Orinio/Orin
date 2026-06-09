@@ -6,7 +6,7 @@ export const verificationAgent: AgentDefinition = {
   name: 'Verification Agent',
   description: 'Verifies proof sources with real API calls (GitHub, certificates, Kaggle, LinkedIn)',
   role: 'verifier',
-  model: MODELS.fast.chat,
+  model: MODELS.ai.verification,
   temperature: 0.3,
   maxTokens: 1000,
   maxIterations: 4,

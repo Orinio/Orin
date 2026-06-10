@@ -19,6 +19,8 @@ import {
   ShieldCheck,
   BarChart3,
   Home,
+  Crown,
+  Users,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
@@ -162,6 +164,8 @@ export default function Navigation() {
 
   const bottomLinks = [
     { href: '/dashboard/messages', label: 'Messages', icon: Bell, badge: 0 },
+    { href: '/dashboard/billing', label: 'Billing', icon: Crown },
+    { href: '/dashboard/team', label: 'Team', icon: Users },
     { href: '/employer/portal', label: 'Employer Portal', icon: Briefcase },
     { href: '/notifications', label: 'Notifications', icon: Bell, badge: unreadCount },
     { href: '/settings', label: 'Settings', icon: Settings },

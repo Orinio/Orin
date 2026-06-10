@@ -8,13 +8,17 @@ import {
   Cell,
   BarChart as RechartsBarChart,
   Bar,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   Tooltip,
   ResponsiveContainer,
   Legend,
+  Area,
+  AreaChart,
 } from 'recharts';
-import { BarChart3, TrendingUp, Eye, Shield, Plus, ExternalLink, ArrowUpRight } from 'lucide-react';
+import { BarChart3, TrendingUp, Eye, Shield, Plus, ExternalLink, ArrowUpRight, Calendar, Target, Flame } from 'lucide-react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { mapDbProofToProof, formatNumber } from '@/lib/utils';
@@ -252,6 +256,266 @@ function SkillChart({ proofs }: { proofs: Proof[] }) {
   );
 }
 
+function CareerProgressChart({ proofs }: { proofs: Proof[] }) {
+  // Group proofs by month
+  const monthlyData = new Map<string, { count: number; verified: number }>();
+  
+  proofs.forEach((p) => {
+    const date = new Date(p.createdAt);
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    const existing = monthlyData.get(key) || { count: 0, verified: 0 };
+    monthlyData.set(key, {
+      count: existing.count + 1,
+      verified: existing.verified + (p.verificationStatus === 'verified' ? 1 : 0),
+    });
+  });
+
+  const data = Array.from(monthlyData.entries())
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .slice(-6)
+    .map(([month, stats]) => ({
+      month: new Date(month + '-01').toLocaleDateString('en-US', { month: 'short' }),
+      proofs: stats.count,
+      verified: stats.verified,
+    }));
+
+  return (
+    <div className="card-premium p-5">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold" style={{ color: 'var(--color-ink)', fontFamily: 'var(--font-heading)' }}>Career Progress</h2>
+        <div className="flex items-center gap-4 text-xs">
+          <span className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--color-bloom)' }} />
+            Total Proofs
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--color-pulse)' }} />
+            Verified
+          </span>
+        </div>
+      </div>
+      {data.length < 2 ? (
+        <p className="mt-4 text-sm" style={{ color: 'var(--color-text-tertiary)' }}>Need at least 2 months of data to show progress.</p>
+      ) : (
+        <div className="mt-4" style={{ height: 260 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={data} margin={{ left: 0, right: 0, top: 5, bottom: 5 }}>
+              <defs>
+                <linearGradient id="colorProofs" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="var(--color-bloom)" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="var(--color-bloom)" stopOpacity={0}/>
+                </linearGradient>
+                <linearGradient id="colorVerified" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="var(--color-pulse)" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="var(--color-pulse)" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <XAxis
+                dataKey="month"
+                tick={{ fontSize: 11, fill: 'var(--color-text-tertiary)' }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <YAxis
+                tick={{ fontSize: 11, fill: 'var(--color-text-tertiary)' }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <Tooltip
+                contentStyle={{
+                  borderRadius: 12,
+                  border: '1px solid var(--color-border)',
+                  background: 'var(--color-surface)',
+                  fontSize: 12,
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                }}
+              />
+              <Area
+                type="monotone"
+                dataKey="proofs"
+                stroke="var(--color-bloom)"
+                strokeWidth={2}
+                fillOpacity={1}
+                fill="url(#colorProofs)"
+              />
+              <Area
+                type="monotone"
+                dataKey="verified"
+                stroke="var(--color-pulse)"
+                strokeWidth={2}
+                fillOpacity={1}
+                fill="url(#colorVerified)"
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function EngagementChart({ proofs }: { proofs: Proof[] }) {
+  // Group views by day for last 30 days
+  const dailyViews = new Map<string, number>();
+  const now = new Date();
+  
+  for (let i = 29; i >= 0; i--) {
+    const date = new Date(now);
+    date.setDate(date.getDate() - i);
+    const key = date.toISOString().split('T')[0];
+    dailyViews.set(key, 0);
+  }
+
+  proofs.forEach((p) => {
+    // Simulate view distribution based on creation date
+    const created = new Date(p.createdAt);
+    const key = created.toISOString().split('T')[0];
+    if (dailyViews.has(key)) {
+      dailyViews.set(key, (dailyViews.get(key) || 0) + p.viewCount);
+    }
+  });
+
+  const data = Array.from(dailyViews.entries())
+    .map(([date, views]) => ({
+      date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      views,
+    }));
+
+  return (
+    <div className="card-premium p-5">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold" style={{ color: 'var(--color-ink)', fontFamily: 'var(--font-heading)' }}>Engagement (30 days)</h2>
+        <div className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
+          <Eye className="h-3.5 w-3.5" />
+          {formatNumber(proofs.reduce((sum, p) => sum + p.viewCount, 0))} total views
+        </div>
+      </div>
+      <div className="mt-4" style={{ height: 200 }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={data} margin={{ left: 0, right: 0, top: 5, bottom: 5 }}>
+            <defs>
+              <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="var(--color-ember)" stopOpacity={0.3}/>
+                <stop offset="95%" stopColor="var(--color-ember)" stopOpacity={0}/>
+              </linearGradient>
+            </defs>
+            <XAxis
+              dataKey="date"
+              tick={{ fontSize: 10, fill: 'var(--color-text-tertiary)' }}
+              axisLine={false}
+              tickLine={false}
+              interval="preserveStartEnd"
+            />
+            <YAxis
+              tick={{ fontSize: 10, fill: 'var(--color-text-tertiary)' }}
+              axisLine={false}
+              tickLine={false}
+            />
+            <Tooltip
+              contentStyle={{
+                borderRadius: 12,
+                border: '1px solid var(--color-border)',
+                background: 'var(--color-surface)',
+                fontSize: 12,
+                boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+              }}
+            />
+            <Area
+              type="monotone"
+              dataKey="views"
+              stroke="var(--color-ember)"
+              strokeWidth={2}
+              fillOpacity={1}
+              fill="url(#colorViews)"
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+}
+
+function StreakCard({ proofs }: { proofs: Proof[] }) {
+  // Calculate current streak
+  const sortedDates = [...new Set(
+    proofs.map(p => new Date(p.createdAt).toISOString().split('T')[0])
+  )].sort().reverse();
+
+  let streak = 0;
+  const today = new Date().toISOString().split('T')[0];
+  
+  for (let i = 0; i < sortedDates.length; i++) {
+    const expected = new Date();
+    expected.setDate(expected.getDate() - i);
+    const expectedStr = expected.toISOString().split('T')[0];
+    
+    if (sortedDates[i] === expectedStr) {
+      streak++;
+    } else {
+      break;
+    }
+  }
+
+  return (
+    <div className="card-premium p-5">
+      <div className="flex items-center gap-3">
+        <div
+          className="flex h-12 w-12 items-center justify-center rounded-xl"
+          style={{ backgroundColor: 'var(--color-ember)15' }}
+        >
+          <Flame className="h-6 w-6" style={{ color: 'var(--color-ember)' }} />
+        </div>
+        <div>
+          <p className="text-2xl font-bold" style={{ color: 'var(--color-ink)' }}>{streak}</p>
+          <p className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>Day streak</p>
+        </div>
+      </div>
+      <p className="mt-3 text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
+        {streak > 0 ? 'Keep it up! Add proofs daily to maintain your streak.' : 'Start a streak by adding proofs consistently!'}
+      </p>
+    </div>
+  );
+}
+
+function GoalsProgressCard({ proofs }: { proofs: Proof[] }) {
+  const verifiedCount = proofs.filter(p => p.verificationStatus === 'verified').length;
+  const totalProofs = proofs.length;
+  const goals = [
+    { label: 'First 5 proofs', target: 5, current: totalProofs },
+    { label: '50% verified', target: Math.ceil(totalProofs * 0.5), current: verifiedCount },
+    { label: '10 skills', target: 10, current: new Set(proofs.flatMap(p => [...p.skillsExtracted, ...p.skillsUserAdded])).size },
+    { label: '25 proofs', target: 25, current: totalProofs },
+  ];
+
+  return (
+    <div className="card-premium p-5">
+      <h2 className="text-lg font-semibold" style={{ color: 'var(--color-ink)', fontFamily: 'var(--font-heading)' }}>Goals Progress</h2>
+      <div className="mt-4 space-y-3">
+        {goals.map((goal) => {
+          const progress = Math.min(100, Math.round((goal.current / goal.target) * 100));
+          return (
+            <div key={goal.label}>
+              <div className="flex items-center justify-between text-xs mb-1">
+                <span style={{ color: 'var(--color-ink)' }}>{goal.label}</span>
+                <span style={{ color: 'var(--color-text-tertiary)' }}>{goal.current}/{goal.target}</span>
+              </div>
+              <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--color-border)' }}>
+                <motion.div
+                  className="h-full rounded-full"
+                  style={{ backgroundColor: progress >= 100 ? 'var(--color-bloom)' : 'var(--color-ember)' }}
+                  initial={{ width: 0 }}
+                  animate={{ width: `${progress}%` }}
+                  transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function AnalyticsPage() {
   const { user: authUser } = useAuth();
   const [proofs, setProofs] = useState<Proof[]>([]);
@@ -407,21 +671,28 @@ export default function AnalyticsPage() {
           trend={verificationRate > 50 ? 12 : undefined}
         />
         <StatCard
-          label="Public"
-          value={`${publicCount}/${proofs.length}`}
-          sub={`${proofs.length > 0 ? Math.round((publicCount / proofs.length) * 100) : 0}% publicly visible`}
-          icon={TrendingUp}
+          label="Skills"
+          value={new Set(proofs.flatMap(p => [...p.skillsExtracted, ...p.skillsUserAdded])).size}
+          sub="Unique skills"
+          icon={Target}
           color="var(--color-spark)"
         />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 animate-fadeInUp" style={{ animationDelay: '200ms' }}>
-        <SourceBreakdown proofs={proofs} />
-        <VerificationPie proofs={proofs} />
+        <CareerProgressChart proofs={proofs} />
+        <EngagementChart proofs={proofs} />
       </div>
 
-      <div className="animate-fadeInUp" style={{ animationDelay: '300ms' }}>
+      <div className="grid gap-4 md:grid-cols-3 animate-fadeInUp" style={{ animationDelay: '300ms' }}>
+        <StreakCard proofs={proofs} />
+        <GoalsProgressCard proofs={proofs} />
+        <SourceBreakdown proofs={proofs} />
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 animate-fadeInUp" style={{ animationDelay: '400ms' }}>
         <SkillChart proofs={proofs} />
+        <VerificationPie proofs={proofs} />
       </div>
     </div>
   );

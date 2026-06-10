@@ -48,6 +48,7 @@ export interface SuperMessageData {
   sources?: Array<{ title: string; url: string; snippet?: string }>;
   artifacts?: Array<{ id: string; type: string; title: string; content: string }>;
   visualSpecs?: Array<Record<string, any>>;
+  followUps?: string[];
   isStreaming?: boolean;
   timestamp: Date;
   tokensUsed?: number;
@@ -428,6 +429,47 @@ export default function SuperMessage({ message, onRate, onRetry }: {
                       messageId={message.id}
                       onRate={onRate}
                     />
+                  </div>
+                )}
+
+                {/* Suggested Follow-ups */}
+                {!isStreaming && message.followUps && message.followUps.length > 0 && (
+                  <div className="mt-4">
+                    <div className="text-[10px] font-medium uppercase tracking-wider mb-2" style={{ color: 'var(--color-text-tertiary)' }}>
+                      Suggested
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {message.followUps.map((suggestion, i) => (
+                        <button
+                          key={i}
+                          onClick={() => {
+                            // Find the chat input and set the suggestion
+                            const input = document.querySelector('[data-chat-input]') as HTMLTextAreaElement;
+                            if (input) {
+                              input.value = suggestion;
+                              input.dispatchEvent(new Event('input', { bubbles: true }));
+                              input.focus();
+                            }
+                          }}
+                          className="px-3 py-1.5 rounded-full text-[11px] font-medium transition-all hover:scale-105"
+                          style={{
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            color: 'rgba(59, 130, 246, 0.9)',
+                            border: '1px solid rgba(59, 130, 246, 0.2)',
+                          }}
+                          onMouseEnter={e => {
+                            e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.2)';
+                            e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.4)';
+                          }}
+                          onMouseLeave={e => {
+                            e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
+                            e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.2)';
+                          }}
+                        >
+                          {suggestion}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
               </>

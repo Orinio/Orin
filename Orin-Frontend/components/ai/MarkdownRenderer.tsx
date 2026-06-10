@@ -147,7 +147,7 @@ function MarkdownTable({ header, rows }: { header: string[]; rows: string[][] })
 // ============================================================
 
 interface ParsedBlock {
-  type: 'paragraph' | 'heading' | 'code' | 'table' | 'list' | 'blockquote' | 'hr';
+  type: 'paragraph' | 'heading' | 'code' | 'table' | 'list' | 'blockquote' | 'hr' | 'callout' | 'details';
   content: string;
   level?: number;
   language?: string;
@@ -155,6 +155,8 @@ interface ParsedBlock {
   ordered?: boolean;
   header?: string[];
   rows?: string[][];
+  calloutType?: 'note' | 'tip' | 'warning' | 'info' | 'success' | 'error';
+  summary?: string;
 }
 
 function parseMarkdown(text: string): ParsedBlock[] {
@@ -208,14 +210,44 @@ function parseMarkdown(text: string): ParsedBlock[] {
       continue;
     }
 
-    // Blockquote
+    // Blockquote / Callout
     if (line.trim().startsWith('>')) {
       const quoteLines: string[] = [];
       while (i < lines.length && lines[i].trim().startsWith('>')) {
         quoteLines.push(lines[i].replace(/^>\s?/, ''));
         i++;
       }
-      blocks.push({ type: 'blockquote', content: quoteLines.join('\n') });
+      const firstLine = quoteLines[0] || '';
+      const calloutMatch = firstLine.match(/^\[!(NOTE|TIP|WARNING|INFO|SUCCESS|ERROR)\]\s*(.*)/i);
+      if (calloutMatch) {
+        const typeMap: Record<string, ParsedBlock['calloutType']> = {
+          NOTE: 'note', TIP: 'tip', WARNING: 'warning', INFO: 'info', SUCCESS: 'success', ERROR: 'error',
+        };
+        const calloutType = typeMap[calloutMatch[1].toUpperCase()] || 'note';
+        const remaining = [calloutMatch[2], ...quoteLines.slice(1)].filter(Boolean).join('\n');
+        blocks.push({ type: 'callout', content: remaining, calloutType });
+      } else {
+        blocks.push({ type: 'blockquote', content: quoteLines.join('\n') });
+      }
+      continue;
+    }
+
+    // Details / Collapsible
+    if (line.trim().match(/^<details>/i)) {
+      i++;
+      const summaryMatch = i < lines.length ? lines[i].trim() : '';
+      let summary = 'Details';
+      if (summaryMatch.match(/^<summary>/i)) {
+        summary = summaryMatch.replace(/^<\/?summary>/gi, '').trim();
+        i++;
+      }
+      const detailLines: string[] = [];
+      while (i < lines.length && !lines[i].trim().match(/^<\/details>/i)) {
+        detailLines.push(lines[i]);
+        i++;
+      }
+      if (i < lines.length) i++; // skip closing </details>
+      blocks.push({ type: 'details', content: detailLines.join('\n'), summary });
       continue;
     }
 
@@ -339,6 +371,90 @@ function formatInline(text: string): ReactNode[] {
 }
 
 // ============================================================
+// Callout / Admonition Block
+// ============================================================
+
+const CALLOUT_STYLES: Record<string, { icon: string; bg: string; border: string; color: string }> = {
+  note:    { icon: '📝', bg: 'rgba(59,130,246,0.06)',  border: 'rgba(59,130,246,0.3)',  color: 'rgba(59,130,246,0.9)' },
+  tip:     { icon: '💡', bg: 'rgba(16,185,129,0.06)', border: 'rgba(16,185,129,0.3)', color: 'rgba(16,185,129,0.9)' },
+  warning: { icon: '⚠️', bg: 'rgba(245,158,11,0.06)', border: 'rgba(245,158,11,0.3)', color: 'rgba(245,158,11,0.9)' },
+  info:    { icon: 'ℹ️', bg: 'rgba(99,102,241,0.06)', border: 'rgba(99,102,241,0.3)', color: 'rgba(99,102,241,0.9)' },
+  success: { icon: '✅', bg: 'rgba(16,185,129,0.06)', border: 'rgba(16,185,129,0.3)', color: 'rgba(16,185,129,0.9)' },
+  error:   { icon: '❌', bg: 'rgba(239,68,68,0.06)',  border: 'rgba(239,68,68,0.3)',  color: 'rgba(239,68,68,0.9)' },
+};
+
+function CalloutBlock({ block }: { block: ParsedBlock }) {
+  const style = CALLOUT_STYLES[block.calloutType || 'note'] || CALLOUT_STYLES.note;
+  const label = (block.calloutType || 'note').charAt(0).toUpperCase() + (block.calloutType || 'note').slice(1);
+  return (
+    <div
+      className="my-3 rounded-xl px-4 py-3 text-sm"
+      style={{ backgroundColor: style.bg, border: `1px solid ${style.border}`, color: 'var(--color-ink)' }}
+    >
+      <div className="flex items-center gap-2 mb-1 font-semibold" style={{ color: style.color }}>
+        <span>{style.icon}</span>
+        <span>{label}</span>
+      </div>
+      <div style={{ color: 'var(--color-text-secondary)' }}>{formatInline(block.content)}</div>
+    </div>
+  );
+}
+
+// ============================================================
+// Details / Collapsible Block
+// ============================================================
+
+function DetailsBlock({ block }: { block: ParsedBlock }) {
+  const [open, setOpen] = useState(false);
+  const parsed = useMemo(() => parseMarkdown(block.content), [block.content]);
+  return (
+    <details
+      className="my-3 rounded-xl overflow-hidden"
+      style={{ border: '1px solid var(--color-border)' }}
+      open={open}
+      onToggle={e => setOpen((e.target as HTMLDetailsElement).open)}
+    >
+      <summary
+        className="flex items-center gap-2 px-4 py-2.5 cursor-pointer text-sm font-medium select-none"
+        style={{
+          backgroundColor: 'var(--color-surface-dim)',
+          color: 'var(--color-ink)',
+          listStyle: 'none',
+        }}
+        onClick={e => { e.preventDefault(); setOpen(!open); }}
+      >
+        <svg
+          className="w-3.5 h-3.5 transition-transform duration-200"
+          style={{ transform: open ? 'rotate(90deg)' : 'rotate(0deg)', color: 'var(--color-text-tertiary)' }}
+          viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+        >
+          <polyline points="9 18 15 12 9 6" />
+        </svg>
+        {block.summary}
+      </summary>
+      <div className="px-4 py-3 text-sm" style={{ backgroundColor: 'var(--color-surface)', color: 'var(--color-ink)' }}>
+        {parsed.map((b, i) => {
+          switch (b.type) {
+            case 'paragraph': return <p key={i} className="my-1 leading-relaxed">{formatInline(b.content)}</p>;
+            case 'list': return (
+              <ul key={i} className="my-1 space-y-0.5">
+                {b.items?.map((item, j) => (
+                  <li key={j} className="flex gap-2">
+                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: 'var(--color-bloom)' }} />
+                    <span>{formatInline(item)}</span>
+                  </li>
+                ))}
+              </ul>
+            );
+            default: return <p key={i} className="my-1">{formatInline(b.content)}</p>;
+          }
+        })}
+      </div>
+    </details>
+  );
+}
+
+// ============================================================
 // Main Component
 // ============================================================
 
@@ -417,6 +533,12 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
                 {formatInline(block.content)}
               </blockquote>
             );
+
+          case 'callout':
+            return <CalloutBlock key={index} block={block} />;
+
+          case 'details':
+            return <DetailsBlock key={index} block={block} />;
 
           case 'hr':
             return <hr key={index} className="my-4" style={{ borderColor: 'var(--color-border)' }} />;

@@ -1628,7 +1628,7 @@ registerTool({
   parameters: {
     type: 'object',
     properties: {
-      kind: { type: 'string', description: 'Visual type: bar, line, area, pie, scatter, flowchart, timeline, cards, dashboard, explainer', enum: ['bar', 'line', 'area', 'pie', 'scatter', 'flowchart', 'timeline', 'cards', 'dashboard', 'explainer'] },
+      kind: { type: 'string', description: 'Visual type: bar, line, area, pie, scatter, flowchart, timeline, cards, dashboard, explainer, heatmap, radar, gantt, network', enum: ['bar', 'line', 'area', 'pie', 'scatter', 'flowchart', 'timeline', 'cards', 'dashboard', 'explainer', 'heatmap', 'radar', 'gantt', 'network'] },
       title: { type: 'string', description: 'Chart title (concise, descriptive)' },
       subtitle: { type: 'string', description: 'Optional subtitle' },
       data: { type: 'string', description: 'JSON string of the data array. For bar/line/pie: [{label, value}]. For flowchart: [{id, label, status}]. For timeline: [{date, title, description}]. For cards: [{title, value, subtitle}].' },
@@ -1691,6 +1691,18 @@ registerTool({
         case 'explainer':
           spec.cards = Array.isArray(parsedData) ? parsedData : [parsedData];
           break;
+        case 'heatmap':
+          spec.heatmap = parsedData;
+          break;
+        case 'radar':
+          spec.radar = Array.isArray(parsedData) ? parsedData : [parsedData];
+          break;
+        case 'gantt':
+          spec.gantt = Array.isArray(parsedData) ? parsedData : [parsedData];
+          break;
+        case 'network':
+          spec.network = parsedData;
+          break;
       }
 
       return {
@@ -1704,6 +1716,111 @@ registerTool({
       return { success: false, error: `Failed to generate visual spec: ${error instanceof Error ? error.message : 'Invalid data format'}` };
     }
   }
+});
+
+// ============================================================
+// Tool: Generate Code Artifact (self-contained HTML/CSS/JS)
+// ============================================================
+registerTool({
+  name: 'generate_code_artifact',
+  description: 'Generate a self-contained HTML/CSS/JS interactive artifact that renders inline in the chat. Use this for interactive demos, calculators, visualizations, mini-games, animated explainers, data tables, or any creative interactive content. The code MUST be a single complete HTML file with embedded CSS and JS (no external dependencies). Keep it under 5000 characters. The frontend renders this in a sandboxed iframe.',
+  category: 'analysis',
+  timeoutMs: 15000,
+  parameters: {
+    type: 'object',
+    properties: {
+      title: { type: 'string', description: 'Short descriptive title for the artifact' },
+      html: { type: 'string', description: 'Complete self-contained HTML document with embedded CSS and JS. Must be valid HTML starting with <!DOCTYPE html> or <html>. Include <style> and <script> tags inline. No external CDN dependencies.' },
+      description: { type: 'string', description: 'Brief description of what the artifact does' },
+    },
+    required: ['title', 'html'],
+  },
+  execute: async (args) => {
+    try {
+      const html = args.html;
+      if (!html || html.length < 50) {
+        return { success: false, error: 'HTML content is too short. Provide a complete HTML document.' };
+      }
+      if (html.length > 8000) {
+        return { success: false, error: 'HTML content exceeds 8000 character limit. Keep it concise.' };
+      }
+
+      const id = `art_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+
+      const spec: Record<string, any> = {
+        id,
+        kind: 'html',
+        title: args.title,
+        subtitle: args.description,
+        html,
+        layout: { mode: 'panel', size: 'large' },
+        accessibility: {
+          alt_text: args.description || args.title,
+        },
+      };
+
+      return {
+        success: true,
+        data: {
+          visualSpec: spec,
+          message: `Interactive artifact "${args.title}" generated successfully.`,
+        },
+      };
+    } catch (error) {
+      return { success: false, error: `Failed to generate artifact: ${error instanceof Error ? error.message : 'Unknown error'}` };
+    }
+  },
+});
+
+// ============================================================
+// Tool: Generate Mermaid Diagram
+// ============================================================
+registerTool({
+  name: 'generate_mermaid',
+  description: 'Generate a Mermaid diagram for flowcharts, sequence diagrams, class diagrams, state diagrams, ER diagrams, or Gantt charts. Use this when the user wants to see a diagram of relationships, processes, or structures. The frontend renders the Mermaid syntax into an SVG diagram.',
+  category: 'analysis',
+  timeoutMs: 15000,
+  parameters: {
+    type: 'object',
+    properties: {
+      title: { type: 'string', description: 'Diagram title' },
+      code: { type: 'string', description: 'Mermaid syntax code. Examples: flowchart TD, sequenceDiagram, classDiagram, stateDiagram-v2, erDiagram, gantt' },
+      description: { type: 'string', description: 'What this diagram shows' },
+    },
+    required: ['title', 'code'],
+  },
+  execute: async (args) => {
+    try {
+      const code = args.code;
+      if (!code || code.length < 10) {
+        return { success: false, error: 'Mermaid code is too short.' };
+      }
+
+      const id = `merm_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+
+      const spec: Record<string, any> = {
+        id,
+        kind: 'mermaid',
+        title: args.title,
+        subtitle: args.description,
+        mermaidCode: code,
+        layout: { mode: 'panel', size: 'large' },
+        accessibility: {
+          alt_text: args.description || args.title,
+        },
+      };
+
+      return {
+        success: true,
+        data: {
+          visualSpec: spec,
+          message: `Mermaid diagram "${args.title}" generated successfully.`,
+        },
+      };
+    } catch (error) {
+      return { success: false, error: `Failed to generate diagram: ${error instanceof Error ? error.message : 'Unknown error'}` };
+    }
+  },
 });
 
 // ============================================================

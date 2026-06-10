@@ -3,6 +3,12 @@
 import type { VisualSpec } from '@/lib/visual-spec';
 import { BarChart, LineChart, PieChart, ScatterPlot } from './charts';
 import { Flowchart, Timeline, Cards, Dashboard } from './diagrams';
+import { HtmlArtifact } from './HtmlArtifact';
+import { MermaidDiagram } from './MermaidDiagram';
+import { HeatMap } from './HeatMap';
+import { RadarChart } from './RadarChart';
+import { GanttChart } from './GanttChart';
+import { NetworkGraph } from './NetworkGraph';
 
 interface VisualRendererProps {
   spec: VisualSpec;
@@ -122,6 +128,32 @@ export function VisualRenderer({ spec, className, compact = false }: VisualRende
             )}
           </div>
         );
+
+      case 'html':
+        return <HtmlArtifact html={spec.html || ''} title={spec.title} />;
+
+      case 'mermaid':
+        return <MermaidDiagram code={spec.mermaidCode || ''} title={spec.title} />;
+
+      case 'heatmap':
+        return spec.heatmap ? (
+          <HeatMap data={spec.heatmap} title={spec.title} subtitle={spec.subtitle} size={size} />
+        ) : null;
+
+      case 'radar':
+        return spec.radar ? (
+          <RadarChart data={spec.radar} title={spec.title} subtitle={spec.subtitle} size={size} />
+        ) : null;
+
+      case 'gantt':
+        return spec.gantt ? (
+          <GanttChart data={spec.gantt} title={spec.title} subtitle={spec.subtitle} size={size} />
+        ) : null;
+
+      case 'network':
+        return spec.network ? (
+          <NetworkGraph data={spec.network} title={spec.title} subtitle={spec.subtitle} size={size} />
+        ) : null;
 
       default:
         return (

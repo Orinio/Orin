@@ -265,6 +265,7 @@ export default function SuperAgentChat() {
     let durationMs = 0;
     const steps: ToolStep[] = [];
     const visualSpecs: Array<Record<string, any>> = [];
+    const followUps: string[] = [];
 
     try {
       abortRef.current = new AbortController();
@@ -413,6 +414,7 @@ export default function SuperAgentChat() {
               if (data.agentName) agentName = data.agentName;
               if (data.tokensUsed) tokensUsed = data.tokensUsed;
               if (data.durationMs) durationMs = data.durationMs;
+              if (data.followUps) followUps.length = 0, data.followUps.forEach((f: string) => followUps.push(f));
               if (data.visualSpecs) { visualSpecs.length = 0; data.visualSpecs.forEach((s: any) => visualSpecs.push(s)); }
               if (data.toolCalls) {
                 steps.length = 0;
@@ -421,7 +423,7 @@ export default function SuperAgentChat() {
               setAgentState('idle');
               updateAssistant(assistantId, {
                 content: fullContent || 'No response generated.', thinking: thinking || undefined, agentId, agentName, tokensUsed, durationMs,
-                steps: [...steps], visualSpecs: visualSpecs.length > 0 ? [...visualSpecs] : undefined, isStreaming: false,
+                steps: [...steps], visualSpecs: visualSpecs.length > 0 ? [...visualSpecs] : undefined, followUps: followUps.length > 0 ? [...followUps] : undefined, isStreaming: false,
               });
               break;
           }

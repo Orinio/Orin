@@ -636,7 +636,8 @@ export class AgentOrchestrator {
       })),
       iterations,
       tokensUsed: totalTokens,
-      durationMs
+      durationMs,
+      followUps: extractFollowUps(finalAnswer),
     });
   }
 
@@ -760,6 +761,49 @@ export class AgentOrchestrator {
   getSessionId(): string {
     return this.sessionId;
   }
+}
+
+// ============================================================
+// Follow-up extraction from answer text
+// ============================================================
+function extractFollowUps(answer: string): string[] {
+  const followUps: string[] = [];
+
+  // Look for explicit question patterns
+  const questionPatterns = [
+    /(?:would you like|want me to|shall I|should I|can I|may I)\s+(.+?)\??/gi,
+    /(?:next|also|additionally),?\s+(.+?\?)\s/gi,
+    /(?:you might also|you may want to|consider)\s+(.+?)\.?\s/gi,
+  ];
+
+  for (const pattern of questionPatterns) {
+    let match;
+    while ((match = pattern.exec(answer)) !== null && followUps.length < 3) {
+      const suggestion = match[1].trim().replace(/\.$/, '');
+      if (suggestion.length > 10 && suggestion.length < 100 && !followUps.includes(suggestion)) {
+        followUps.push(suggestion.charAt(0).toUpperCase() + suggestion.slice(1));
+      }
+    }
+  }
+
+  // If no explicit questions found, generate contextual suggestions based on keywords
+  if (followUps.length === 0) {
+    const lowerAnswer = answer.toLowerCase();
+    if (lowerAnswer.includes('skill') || lowerAnswer.includes('portfolio')) {
+      followUps.push('What skills should I learn next?');
+    }
+    if (lowerAnswer.includes('job') || lowerAnswer.includes('opportunity') || lowerAnswer.includes('career')) {
+      followUps.push('Show me matching opportunities');
+    }
+    if (lowerAnswer.includes('proof') || lowerAnswer.includes('project')) {
+      followUps.push('Help me verify my latest proof');
+    }
+    if (lowerAnswer.includes('resume') || lowerAnswer.includes('bullet')) {
+      followUps.push('Generate resume bullet points from my proofs');
+    }
+  }
+
+  return followUps.slice(0, 3);
 }
 
 // ============================================================

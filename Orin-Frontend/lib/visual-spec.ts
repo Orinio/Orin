@@ -87,7 +87,13 @@ export type VisualKind =
   | 'timeline'
   | 'cards'
   | 'dashboard'
-  | 'explainer';
+  | 'explainer'
+  | 'html'
+  | 'mermaid'
+  | 'heatmap'
+  | 'radar'
+  | 'gantt'
+  | 'network';
 
 export type VisualLayoutMode = 'inline' | 'panel';
 export type VisualSize = 'small' | 'medium' | 'large';
@@ -151,6 +157,33 @@ export interface VisualSpec {
   text?: {
     short_explanation?: string;
     key_takeaways?: string[];
+  };
+
+  // HTML artifact (self-contained HTML/CSS/JS)
+  html?: string;
+
+  // Mermaid diagram source code
+  mermaidCode?: string;
+
+  // Heatmap data
+  heatmap?: {
+    rows: string[];
+    columns: string[];
+    values: number[][];
+    minLabel?: string;
+    maxLabel?: string;
+  };
+
+  // Radar chart data
+  radar?: Array<{ label: string; value: number; maxValue?: number }>;
+
+  // Gantt chart data
+  gantt?: Array<{ id: string; label: string; start: string; end: string; progress?: number; color?: string; group?: string }>;
+
+  // Network graph data
+  network?: {
+    nodes: Array<{ id: string; label: string; size?: number; color?: string; group?: string }>;
+    edges: Array<{ source: string; target: string; label?: string; weight?: number }>;
   };
 }
 

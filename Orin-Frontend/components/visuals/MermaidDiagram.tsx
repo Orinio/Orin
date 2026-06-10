@@ -21,7 +21,7 @@ export function MermaidDiagram({ code, title, className }: MermaidDiagramProps) 
 
     async function renderMermaid() {
       try {
-        const mermaid = (await import('mermaid')).mermaid;
+        const mermaid = (await import('mermaid')).default;
         mermaid.initialize({
           startOnLoad: false,
           theme: 'dark',

@@ -76,51 +76,135 @@ setInterval(() => {
 // ============================================================
 // Middleware: Per-User AI Rate Limit + Token Budget
 // ============================================================
+// Plan-based upgrade messages
+const UPGRADE_MESSAGES = {
+    free: 'Upgrade to Pro for 5x higher limits and priority access.',
+    pro: 'Upgrade to Team for even higher limits and dedicated support.',
+    team: 'Contact support for custom limits.',
+};
+const PLAN_NAMES = {
+    free: 'Free',
+    pro: 'Pro',
+    team: 'Team',
+};
 function userRateLimitMiddleware(endpoint) {
     return async (req, res, next) => {
-        const userId = req.user?.id;
-        if (!userId) {
+        const authUserId = req.user?.id;
+        if (!authUserId) {
             next();
             return;
         }
         try {
-            // Check Supabase-based rate limit
+            // Resolve internal user row (id + subscription plan)
+            const { data: userRow } = await supabase_js_1.supabase
+                .from('users')
+                .select('id')
+                .eq('auth_user_id', authUserId)
+                .maybeSingle();
+            const userId = userRow?.id || authUserId;
+            req.internalUserId = userId;
+            // Fetch user's active subscription plan
+            let plan = 'free';
+            const { data: sub } = await supabase_js_1.supabase
+                .from('subscriptions')
+                .select('plan, status')
+                .eq('user_id', userId)
+                .in('status', ['active', 'trialing'])
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+            if (sub?.plan) {
+                plan = sub.plan;
+            }
+            // Check Supabase-based rate limit (plan-aware)
             const rateLimit = await import('../lib/rate-limit.js');
-            const rateResult = await rateLimit.checkAIRateLimit(supabase_js_1.supabase, userId, endpoint);
+            const rateResult = await rateLimit.checkAIRateLimit(supabase_js_1.supabase, userId, endpoint, plan);
             if (!rateResult.allowed) {
+                const waitMs = rateResult.nextAllowedAt
+                    ? Math.max(0, rateResult.nextAllowedAt.getTime() - Date.now())
+                    : 0;
+                const waitMinutes = Math.ceil(waitMs / 60000);
+                const waitSeconds = Math.ceil(waitMs / 1000);
+                const waitDisplay = waitMinutes > 60
+                    ? `${Math.ceil(waitMinutes / 60)} hour${Math.ceil(waitMinutes / 60) > 1 ? 's' : ''}`
+                    : waitMinutes > 1
+                        ? `${waitMinutes} minutes`
+                        : `${waitSeconds} seconds`;
+                const usage = rateResult.usage;
+                const usageDisplay = usage ? `${usage.used}/${usage.limit}` : 'unknown';
+                logger_js_1.logger.warn({ userId, endpoint, plan, usage: usageDisplay, waitMs }, 'Per-user rate limit denied');
                 res.status(429).json({
                     error: {
                         code: 'RATE_LIMITED',
-                        message: rateResult.reason,
-                        nextAllowedAt: rateResult.nextAllowedAt,
+                        message: rateResult.reason || 'Rate limit exceeded',
+                        details: {
+                            plan,
+                            planName: PLAN_NAMES[plan] || 'Free',
+                            usage: usage ? {
+                                used: usage.used,
+                                limit: usage.limit,
+                                remaining: Math.max(0, usage.limit - usage.used),
+                                resetsAt: usage.resetsAt?.toISOString(),
+                            } : null,
+                            retryAfterMs: waitMs,
+                            retryAfterDisplay: waitDisplay,
+                            nextAllowedAt: rateResult.nextAllowedAt?.toISOString(),
+                            upgradeMessage: plan !== 'team' ? UPGRADE_MESSAGES[plan] : undefined,
+                            upgradeUrl: plan === 'free' ? '/settings?tab=billing' : undefined,
+                        },
                     },
                 });
                 return;
             }
             // Check token budget
-            const tier = req.user?.tier || 'free';
-            const budget = checkTokenBudget(userId, tier);
+            const tier = plan; // Use actual subscription plan
+            const budget = checkTokenBudget(authUserId, tier);
             if (!budget.allowed) {
+                logger_js_1.logger.warn({ userId: authUserId, tier, remaining: budget.remaining, limit: budget.limit }, 'Token budget exceeded');
                 res.status(429).json({
                     error: {
                         code: 'TOKEN_BUDGET_EXCEEDED',
-                        message: `Daily token budget of ${budget.limit.toLocaleString()} exceeded. Upgrade to increase your limit.`,
-                        remaining: budget.remaining,
-                        limit: budget.limit,
+                        message: `Daily token budget of ${budget.limit.toLocaleString()} exceeded.`,
+                        details: {
+                            plan,
+                            planName: PLAN_NAMES[plan] || 'Free',
+                            tokenBudget: {
+                                used: budget.limit - budget.remaining,
+                                limit: budget.limit,
+                                remaining: 0,
+                            },
+                            retryAfterMs: RESET_INTERVAL_MS,
+                            retryAfterDisplay: '24 hours (resets daily)',
+                            upgradeMessage: plan !== 'team' ? UPGRADE_MESSAGES[plan] : undefined,
+                            upgradeUrl: plan === 'free' ? '/settings?tab=billing' : undefined,
+                        },
                     },
                 });
                 return;
             }
             // Store for token consumption later
             req.tokenBudget = budget;
-            // Capture response to log usage
+            req.userPlan = plan;
+            // Capture response to log usage ONLY on success (2xx)
             const originalJson = res.json.bind(res);
+            const originalStatus = res.status.bind(res);
+            let responseStatusCode = 200;
+            res.status = function (code) {
+                responseStatusCode = code;
+                return originalStatus(code);
+            };
             res.json = function (body) {
-                const tokensUsed = body?.tokensUsed || 0;
-                if (tokensUsed > 0) {
-                    consumeTokens(userId, tokensUsed, tier);
+                // Only count successful responses toward rate limit
+                if (responseStatusCode >= 200 && responseStatusCode < 300) {
+                    const tokensUsed = body?.tokensUsed || 0;
+                    if (tokensUsed > 0) {
+                        consumeTokens(authUserId, tokensUsed, tier);
+                    }
+                    rateLimit.logAIUsage(supabase_js_1.supabase, userId, endpoint, tokensUsed).catch(() => { });
                 }
-                rateLimit.logAIUsage(supabase_js_1.supabase, userId, endpoint, tokensUsed).catch(() => { });
+                else {
+                    logger_js_1.logger.debug({ userId, endpoint, status: responseStatusCode }, 'Skipping rate limit count — error response');
+                }
                 return originalJson(body);
             };
             next();

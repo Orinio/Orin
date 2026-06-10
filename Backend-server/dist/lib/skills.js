@@ -10,8 +10,8 @@ exports.analyzeSkills = analyzeSkills;
 exports.getSkillRecommendations = getSkillRecommendations;
 function extractSkillsFromProofs(proofs) {
     const allSkills = proofs.flatMap((proof) => [
-        ...proof.skillsExtracted,
-        ...proof.skillsUserAdded,
+        ...(proof.skillsExtracted || []),
+        ...(proof.skillsUserAdded || []),
     ]);
     const uniqueSkills = [...new Set(allSkills.map((s) => s.toLowerCase().trim()))];
     return uniqueSkills;
@@ -19,7 +19,7 @@ function extractSkillsFromProofs(proofs) {
 function getSkillFrequencyMap(proofs) {
     const frequencyMap = new Map();
     proofs.forEach((proof) => {
-        const allSkills = [...proof.skillsExtracted, ...proof.skillsUserAdded];
+        const allSkills = [...(proof.skillsExtracted || []), ...(proof.skillsUserAdded || [])];
         allSkills.forEach((skill) => {
             const normalized = skill.toLowerCase().trim();
             frequencyMap.set(normalized, (frequencyMap.get(normalized) || 0) + 1);
@@ -39,10 +39,10 @@ function getSkillTrend(proofs, skill) {
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
     const recentProofs = proofs.filter((p) => new Date(p.createdAt) >= thirtyDaysAgo &&
-        [...p.skillsExtracted, ...p.skillsUserAdded].some((s) => s.toLowerCase().trim() === skill));
+        [...(p.skillsExtracted || []), ...(p.skillsUserAdded || [])].some((s) => s.toLowerCase().trim() === skill));
     const olderProofs = proofs.filter((p) => new Date(p.createdAt) >= sixtyDaysAgo &&
         new Date(p.createdAt) < thirtyDaysAgo &&
-        [...p.skillsExtracted, ...p.skillsUserAdded].some((s) => s.toLowerCase().trim() === skill));
+        [...(p.skillsExtracted || []), ...(p.skillsUserAdded || [])].some((s) => s.toLowerCase().trim() === skill));
     if (recentProofs.length > olderProofs.length)
         return 'improving';
     if (recentProofs.length < olderProofs.length)
@@ -168,10 +168,10 @@ function analyzeSkills(proofs, targetRole) {
         count,
         depth: calculateSkillDepth(count),
         sources: [...new Set(proofs
-                .filter((p) => [...p.skillsExtracted, ...p.skillsUserAdded].some((s) => s.toLowerCase().trim() === name))
+                .filter((p) => [...(p.skillsExtracted || []), ...(p.skillsUserAdded || [])].some((s) => s.toLowerCase().trim() === name))
                 .map((p) => p.sourceType))],
         lastUsed: new Date(Math.max(...proofs
-            .filter((p) => [...p.skillsExtracted, ...p.skillsUserAdded].some((s) => s.toLowerCase().trim() === name))
+            .filter((p) => [...(p.skillsExtracted || []), ...(p.skillsUserAdded || [])].some((s) => s.toLowerCase().trim() === name))
             .map((p) => new Date(p.createdAt).getTime()))),
         trend: getSkillTrend(proofs, name),
     }));

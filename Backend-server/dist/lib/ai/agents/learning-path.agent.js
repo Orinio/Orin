@@ -7,7 +7,7 @@ exports.learningPathAgent = {
     name: 'Learning Path Agent',
     description: 'Generates personalized learning paths with real resources from the web',
     role: 'learning_advisor',
-    model: models_js_1.MODELS.primary.learning,
+    model: models_js_1.MODELS.ai.learningPath,
     temperature: 0.5,
     maxTokens: 2000,
     maxIterations: 4,

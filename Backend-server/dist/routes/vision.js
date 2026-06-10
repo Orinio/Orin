@@ -8,6 +8,14 @@ const vision_service_js_1 = require("../lib/ai/services/vision.service.js");
 const supabase_js_1 = require("../lib/supabase.js");
 const rate_limit_js_1 = require("../middleware/rate-limit.js");
 exports.visionRouter = (0, express_1.Router)();
+async function resolveUserId(authUserId) {
+    const { data } = await supabase_js_1.supabase
+        .from('users')
+        .select('id')
+        .eq('auth_user_id', authUserId)
+        .maybeSingle();
+    return data?.id || null;
+}
 /**
  * POST /ai/vision/analyze - Analyze an image
  */
@@ -79,7 +87,8 @@ exports.visionRouter.post('/certificate/verify', (0, rate_limit_js_1.userRateLim
         const result = await (0, vision_service_js_1.verifyCertificate)(imageUrl, expectedIssuer, model);
         // Update proof status if proofId provided
         if (proofId) {
-            const userId = req.user?.id;
+            const authUserId = req.user?.id;
+            const userId = req.internalUserId || (authUserId ? await resolveUserId(authUserId) : null);
             if (userId) {
                 const { data: existingProof } = await supabase_js_1.supabase
                     .from('proof_cards')

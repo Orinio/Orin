@@ -35,11 +35,14 @@ const chat_js_1 = require("./routes/chat.js");
 const integrations_js_1 = require("./routes/integrations.js");
 const billing_js_1 = require("./routes/billing.js");
 const index_js_1 = require("./lib/ai/tools/index.js");
+const push_js_1 = require("./lib/push.js");
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 3001;
 const isDev = process.env.NODE_ENV === 'development';
 // Initialize AI tools once at startup
 (0, index_js_1.initTools)();
+// Initialize VAPID for push notifications
+(0, push_js_1.configureVapid)();
 // Request ID (first — propagates to all downstream middleware)
 app.use(request_id_js_1.requestIdMiddleware);
 // Security headers with production-grade Helmet config

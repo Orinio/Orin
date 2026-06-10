@@ -15,18 +15,26 @@ export interface RateLimitConfig {
     maxPerWeek: number;
     cooldownHours: number;
 }
+export declare const AI_RATE_LIMITS_BY_PLAN: Record<string, Record<string, RateLimitConfig>>;
 export declare const AI_RATE_LIMITS: Record<string, RateLimitConfig>;
+export declare function getRateLimitConfigForPlan(endpoint: string, plan?: string): RateLimitConfig;
 export declare const RATE_LIMITS: Record<CoachNoteType, RateLimitConfig>;
 export interface RateLimitResult {
     allowed: boolean;
     reason?: string;
     nextAllowedAt?: Date;
+    usage?: {
+        used: number;
+        limit: number;
+        resetsAt: Date;
+    };
+    plan?: string;
 }
 export declare function checkRateLimit(supabase: SupabaseClient, userId: string, noteType: CoachNoteType): Promise<RateLimitResult>;
 export declare function getLastNoteCreatedAt(supabase: SupabaseClient, userId: string, noteType: CoachNoteType): Promise<Date | null>;
 export declare function getNoteCount(supabase: SupabaseClient, userId: string, noteType: CoachNoteType, since: Date): Promise<number>;
 export declare function logAIUsage(supabase: SupabaseClient, userId: string, endpoint: string, tokensUsed?: number): Promise<void>;
-export declare function checkAIRateLimit(supabase: SupabaseClient, userId: string, endpoint: string): Promise<RateLimitResult>;
+export declare function checkAIRateLimit(supabase: SupabaseClient, userId: string, endpoint: string, plan?: string): Promise<RateLimitResult>;
 import type { Request, Response, NextFunction } from 'express';
 export declare function globalAIRateLimitMiddleware(_req: Request, res: Response, next: NextFunction): void;
 declare const AUTH_RATE_LIMITS: {

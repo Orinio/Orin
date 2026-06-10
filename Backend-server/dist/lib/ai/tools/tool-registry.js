@@ -1452,6 +1452,158 @@ function generateRecommendations(profile) {
     }
 });
 // ============================================================
+// VISUAL RESPONSE TOOLS — Generate interactive visual specs
+// ============================================================
+(0, tool_registry_js_1.registerTool)({
+    name: 'classify_visual_intent',
+    description: 'Classify whether a user query needs a visual response and which visual type. Use this BEFORE render_visual to decide if a visual is appropriate.',
+    category: 'analysis',
+    timeoutMs: 10000,
+    parameters: {
+        type: 'object',
+        properties: {
+            query: { type: 'string', description: 'The user query or context' },
+            dataDescription: { type: 'string', description: 'Description of available data (e.g., "user has 12 proofs with 5 skills")' }
+        },
+        required: ['query']
+    },
+    execute: async (args) => {
+        const query = args.query.toLowerCase();
+        // Intent classification rules
+        const patterns = [
+            // Trend / time-based
+            { regex: /trend|over time|growth|progress|history|timeline|evolution|change over|monthly|weekly|daily/i, kind: 'line', confidence: 0.9, mode: 'panel' },
+            // Comparison
+            { regex: /compare|comparison|vs\.?|versus|difference|which is better|ranking|ranked|top \d+|best|worst/i, kind: 'bar', confidence: 0.85, mode: 'inline' },
+            // Part-to-whole
+            { regex: /distribution|breakdown|proportion|percentage|share of|part of|composition|split/i, kind: 'pie', confidence: 0.8, mode: 'inline' },
+            // Relationship
+            { regex: /relationship|correlation|scatter|plot|分布|versus.*and/i, kind: 'scatter', confidence: 0.75, mode: 'panel' },
+            // Process / workflow
+            { regex: /process|workflow|steps|how to|pipeline|stages|flow|sequence/i, kind: 'flowchart', confidence: 0.85, mode: 'panel' },
+            // Timeline
+            { regex: /timeline|chronological|history of|milestones|key dates|events/i, kind: 'timeline', confidence: 0.9, mode: 'panel' },
+            // Dashboard / summary
+            { regex: /dashboard|summary|overview|stats|statistics|metrics|overview of/i, kind: 'dashboard', confidence: 0.85, mode: 'panel' },
+            // Score / metric display
+            { regex: /score|rating|grade|out of \d+|percentage|progress bar/i, kind: 'cards', confidence: 0.8, mode: 'inline' },
+            // Explanation
+            { regex: /explain|explain how|what is|concept|understand|guide/i, kind: 'explainer', confidence: 0.7, mode: 'panel' },
+        ];
+        let bestMatch = null;
+        for (const pattern of patterns) {
+            if (pattern.regex.test(query) && (!bestMatch || pattern.confidence > bestMatch.confidence)) {
+                bestMatch = { kind: pattern.kind, confidence: pattern.confidence, mode: pattern.mode };
+            }
+        }
+        // If no pattern matched, no visual needed
+        const confidence = bestMatch?.confidence || 0.3;
+        if (!bestMatch || bestMatch.confidence < 0.7) {
+            return {
+                success: true,
+                data: {
+                    needsVisual: false,
+                    reason: 'Query does not clearly benefit from a visual. Text response is more appropriate.',
+                    confidence,
+                }
+            };
+        }
+        return {
+            success: true,
+            data: {
+                needsVisual: true,
+                kind: bestMatch.kind,
+                confidence: bestMatch.confidence,
+                layoutMode: bestMatch.mode,
+                suggestion: `A ${bestMatch.kind} chart in ${bestMatch.mode === 'panel' ? 'expanded' : 'inline'} mode would best answer this query.`,
+            }
+        };
+    }
+});
+(0, tool_registry_js_1.registerTool)({
+    name: 'render_visual',
+    description: 'Generate a structured visual spec JSON for rendering charts, diagrams, or cards. The output is a VisualSpec object that the frontend renders into an interactive visual. NEVER fabricate data — only use data from actual tool results or verified sources.',
+    category: 'analysis',
+    timeoutMs: 15000,
+    parameters: {
+        type: 'object',
+        properties: {
+            kind: { type: 'string', description: 'Visual type: bar, line, area, pie, scatter, flowchart, timeline, cards, dashboard, explainer', enum: ['bar', 'line', 'area', 'pie', 'scatter', 'flowchart', 'timeline', 'cards', 'dashboard', 'explainer'] },
+            title: { type: 'string', description: 'Chart title (concise, descriptive)' },
+            subtitle: { type: 'string', description: 'Optional subtitle' },
+            data: { type: 'string', description: 'JSON string of the data array. For bar/line/pie: [{label, value}]. For flowchart: [{id, label, status}]. For timeline: [{date, title, description}]. For cards: [{title, value, subtitle}].' },
+            summary: { type: 'string', description: 'Plain-language summary of what the visual shows' },
+            dataSource: { type: 'string', description: 'Where the data came from (e.g., "user portfolio analysis", "web search results")' },
+            xAxisLabel: { type: 'string', description: 'X-axis label for charts' },
+            yAxisLabel: { type: 'string', description: 'Y-axis label for charts' },
+            layoutMode: { type: 'string', description: 'inline for small charts, panel for larger ones', enum: ['inline', 'panel'] },
+            size: { type: 'string', description: 'small, medium, or large', enum: ['small', 'medium', 'large'] },
+        },
+        required: ['kind', 'title', 'data']
+    },
+    execute: async (args) => {
+        try {
+            const parsedData = JSON.parse(args.data);
+            const id = `vis_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+            const spec = {
+                id,
+                kind: args.kind,
+                title: args.title,
+                subtitle: args.subtitle || undefined,
+                summary: args.summary || undefined,
+                data_source: args.dataSource || undefined,
+                layout: {
+                    mode: args.layoutMode || (['bar', 'line', 'pie', 'area'].includes(args.kind) ? 'inline' : 'panel'),
+                    size: args.size || 'medium',
+                },
+                interactions: { hover: true, click: true },
+                accessibility: {
+                    alt_text: args.summary || args.title,
+                    color_contrast: 'high',
+                    keyboard_support: true,
+                },
+            };
+            // Populate data based on kind
+            switch (args.kind) {
+                case 'bar':
+                case 'line':
+                case 'area':
+                case 'pie':
+                case 'scatter':
+                    spec.series = Array.isArray(parsedData) ? parsedData : [parsedData];
+                    if (args.xAxisLabel || args.yAxisLabel) {
+                        spec.axes = {
+                            x: args.xAxisLabel ? { label: args.xAxisLabel } : undefined,
+                            y: args.yAxisLabel ? { label: args.yAxisLabel } : undefined,
+                        };
+                    }
+                    break;
+                case 'flowchart':
+                    spec.steps = Array.isArray(parsedData) ? parsedData : [parsedData];
+                    break;
+                case 'timeline':
+                    spec.entries = Array.isArray(parsedData) ? parsedData : [parsedData];
+                    break;
+                case 'cards':
+                case 'dashboard':
+                case 'explainer':
+                    spec.cards = Array.isArray(parsedData) ? parsedData : [parsedData];
+                    break;
+            }
+            return {
+                success: true,
+                data: {
+                    visualSpec: spec,
+                    message: `Visual ${args.kind} chart generated successfully.`
+                }
+            };
+        }
+        catch (error) {
+            return { success: false, error: `Failed to generate visual spec: ${error instanceof Error ? error.message : 'Invalid data format'}` };
+        }
+    }
+});
+// ============================================================
 // Initialize — just logs (tools self-register at module load)
 // ============================================================
 const tool_registry_js_2 = require("../core/tool-registry.js");

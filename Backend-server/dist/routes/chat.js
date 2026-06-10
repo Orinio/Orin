@@ -3,21 +3,27 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.chatRouter = void 0;
 const express_1 = require("express");
 const zod_1 = require("zod");
+const crypto_1 = require("crypto");
 const supabase_js_1 = require("../lib/supabase.js");
 const logger_js_1 = require("../lib/logger.js");
 exports.chatRouter = (0, express_1.Router)();
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const saveConversationSchema = zod_1.z.object({
     id: zod_1.z.string().min(1),
     title: zod_1.z.string().optional(),
     messages: zod_1.z.array(zod_1.z.any()).optional(),
     messageCount: zod_1.z.number().optional(),
-    agentId: zod_1.z.string().optional(),
+    agentId: zod_1.z.string().optional().default('chat'),
     createdAt: zod_1.z.string().optional(),
     updatedAt: zod_1.z.string().optional(),
 });
 exports.chatRouter.get('/', async (req, res) => {
     try {
         const userId = req.user?.id;
+        if (!userId) {
+            res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } });
+            return;
+        }
         const { data, error } = await supabase_js_1.supabase
             .from('chat_conversations')
             .select('*')
@@ -49,6 +55,10 @@ exports.chatRouter.get('/', async (req, res) => {
 exports.chatRouter.get('/:id', async (req, res) => {
     try {
         const userId = req.user?.id;
+        if (!userId) {
+            res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } });
+            return;
+        }
         const { id } = req.params;
         const { data, error } = await supabase_js_1.supabase
             .from('chat_conversations')
@@ -83,18 +93,23 @@ exports.chatRouter.get('/:id', async (req, res) => {
 exports.chatRouter.post('/', async (req, res) => {
     try {
         const userId = req.user?.id;
+        if (!userId) {
+            res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } });
+            return;
+        }
         const parsed = saveConversationSchema.safeParse(req.body);
         if (!parsed.success) {
             res.status(400).json({ error: { code: 'INVALID_INPUT', message: parsed.error.errors[0].message } });
             return;
         }
         const { id, title, messages, messageCount, agentId, createdAt, updatedAt } = parsed.data;
+        const conversationId = UUID_RE.test(id) ? id : (0, crypto_1.randomUUID)();
         const { error } = await supabase_js_1.supabase
             .from('chat_conversations')
             .upsert({
-            id,
+            id: conversationId,
             user_id: userId,
-            agent_id: agentId || null,
+            agent_id: agentId,
             title: title || 'New conversation',
             messages: messages || [],
             message_count: messageCount || 0,
@@ -115,6 +130,10 @@ exports.chatRouter.post('/', async (req, res) => {
 exports.chatRouter.delete('/:id', async (req, res) => {
     try {
         const userId = req.user?.id;
+        if (!userId) {
+            res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } });
+            return;
+        }
         const { id } = req.params;
         const { error } = await supabase_js_1.supabase
             .from('chat_conversations')

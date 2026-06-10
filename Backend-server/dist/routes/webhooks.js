@@ -171,19 +171,25 @@ exports.webhooksRouter.post('/stripe', async (req, res) => {
             case 'checkout.session.completed': {
                 const session = event.data?.object;
                 if (session?.client_reference_id) {
-                    const { error } = await supabase_js_1.supabase
+                    const { data: userProfile } = await supabase_js_1.supabase
                         .from('users')
-                        .update({
-                        subscription_status: 'active',
-                        stripe_customer_id: session.customer,
-                        stripe_subscription_id: session.subscription,
-                        plan: session.metadata?.plan || 'pro',
-                        updated_at: new Date().toISOString(),
-                    })
-                        .eq('auth_user_id', session.client_reference_id);
-                    if (error) {
-                        logger_js_1.logger.error({ error }, 'Failed to update user subscription');
-                        webhookResult = 'error';
+                        .select('id')
+                        .eq('auth_user_id', session.client_reference_id)
+                        .single();
+                    if (userProfile) {
+                        const { error } = await supabase_js_1.supabase
+                            .from('subscriptions')
+                            .upsert({
+                            user_id: userProfile.id,
+                            plan: (session.metadata?.plan || 'pro'),
+                            status: 'active',
+                            stripe_customer_id: session.customer,
+                            stripe_subscription_id: session.subscription,
+                        }, { onConflict: 'user_id' });
+                        if (error) {
+                            logger_js_1.logger.error({ error }, 'Failed to update user subscription');
+                            webhookResult = 'error';
+                        }
                     }
                 }
                 break;
@@ -191,13 +197,10 @@ exports.webhooksRouter.post('/stripe', async (req, res) => {
             case 'customer.subscription.updated': {
                 const subscription = event.data?.object;
                 if (subscription?.id) {
-                    const status = subscription.status === 'active' ? 'active' : 'inactive';
+                    const status = subscription.status === 'active' ? 'active' : 'canceled';
                     await supabase_js_1.supabase
-                        .from('users')
-                        .update({
-                        subscription_status: status,
-                        updated_at: new Date().toISOString(),
-                    })
+                        .from('subscriptions')
+                        .update({ status, updated_at: new Date().toISOString() })
                         .eq('stripe_subscription_id', subscription.id);
                 }
                 break;
@@ -206,12 +209,8 @@ exports.webhooksRouter.post('/stripe', async (req, res) => {
                 const subscription = event.data?.object;
                 if (subscription?.id) {
                     await supabase_js_1.supabase
-                        .from('users')
-                        .update({
-                        subscription_status: 'inactive',
-                        plan: 'free',
-                        updated_at: new Date().toISOString(),
-                    })
+                        .from('subscriptions')
+                        .update({ plan: 'free', status: 'canceled', updated_at: new Date().toISOString() })
                         .eq('stripe_subscription_id', subscription.id);
                 }
                 break;
@@ -220,11 +219,8 @@ exports.webhooksRouter.post('/stripe', async (req, res) => {
                 const invoice = event.data?.object;
                 if (invoice?.customer) {
                     await supabase_js_1.supabase
-                        .from('users')
-                        .update({
-                        subscription_status: 'past_due',
-                        updated_at: new Date().toISOString(),
-                    })
+                        .from('subscriptions')
+                        .update({ status: 'past_due', updated_at: new Date().toISOString() })
                         .eq('stripe_customer_id', invoice.customer);
                 }
                 break;

@@ -12,6 +12,14 @@ const rate_limit_js_1 = require("../lib/rate-limit.js");
 const context_js_1 = require("../lib/context.js");
 const rate_limit_js_2 = require("../middleware/rate-limit.js");
 exports.coachRouter = (0, express_1.Router)();
+async function resolveUserId(authUserId) {
+    const { data } = await supabase_js_1.supabase
+        .from('users')
+        .select('id')
+        .eq('auth_user_id', authUserId)
+        .maybeSingle();
+    return data?.id || null;
+}
 const generateNoteSchema = zod_1.z.object({
     noteType: zod_1.z.enum(['daily', 'weekly', 'milestone', 'ad_hoc']),
     milestone: zod_1.z.string().optional(),
@@ -20,9 +28,14 @@ const generateNoteSchema = zod_1.z.object({
 // POST /coach/generate — Generate a coach note
 exports.coachRouter.post('/generate', (0, rate_limit_js_2.userRateLimitMiddleware)('coach-generate'), async (req, res) => {
     try {
-        const userId = req.user?.id;
-        if (!userId) {
+        const authUserId = req.user?.id;
+        if (!authUserId) {
             res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } });
+            return;
+        }
+        const userId = req.internalUserId || await resolveUserId(authUserId);
+        if (!userId) {
+            res.status(404).json({ error: { code: 'NOT_FOUND', message: 'User profile not found' } });
             return;
         }
         const validation = generateNoteSchema.safeParse(req.body);
@@ -36,7 +49,7 @@ exports.coachRouter.post('/generate', (0, rate_limit_js_2.userRateLimitMiddlewar
             res.status(429).json({ error: { code: 'RATE_LIMITED', message: rateLimitResult.reason, nextAllowedAt: rateLimitResult.nextAllowedAt } });
             return;
         }
-        const context = await (0, context_js_1.buildAgentContext)(req.user.id);
+        const context = await (0, context_js_1.buildAgentContext)(authUserId);
         const agent = (0, index_js_1.getAgent)('coach');
         // Build the prompt using the prompts library
         const userPrompt = (0, prompts_js_1.getPromptForNoteType)({

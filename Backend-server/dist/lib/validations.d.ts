@@ -138,17 +138,17 @@ export declare const getOpportunitiesSchema: z.ZodObject<{
     page: z.ZodDefault<z.ZodOptional<z.ZodNumber>>;
     limit: z.ZodDefault<z.ZodOptional<z.ZodNumber>>;
 }, "strip", z.ZodTypeAny, {
-    page: number;
     limit: number;
+    page: number;
     type?: "hackathon" | "other" | "internship" | "job" | "scholarship" | "mentorship" | "research" | undefined;
     search?: string | undefined;
     company?: string | undefined;
 }, {
     type?: "hackathon" | "other" | "internship" | "job" | "scholarship" | "mentorship" | "research" | undefined;
+    limit?: number | undefined;
     search?: string | undefined;
     company?: string | undefined;
     page?: number | undefined;
-    limit?: number | undefined;
 }>;
 export declare const chatMessageSchema: z.ZodObject<{
     message: z.ZodString;

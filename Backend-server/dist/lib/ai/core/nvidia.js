@@ -12,19 +12,76 @@ const NVIDIA_BASE_URL = 'https://integrate.api.nvidia.com/v1';
 const NVIDIA_API_KEY = process.env.NVIDIA_API_KEY;
 const MAX_RETRIES = 3;
 const RETRY_BASE_MS = 1500;
-const API_TIMEOUT_MS = 45000; // 45s for API calls (was 30s — too tight for tool-calling models)
+const API_TIMEOUT_MS = 90000; // 90s for large models (397B+ params need more time)
 // ---- Model Fallback Chain ----
 // When primary model is unavailable (rate limited, overloaded), try fallbacks.
 // Ordered by capability: best → acceptable → emergency.
 const MODEL_FALLBACKS = {
+    // GPT OSS 120B — primary for non-chat AI features
+    'openai/gpt-oss-120b': [
+        'qwen/qwen3.5-397b-a17b',
+        'nvidia/llama-3.3-nemotron-super-49b-v1',
+        'meta/llama-3.3-70b-instruct',
+    ],
+    // Qwen models — large, high quality
+    'qwen/qwen3.5-397b-a17b': [
+        'openai/gpt-oss-120b',
+        'qwen/qwen3.5-122b-a10b',
+        'nvidia/llama-3.3-nemotron-super-49b-v1',
+        'meta/llama-3.3-70b-instruct',
+    ],
+    'qwen/qwen3-coder-480b-a35b-instruct': [
+        'qwen/qwen3.5-397b-a17b',
+        'nvidia/llama-3.1-nemotron-70b-instruct',
+        'meta/llama-3.3-70b-instruct',
+    ],
+    'qwen/qwen3.5-122b-a10b': [
+        'nvidia/llama-3.3-nemotron-super-49b-v1',
+        'meta/llama-3.3-70b-instruct',
+        'meta/llama-3.1-70b-instruct',
+    ],
+    // NVIDIA Nemotron models
     'nvidia/llama-3.3-nemotron-super-49b-v1': [
         'nvidia/llama-3.1-nemotron-70b-instruct',
+        'meta/llama-3.3-70b-instruct',
         'meta/llama-3.1-8b-instruct',
     ],
     'nvidia/llama-3.1-nemotron-70b-instruct': [
+        'meta/llama-3.3-70b-instruct',
         'meta/llama-3.1-8b-instruct',
     ],
-    'meta/llama-3.1-8b-instruct': [],
+    // Meta Llama models
+    'meta/llama-3.3-70b-instruct': [
+        'meta/llama-3.1-70b-instruct',
+        'meta/llama-3.1-8b-instruct',
+    ],
+    'meta/llama-3.1-70b-instruct': [
+        'meta/llama-3.1-8b-instruct',
+        'nvidia/llama-3.1-nemotron-nano-8b-v1',
+    ],
+    'meta/llama-3.1-8b-instruct': [
+        'nvidia/llama-3.1-nemotron-nano-8b-v1',
+        'meta/llama-3.2-3b-instruct',
+    ],
+    // DeepSeek models
+    'deepseek-ai/deepseek-v4-pro': [
+        'deepseek-ai/deepseek-v4-flash',
+        'qwen/qwen3.5-122b-a10b',
+        'meta/llama-3.3-70b-instruct',
+    ],
+    'deepseek-ai/deepseek-v4-flash': [
+        'qwen/qwen3.5-122b-a10b',
+        'meta/llama-3.3-70b-instruct',
+    ],
+    // Mistral models
+    'mistralai/mistral-large-3-675b-instruct-2512': [
+        'mistralai/mistral-medium-3.5-128b',
+        'meta/llama-3.3-70b-instruct',
+    ],
+    'mistralai/mistral-medium-3.5-128b': [
+        'mistralai/mistral-small-4-119b-2603',
+        'meta/llama-3.3-70b-instruct',
+    ],
 };
 // ---- Global token tracking (for observability) ----
 const tokenUsage = { prompt: 0, completion: 0, total: 0, requests: 0, errors: 0 };

@@ -328,7 +328,7 @@ aiRouter.post('/chat-stream', userRateLimitMiddleware('ai-chat-stream'), async (
       await orchestrator.runAgentStream(
         'chat',
         message,
-        { userId, authUserId, conversationHistory: context.conversationHistory as AgentMessage[], modelOverride: model || undefined },
+        { userId: authUserId, authUserId, conversationHistory: context.conversationHistory as AgentMessage[], modelOverride: model || undefined },
         (event, data) => sendEvent(event, data)
       );
 
@@ -337,9 +337,9 @@ aiRouter.post('/chat-stream', userRateLimitMiddleware('ai-chat-stream'), async (
     } else {
       // Non-streaming: use orchestrator with full tool calling
       const { createOrchestrator } = await import('../lib/ai/orchestrator/agent-orchestrator.js');
-      const orchestrator = createOrchestrator(userId);
+      const orchestrator = createOrchestrator(authUserId);
       const result = await orchestrator.runAgent('chat', message, {
-        userId,
+        userId: authUserId,
         authUserId,
         conversationHistory: context.conversationHistory as AgentMessage[]
       });

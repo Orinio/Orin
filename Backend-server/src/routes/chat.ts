@@ -1,16 +1,19 @@
 import { Router } from 'express';
 import { z } from 'zod';
+import { randomUUID } from 'crypto';
 import { supabase } from '../lib/supabase.js';
 import { logger } from '../lib/logger.js';
 
 export const chatRouter = Router();
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const saveConversationSchema = z.object({
   id: z.string().min(1),
   title: z.string().optional(),
   messages: z.array(z.any()).optional(),
   messageCount: z.number().optional(),
-  agentId: z.string().optional(),
+  agentId: z.string().optional().default('chat'),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -109,12 +112,14 @@ chatRouter.post('/', async (req, res) => {
 
     const { id, title, messages, messageCount, agentId, createdAt, updatedAt } = parsed.data;
 
+    const conversationId = UUID_RE.test(id) ? id : randomUUID();
+
     const { error } = await supabase
       .from('chat_conversations')
       .upsert({
-        id,
+        id: conversationId,
         user_id: userId,
-        agent_id: agentId || null,
+        agent_id: agentId,
         title: title || 'New conversation',
         messages: messages || [],
         message_count: messageCount || 0,

@@ -50,8 +50,29 @@ exports.Errors = {
     rateLimited(reason, retryAfterMs) {
         return new AppError('RATE_LIMITED', reason, 429, { retryAfterMs });
     },
+    tokenBudgetExceeded(plan, limit, retryAfterMs) {
+        return new AppError('TOKEN_BUDGET_EXCEEDED', `Daily token budget of ${limit.toLocaleString()} exceeded on ${plan.toUpperCase()} plan.`, 429, {
+            plan,
+            tokenBudget: { limit, remaining: 0 },
+            retryAfterMs,
+            retryAfterDisplay: '24 hours (resets daily)',
+        });
+    },
     globalRateLimited(retryAfterMs) {
         return new AppError('GLOBAL_RATE_LIMITED', `AI rate limit exceeded. Retry in ${Math.ceil(retryAfterMs / 1000)}s.`, 429, { retryAfterMs });
+    },
+    planRateLimited(plan, endpoint, used, limit, retryAfterMs, upgradeMessage) {
+        const waitMinutes = Math.ceil(retryAfterMs / 60000);
+        const waitDisplay = waitMinutes > 60
+            ? `${Math.ceil(waitMinutes / 60)} hour${Math.ceil(waitMinutes / 60) > 1 ? 's' : ''}`
+            : `${waitMinutes} minute${waitMinutes > 1 ? 's' : ''}`;
+        return new AppError('PLAN_RATE_LIMITED', `${plan.toUpperCase()} plan limit reached for ${endpoint}. Try again in ${waitDisplay}.`, 429, {
+            plan,
+            endpoint,
+            usage: { used, limit, remaining: Math.max(0, limit - used) },
+            retryAfterMs,
+            upgradeMessage,
+        });
     },
     conflict(message) {
         return new AppError('CONFLICT', message, 409);

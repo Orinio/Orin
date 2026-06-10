@@ -70,6 +70,7 @@ export interface AgentResult {
     totalTokens: number;
     model: string;
     durationMs: number;
+    visualSpecs?: Array<Record<string, any>>;
 }
 export interface AgentConfig {
     model?: string;

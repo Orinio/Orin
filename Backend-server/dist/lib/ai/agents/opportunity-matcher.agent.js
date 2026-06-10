@@ -7,7 +7,7 @@ exports.opportunityMatcherAgent = {
     name: 'Opportunity Matcher Agent',
     description: 'Matches developer skills to real job/internship/scholarship opportunities with scoring',
     role: 'opportunity_matcher',
-    model: models_js_1.MODELS.toolCalling.primary,
+    model: models_js_1.MODELS.ai.opportunityMatching,
     temperature: 0.3,
     maxTokens: 2000,
     maxIterations: 4,

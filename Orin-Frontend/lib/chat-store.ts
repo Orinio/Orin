@@ -154,7 +154,7 @@ export const chatStore = {
 
   newConversation(userId: string | null, agentId: string): ChatConversation {
     return {
-      id: `conv_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      id: crypto.randomUUID(),
       userId,
       agentId,
       title: 'New conversation',

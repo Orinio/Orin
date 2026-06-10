@@ -5,6 +5,14 @@ const express_1 = require("express");
 const supabase_js_1 = require("../lib/supabase.js");
 const logger_js_1 = require("../lib/logger.js");
 exports.integrationsRouter = (0, express_1.Router)();
+async function resolveUserId(authUserId) {
+    const { data } = await supabase_js_1.supabase
+        .from('users')
+        .select('id')
+        .eq('auth_user_id', authUserId)
+        .maybeSingle();
+    return data?.id || null;
+}
 const PROVIDERS = {
     github: {
         name: 'GitHub',
@@ -49,7 +57,12 @@ const PROVIDERS = {
 };
 exports.integrationsRouter.get('/', async (req, res) => {
     try {
-        const userId = req.user?.id;
+        const authUserId = req.user?.id;
+        const userId = req.internalUserId || await resolveUserId(authUserId);
+        if (!userId) {
+            res.status(404).json({ error: { code: 'NOT_FOUND', message: 'User profile not found' } });
+            return;
+        }
         const { data: connections } = await supabase_js_1.supabase
             .from('user_integrations')
             .select('*')
@@ -93,7 +106,12 @@ exports.integrationsRouter.get('/:provider/connect', async (req, res) => {
 });
 exports.integrationsRouter.delete('/:provider', async (req, res) => {
     try {
-        const userId = req.user?.id;
+        const authUserId = req.user?.id;
+        const userId = req.internalUserId || await resolveUserId(authUserId);
+        if (!userId) {
+            res.status(404).json({ error: { code: 'NOT_FOUND', message: 'User profile not found' } });
+            return;
+        }
         const { provider } = req.params;
         const { error } = await supabase_js_1.supabase
             .from('user_integrations')
@@ -113,7 +131,12 @@ exports.integrationsRouter.delete('/:provider', async (req, res) => {
 });
 exports.integrationsRouter.post('/:provider/import', async (req, res) => {
     try {
-        const userId = req.user?.id;
+        const authUserId = req.user?.id;
+        const userId = req.internalUserId || await resolveUserId(authUserId);
+        if (!userId) {
+            res.status(404).json({ error: { code: 'NOT_FOUND', message: 'User profile not found' } });
+            return;
+        }
         const { provider } = req.params;
         const { data: connection } = await supabase_js_1.supabase
             .from('user_integrations')

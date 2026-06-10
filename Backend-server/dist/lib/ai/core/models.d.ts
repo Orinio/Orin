@@ -13,6 +13,13 @@ export declare const MODELS: {
         coach: string;
         learning: string;
     };
+    ai: {
+        verification: string;
+        skillAnalysis: string;
+        learningPath: string;
+        portfolioScoring: string;
+        opportunityMatching: string;
+    };
     fast: {
         chat: string;
         quick: string;
@@ -48,6 +55,16 @@ export declare const MODELS: {
     };
 };
 export declare const MODEL_METADATA: {
+    'openai/gpt-oss-120b': {
+        name: string;
+        provider: string;
+        category: string;
+        speed: string;
+        quality: string;
+        toolCalling: boolean;
+        contextWindow: string;
+        description: string;
+    };
     'qwen/qwen3.5-397b-a17b': {
         name: string;
         provider: string;

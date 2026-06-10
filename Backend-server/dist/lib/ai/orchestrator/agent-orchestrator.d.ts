@@ -63,6 +63,7 @@ export declare class AgentOrchestrator {
     }>;
     runAgent(agentId: string, query: string, context?: {
         userId?: string;
+        authUserId?: string;
         conversationHistory?: AgentMessage[];
     }): Promise<AgentResult>;
     /**
@@ -75,7 +76,9 @@ export declare class AgentOrchestrator {
      */
     runAgentStream(agentId: string, query: string, context: {
         userId?: string;
+        authUserId?: string;
         conversationHistory?: AgentMessage[];
+        modelOverride?: string;
     }, onEvent: (event: string, data: any) => void): Promise<void>;
     runWorkflow(workflow: Workflow, _initialQuery: string, context?: {
         userId?: string;

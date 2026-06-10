@@ -27,7 +27,15 @@ exports.MODELS = {
     primary: {
         chat: 'qwen/qwen3.5-397b-a17b', // Best speed + tool calling
         coach: 'qwen/qwen3-coder-480b-a35b-instruct', // Best quality
-        learning: 'qwen/qwen3-coder-480b-a35b-instruct', // Detailed reasoning
+        learning: 'openai/gpt-oss-120b', // GPT OSS 120B - detailed reasoning
+    },
+    // Non-Chat AI Features (GPT OSS 120B as default)
+    ai: {
+        verification: 'openai/gpt-oss-120b', // Proof verification
+        skillAnalysis: 'openai/gpt-oss-120b', // Skill extraction & analysis
+        learningPath: 'openai/gpt-oss-120b', // Learning path generation
+        portfolioScoring: 'openai/gpt-oss-120b', // Portfolio scoring
+        opportunityMatching: 'openai/gpt-oss-120b', // Opportunity matching
     },
     // Fast Models (Speed Priority)
     fast: {
@@ -74,6 +82,16 @@ exports.MODELS = {
 // Model Metadata (for documentation and UI)
 // ============================================================
 exports.MODEL_METADATA = {
+    'openai/gpt-oss-120b': {
+        name: 'GPT OSS 120B',
+        provider: 'OpenAI',
+        category: 'Text Generation',
+        speed: 'medium',
+        quality: 'highest',
+        toolCalling: true,
+        contextWindow: '128K',
+        description: 'Open-source GPT model for high-quality reasoning, verification, and analysis'
+    },
     'qwen/qwen3.5-397b-a17b': {
         name: 'Qwen 3.5 397B',
         provider: 'Qwen',

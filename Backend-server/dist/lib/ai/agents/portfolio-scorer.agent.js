@@ -7,7 +7,7 @@ exports.portfolioScorerAgent = {
     name: 'Portfolio Scorer Agent',
     description: 'Scores a developer portfolio from 0-100 with detailed breakdown and improvement plan',
     role: 'portfolio_scorer',
-    model: models_js_1.MODELS.fast.chat,
+    model: models_js_1.MODELS.ai.portfolioScoring,
     temperature: 0.3,
     maxTokens: 1500,
     maxIterations: 3,

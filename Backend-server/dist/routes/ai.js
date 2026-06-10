@@ -31,6 +31,83 @@ async function getCachedOpportunities() {
     opportunityCache.expiresAt = now + OPPORTUNITY_CACHE_TTL_MS;
     return opportunityCache.data;
 }
+// GET /ai/usage — Return live usage/limits for the current user
+exports.aiRouter.get('/usage', async (req, res) => {
+    try {
+        const authUserId = req.user?.id;
+        if (!authUserId) {
+            res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'Authentication required' } });
+            return;
+        }
+        // Resolve internal user
+        const { data: userRow } = await supabase_js_1.supabase
+            .from('users')
+            .select('id')
+            .eq('auth_user_id', authUserId)
+            .maybeSingle();
+        const userId = userRow?.id;
+        if (!userId) {
+            res.status(404).json({ error: { code: 'NOT_FOUND', message: 'User profile not found' } });
+            return;
+        }
+        // Fetch subscription plan
+        let plan = 'free';
+        const { data: sub } = await supabase_js_1.supabase
+            .from('subscriptions')
+            .select('plan, status')
+            .eq('user_id', userId)
+            .in('status', ['active', 'trialing'])
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+        if (sub?.plan)
+            plan = sub.plan;
+        // Get usage for each endpoint
+        const now = new Date();
+        const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        const endpoints = ['ai-chat', 'ai-chat-stream', 'ai-verify', 'ai-skills', 'ai-match-opportunities', 'coach-notes-generate'];
+        const usage = {};
+        for (const endpoint of endpoints) {
+            const config = (0, rate_limit_js_1.getRateLimitConfigForPlan)(endpoint, plan);
+            const { data: logs } = await supabase_js_1.supabase
+                .from('ai_usage_log')
+                .select('created_at')
+                .eq('user_id', userId)
+                .eq('endpoint', endpoint)
+                .gte('created_at', twentyFourHoursAgo.toISOString());
+            const used = (logs || []).length;
+            const resetsAt = logs && logs.length > 0
+                ? new Date(new Date(logs[logs.length - 1].created_at).getTime() + 24 * 60 * 60 * 1000).toISOString()
+                : new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString();
+            usage[endpoint] = {
+                used,
+                limit: config.maxPerDay,
+                remaining: Math.max(0, config.maxPerDay - used),
+                resetsAt,
+            };
+        }
+        // Token budget
+        const budget = (0, rate_limit_js_2.checkTokenBudget)(authUserId, plan);
+        res.json({
+            success: true,
+            data: {
+                plan,
+                planName: plan === 'free' ? 'Free' : plan === 'pro' ? 'Pro' : 'Team',
+                endpoints,
+                usage,
+                tokenBudget: {
+                    used: budget.limit - budget.remaining,
+                    limit: budget.limit,
+                    remaining: budget.remaining,
+                },
+            },
+        });
+    }
+    catch (err) {
+        logger_js_1.logger.error({ err }, 'Usage endpoint error');
+        res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch usage' } });
+    }
+});
 /**
  * Graceful degradation: return a helpful fallback when AI is unavailable.
  * Uses deterministic logic based on user's existing data.
@@ -69,13 +146,14 @@ function getFallbackResponse(operation, context) {
 // POST /ai/verify — Verify a proof
 exports.aiRouter.post('/verify', (0, rate_limit_js_2.userRateLimitMiddleware)('ai-verify'), (0, validate_js_1.validate)(validations_js_1.verifyRequestSchema), async (req, res) => {
     try {
-        const userId = req.user?.id;
-        if (!userId) {
+        const authUserId = req.user?.id;
+        if (!authUserId) {
             res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } });
             return;
         }
+        const userId = req.internalUserId || authUserId;
         const { action, proofId, proofUrl, sourceType, proofData, text, username, url, query } = req.body;
-        const context = await (0, context_js_1.buildAgentContext)(req.user.id);
+        const context = await (0, context_js_1.buildAgentContext)(authUserId);
         const agent = (0, index_js_1.getAgent)('verification');
         let result;
         switch (action) {
@@ -169,13 +247,14 @@ exports.aiRouter.post('/verify', (0, rate_limit_js_2.userRateLimitMiddleware)('a
 // POST /ai/chat — Non-streaming chat
 exports.aiRouter.post('/chat', (0, rate_limit_js_2.userRateLimitMiddleware)('ai-chat'), (0, validate_js_1.validate)(validations_js_1.chatMessageSchema), async (req, res) => {
     try {
-        const userId = req.user?.id;
-        if (!userId) {
+        const authUserId = req.user?.id;
+        if (!authUserId) {
             res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } });
             return;
         }
+        const userId = req.internalUserId || authUserId;
         const { message, history } = req.body;
-        const context = await (0, context_js_1.buildAgentContext)(req.user.id);
+        const context = await (0, context_js_1.buildAgentContext)(authUserId);
         context.conversationHistory = (history || []).slice(-6).map((m) => ({ role: m.role, content: m.content }));
         // Graceful degradation: return fallback if AI is unavailable
         if (!(0, nvidia_js_1.isNvidiaConfigured)()) {
@@ -195,18 +274,29 @@ exports.aiRouter.post('/chat', (0, rate_limit_js_2.userRateLimitMiddleware)('ai-
 });
 // POST /ai/chat-stream — Streaming chat with full agentic behavior
 exports.aiRouter.post('/chat-stream', (0, rate_limit_js_2.userRateLimitMiddleware)('ai-chat-stream'), async (req, res) => {
+    let headersSent = false;
     try {
-        const userId = req.user?.id;
-        if (!userId) {
+        const authUserId = req.user?.id;
+        if (!authUserId) {
             res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } });
             return;
         }
-        const { message, history } = req.body;
+        const userId = req.internalUserId || authUserId;
+        // Support both formats: { message, history } (workspace) and { messages } (legacy)
+        const bodyMessage = req.body.message;
+        const bodyMessages = req.body.messages;
+        const message = bodyMessage || (bodyMessages?.length
+            ? [...bodyMessages].reverse().find((m) => m.role === 'user')?.content || ''
+            : '');
+        const history = req.body.history || (bodyMessages?.length
+            ? bodyMessages.slice(0, -1).map((m) => ({ role: m.role, content: m.content }))
+            : []);
+        const model = req.body.model;
         if (!message) {
             res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'Message is required' } });
             return;
         }
-        const context = await (0, context_js_1.buildAgentContext)(req.user.id);
+        const context = await (0, context_js_1.buildAgentContext)(authUserId);
         context.conversationHistory = (history || []).slice(-6).map((m) => ({ role: m.role, content: m.content }));
         const acceptHeader = req.headers.accept;
         const wantsStreaming = acceptHeader?.includes('text/event-stream');
@@ -215,23 +305,28 @@ exports.aiRouter.post('/chat-stream', (0, rate_limit_js_2.userRateLimitMiddlewar
             res.setHeader('Cache-Control', 'no-cache');
             res.setHeader('Connection', 'keep-alive');
             res.setHeader('X-Accel-Buffering', 'no');
+            headersSent = true;
             const sendEvent = (event, data) => {
-                res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+                try {
+                    res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+                }
+                catch { }
             };
             // Use orchestrator with memory, tool calling, and full user context
             const { createOrchestrator } = await import('../lib/ai/orchestrator/agent-orchestrator.js');
-            const orchestrator = createOrchestrator(userId);
+            const orchestrator = createOrchestrator(authUserId);
             sendEvent('start', { agentId: 'chat', query: message });
-            await orchestrator.runAgentStream('chat', message, { userId, conversationHistory: context.conversationHistory }, (event, data) => sendEvent(event, data));
+            await orchestrator.runAgentStream('chat', message, { userId: authUserId, authUserId, conversationHistory: context.conversationHistory, modelOverride: model || undefined }, (event, data) => sendEvent(event, data));
             res.write('event: end\ndata: {}\n\n');
             res.end();
         }
         else {
             // Non-streaming: use orchestrator with full tool calling
             const { createOrchestrator } = await import('../lib/ai/orchestrator/agent-orchestrator.js');
-            const orchestrator = createOrchestrator(userId);
+            const orchestrator = createOrchestrator(authUserId);
             const result = await orchestrator.runAgent('chat', message, {
-                userId,
+                userId: authUserId,
+                authUserId,
                 conversationHistory: context.conversationHistory
             });
             await (0, rate_limit_js_1.logAIUsage)(supabase_js_1.supabase, userId, 'ai-chat', result.tokensUsed);
@@ -249,18 +344,30 @@ exports.aiRouter.post('/chat-stream', (0, rate_limit_js_2.userRateLimitMiddlewar
     }
     catch (err) {
         logger_js_1.logger.error({ err }, 'AI chat-stream error');
-        res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } });
+        if (headersSent) {
+            try {
+                res.write(`event: error\ndata: ${JSON.stringify({ message: 'Internal server error' })}\n\n`);
+            }
+            catch { }
+            try {
+                res.end();
+            }
+            catch { }
+        }
+        else {
+            res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } });
+        }
     }
 });
 // GET /ai/skills — Skill analysis
 exports.aiRouter.get('/skills', (0, rate_limit_js_2.userRateLimitMiddleware)('ai-skills'), async (req, res) => {
     try {
-        const userId = req.user?.id;
-        if (!userId) {
+        const authUserId = req.user?.id;
+        if (!authUserId) {
             res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } });
             return;
         }
-        const context = await (0, context_js_1.buildAgentContext)(req.user.id);
+        const context = await (0, context_js_1.buildAgentContext)(authUserId);
         const { searchParams } = new URL(req.url, `http://localhost`);
         const targetRole = searchParams.get('targetRole') || undefined;
         const skillAnalysis = (0, skills_js_1.analyzeSkills)(context.proofs, targetRole);
@@ -289,19 +396,19 @@ exports.aiRouter.get('/skills', (0, rate_limit_js_2.userRateLimitMiddleware)('ai
 // POST /ai/match — Match opportunities
 exports.aiRouter.post('/match', (0, rate_limit_js_2.userRateLimitMiddleware)('ai-match'), async (req, res) => {
     try {
-        const userId = req.user?.id;
-        if (!userId) {
+        const authUserId = req.user?.id;
+        if (!authUserId) {
             res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } });
             return;
         }
         // Check response cache (deterministic: same skills + same opportunities = same result)
-        const cacheKey = `match:${userId}`;
+        const cacheKey = `match:${authUserId}`;
         const cached = (0, rate_limit_js_2.getCached)(cacheKey);
         if (cached) {
             res.json(cached);
             return;
         }
-        const context = await (0, context_js_1.buildAgentContext)(req.user.id);
+        const context = await (0, context_js_1.buildAgentContext)(authUserId);
         const { limit = 10 } = req.body || {};
         const opportunities = await getCachedOpportunities();
         const userSkillsSet = new Set((0, skills_js_1.extractSkillsFromProofs)(context.proofs).map(s => s.toLowerCase()));
@@ -323,7 +430,7 @@ exports.aiRouter.post('/match', (0, rate_limit_js_2.userRateLimitMiddleware)('ai
         }).sort((a, b) => b.matchScore - a.matchScore).slice(0, limit);
         const response = { success: true, matches, skillAnalysis: { topSkills: context.skillAnalysis?.topSkills.slice(0, 10), uniqueSkills: context.skillAnalysis?.uniqueSkills } };
         (0, rate_limit_js_2.setCache)(cacheKey, response, 120_000); // Cache for 2 minutes
-        await (0, rate_limit_js_1.logAIUsage)(supabase_js_1.supabase, userId, 'ai-match-opportunities', 0);
+        await (0, rate_limit_js_1.logAIUsage)(supabase_js_1.supabase, req.internalUserId || authUserId, 'ai-match-opportunities', 0);
         res.json(response);
     }
     catch (err) {
@@ -334,12 +441,13 @@ exports.aiRouter.post('/match', (0, rate_limit_js_2.userRateLimitMiddleware)('ai
 // POST /ai/learning-path — Generate learning path
 exports.aiRouter.post('/learning-path', (0, rate_limit_js_2.userRateLimitMiddleware)('ai-learning-path'), async (req, res) => {
     try {
-        const userId = req.user?.id;
-        if (!userId) {
+        const authUserId = req.user?.id;
+        if (!authUserId) {
             res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } });
             return;
         }
-        const context = await (0, context_js_1.buildAgentContext)(req.user.id);
+        const userId = req.internalUserId || authUserId;
+        const context = await (0, context_js_1.buildAgentContext)(authUserId);
         const { targetRole, timeframe = '3months' } = req.body;
         if (!targetRole || typeof targetRole !== 'string') {
             res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'targetRole is required' } });
@@ -366,12 +474,13 @@ exports.aiRouter.post('/learning-path', (0, rate_limit_js_2.userRateLimitMiddlew
 // POST /ai/score — Score portfolio
 exports.aiRouter.post('/score', (0, rate_limit_js_2.userRateLimitMiddleware)('ai-score'), async (req, res) => {
     try {
-        const userId = req.user?.id;
-        if (!userId) {
+        const authUserId = req.user?.id;
+        if (!authUserId) {
             res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } });
             return;
         }
-        const context = await (0, context_js_1.buildAgentContext)(req.user.id);
+        const userId = req.internalUserId || authUserId;
+        const context = await (0, context_js_1.buildAgentContext)(authUserId);
         const agent = (0, index_js_1.getAgent)('portfolio-scorer');
         const result = await (0, agent_runner_js_1.runAgent)(agent, `Score this portfolio: ${context.proofs.length} proofs, ${context.proofs.filter((p) => p.verification_status === 'verified').length} verified, skills: ${(0, skills_js_1.extractSkillsFromProofs)(context.proofs).slice(0, 10).join(', ')}`, context);
         await (0, rate_limit_js_1.logAIUsage)(supabase_js_1.supabase, userId, 'ai-skills', result.totalTokens);
@@ -385,8 +494,8 @@ exports.aiRouter.post('/score', (0, rate_limit_js_2.userRateLimitMiddleware)('ai
 // POST /ai/safety — Check safety
 exports.aiRouter.post('/safety', (0, rate_limit_js_2.userRateLimitMiddleware)('ai-safety'), async (req, res) => {
     try {
-        const userId = req.user?.id;
-        if (!userId) {
+        const authUserId = req.user?.id;
+        if (!authUserId) {
             res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } });
             return;
         }
@@ -395,7 +504,7 @@ exports.aiRouter.post('/safety', (0, rate_limit_js_2.userRateLimitMiddleware)('a
             res.status(400).json({ error: { code: 'MISSING_FIELDS', message: 'Either url or email is required' } });
             return;
         }
-        const context = await (0, context_js_1.buildAgentContext)(userId);
+        const context = await (0, context_js_1.buildAgentContext)(authUserId);
         const agent = (0, index_js_1.getAgent)('safety-guard');
         const query = url ? `Check safety of URL: ${url}` : `Validate email: ${email}`;
         const result = await (0, agent_runner_js_1.runAgent)(agent, query, context);

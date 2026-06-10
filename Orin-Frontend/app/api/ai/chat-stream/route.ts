@@ -108,6 +108,7 @@ export async function POST(req: NextRequest) {
   const headers: Record<string, string> = {
     'Authorization': authHeader,
     'Content-Type': 'application/json',
+    'Accept': 'text/event-stream',
   };
 
   try {

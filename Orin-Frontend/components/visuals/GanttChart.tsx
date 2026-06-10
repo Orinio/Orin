@@ -18,7 +18,7 @@ const COLORS = [
   'rgba(236, 72, 153, 0.8)',
 ];
 
-export function GanttChart({ data, title, subtitle }: GanttChartProps) {
+export function GanttChart({ data, title, subtitle, size = 'medium' }: GanttChartProps) {
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
 
   const allDates = data.flatMap(d => [new Date(d.start).getTime(), new Date(d.end).getTime()]);

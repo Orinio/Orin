@@ -248,9 +248,9 @@ class AgentOrchestrator {
                 { role: 'assistant', content: finalAnswer }
             ]);
         }
-        // Extract visual specs from render_visual tool calls
+        // Extract visual specs from tool calls that produce them
         const visualSpecs = toolCalls
-            .filter(tc => tc.tool === 'render_visual' && tc.result.success && tc.result.data?.visualSpec)
+            .filter(tc => tc.result.success && tc.result.data?.visualSpec)
             .map(tc => tc.result.data.visualSpec);
         return {
             agentId,
@@ -430,8 +430,8 @@ class AgentOrchestrator {
                             durationMs: toolDurationMs,
                             step: toolCalls.length,
                         });
-                        // Emit visual_spec event when render_visual tool produces a spec
-                        if (tool.name === 'render_visual' && result.success && result.data?.visualSpec) {
+                        // Emit visual_spec event when tools produce a spec
+                        if (result.success && result.data?.visualSpec) {
                             onEvent('visual_spec', { spec: result.data.visualSpec });
                         }
                         // Feed tool result back to the model as a tool message

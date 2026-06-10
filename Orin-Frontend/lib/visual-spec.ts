@@ -242,7 +242,7 @@ export const dashboardWidgetSchema = z.object({
 
 export const visualSpecSchema = z.object({
   id: z.string(),
-  kind: z.enum(['bar', 'line', 'area', 'pie', 'scatter', 'flowchart', 'timeline', 'cards', 'dashboard', 'explainer']),
+  kind: z.enum(['bar', 'line', 'area', 'pie', 'scatter', 'flowchart', 'timeline', 'cards', 'dashboard', 'explainer', 'html', 'mermaid', 'heatmap', 'radar', 'gantt', 'network']),
   title: z.string().min(1).max(200),
   subtitle: z.string().max(300).optional(),
   summary: z.string().max(500).optional(),
@@ -254,6 +254,33 @@ export const visualSpecSchema = z.object({
   entries: z.array(timelineEntrySchema).optional(),
   cards: z.array(cardDataSchema).optional(),
   widgets: z.array(dashboardWidgetSchema).optional(),
+
+  html: z.string().optional(),
+  mermaidCode: z.string().optional(),
+  heatmap: z.object({
+    rows: z.array(z.string()),
+    columns: z.array(z.string()),
+    values: z.array(z.array(z.number())),
+    colorScale: z.array(z.string()).optional(),
+  }).optional(),
+  radar: z.array(z.object({
+    axis: z.string(),
+    value: z.number(),
+    fullMark: z.number().optional(),
+  })).optional(),
+  gantt: z.array(z.object({
+    id: z.string(),
+    name: z.string(),
+    start: z.string(),
+    end: z.string(),
+    progress: z.number().optional(),
+    dependencies: z.array(z.string()).optional(),
+    group: z.string().optional(),
+  })).optional(),
+  network: z.object({
+    nodes: z.array(z.object({ id: z.string(), label: z.string(), group: z.string().optional() })),
+    links: z.array(z.object({ source: z.string(), target: z.string(), label: z.string().optional() })),
+  }).optional(),
 
   axes: z.object({
     x: z.object({ label: z.string().optional(), format: z.string().optional() }).optional(),

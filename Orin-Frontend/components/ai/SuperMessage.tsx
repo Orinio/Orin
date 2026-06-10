@@ -228,10 +228,11 @@ function LiveActivityFeed({ thinking, steps, content, agent }: {
   );
 }
 
-export default function SuperMessage({ message, onRate, onRetry }: {
+export default function SuperMessage({ message, onRate, onRetry, onFollowUp }: {
   message: SuperMessageData;
   onRate?: (messageId: string, rating: 'positive' | 'negative' | 'flagged', feedback?: string) => void;
   onRetry?: (messageId: string) => void;
+  onFollowUp?: (content: string) => void;
 }) {
   const [thinkingOpen, setThinkingOpen] = useState(false);
   const [artifactsOpen, setArtifactsOpen] = useState<Record<string, boolean>>({});
@@ -433,7 +434,7 @@ export default function SuperMessage({ message, onRate, onRetry }: {
                 )}
 
                 {/* Suggested Follow-ups */}
-                {!isStreaming && message.followUps && message.followUps.length > 0 && (
+                {!isStreaming && message.followUps && message.followUps.length > 0 && onFollowUp && (
                   <div className="mt-4">
                     <div className="text-[10px] font-medium uppercase tracking-wider mb-2" style={{ color: 'var(--color-text-tertiary)' }}>
                       Suggested
@@ -442,15 +443,7 @@ export default function SuperMessage({ message, onRate, onRetry }: {
                       {message.followUps.map((suggestion, i) => (
                         <button
                           key={i}
-                          onClick={() => {
-                            // Find the chat input and set the suggestion
-                            const input = document.querySelector('[data-chat-input]') as HTMLTextAreaElement;
-                            if (input) {
-                              input.value = suggestion;
-                              input.dispatchEvent(new Event('input', { bubbles: true }));
-                              input.focus();
-                            }
-                          }}
+                          onClick={() => onFollowUp(suggestion)}
                           className="px-3 py-1.5 rounded-full text-[11px] font-medium transition-all hover:scale-105"
                           style={{
                             backgroundColor: 'rgba(59, 130, 246, 0.1)',

@@ -613,7 +613,7 @@ export default function SuperAgentChat() {
             ) : (
               <div className="py-4 max-w-4xl mx-auto w-full">
                 {messages.map((msg) => (
-                  <SuperMessage key={msg.id} message={msg} onRate={handleRate} onRetry={handleRetry} />
+                  <SuperMessage key={msg.id} message={msg} onRate={handleRate} onRetry={handleRetry} onFollowUp={handleSend} />
                 ))}
 
                 {/* Live reasoning card during streaming */}

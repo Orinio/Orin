@@ -415,7 +415,15 @@ registerTool({
       'Tools': ['git', 'github', 'vs code', 'figma', 'postman', 'jira', 'notion', 'webpack', 'vite', 'npm', 'yarn'],
       'Soft Skills': ['leadership', 'communication', 'teamwork', 'problem solving', 'project management', 'agile', 'scrum'],
       'Mobile': ['react native', 'flutter', 'swift', 'kotlin', 'ios', 'android'],
-      'Blockchain': ['ethereum', 'solidity', 'web3', 'crypto', 'blockchain']
+      'Blockchain': ['ethereum', 'solidity', 'web3', 'crypto', 'blockchain'],
+      'Medical & Healthcare': ['patient care', 'emr', 'ehr', 'clinical research', 'diagnosis', 'treatment planning', 'medical writing', 'hipaa', 'nursing', 'pharmacology'],
+      'Education': ['curriculum design', 'lms', 'student assessment', 'lecturing', 'mentoring', 'educational tech', 'grading', 'classroom management', 'lesson planning'],
+      'Legal': ['legal research', 'contract drafting', 'litigation', 'legal writing', 'case management', 'westlaw', 'client counseling', 'compliance', 'arbitration', 'mediation'],
+      'Business & Marketing': ['seo', 'google analytics', 'content strategy', 'social media', 'email marketing', 'copywriting', 'a/b testing', 'ads manager', 'market research', 'brand management'],
+      'Creative & Design': ['copywriting', 'content writing', 'editing', 'wordpress', 'storytelling', 'photography', 'video editing', 'animation', 'illustration', 'music production', 'graphic design'],
+      'Engineering': ['cad', 'autocad', 'solidworks', 'matlab', 'quality control', 'technical drawing', 'lean manufacturing', 'six sigma', 'process improvement'],
+      'Finance': ['financial modeling', 'excel', 'quickbooks', 'accounting', 'budgeting', 'forecasting', 'tax preparation', 'audit', 'financial analysis', 'investing'],
+      'HR': ['recruiting', 'talent acquisition', 'employee relations', 'compensation', 'benefits', 'hris', 'onboarding', 'training', 'performance management', 'labor law'],
     };
 
     const found: Record<string, string[]> = {};

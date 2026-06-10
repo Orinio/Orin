@@ -122,6 +122,47 @@ export function getSkillsByCategory(
       'leadership', 'communication', 'teamwork', 'problem solving',
       'project management', 'agile', 'scrum', 'presentation',
     ],
+    'Medical & Healthcare': [
+      'patient care', 'emr', 'ehr', 'clinical research', 'diagnosis',
+      'treatment planning', 'medical writing', 'hipaa', 'patient education',
+      'nursing', 'pharmacology', 'surgery', 'radiology', 'pathology',
+    ],
+    'Education': [
+      'curriculum design', 'lms', 'student assessment', 'lecturing',
+      'mentoring', 'educational tech', 'grading', 'classroom management',
+      'lesson planning', 'special education', 'e-learning', 'tutoring',
+    ],
+    'Legal': [
+      'legal research', 'contract drafting', 'litigation', 'legal writing',
+      'case management', 'westlaw', 'client counseling', 'compliance',
+      'due diligence', 'arbitration', 'mediation', 'regulatory',
+    ],
+    'Business & Marketing': [
+      'seo', 'google analytics', 'content strategy', 'social media',
+      'email marketing', 'copywriting', 'a/b testing', 'ads manager',
+      'market research', 'brand management', 'sales', 'crm',
+    ],
+    'Creative & Design': [
+      'copywriting', 'content writing', 'seo writing', 'editing',
+      'research', 'wordpress', 'grammarly', 'storytelling',
+      'photography', 'video editing', 'animation', 'illustration',
+      'music production', 'audio engineering', 'graphic design',
+    ],
+    'Engineering (Non-tech)': [
+      'cad', 'autocad', 'solidworks', 'matlab', 'project management',
+      'quality control', 'technical drawing', 'specifications',
+      'lean manufacturing', 'six sigma', 'process improvement',
+    ],
+    'Finance & Accounting': [
+      'financial modeling', 'excel', 'quickbooks', 'accounting',
+      'budgeting', 'forecasting', 'tax preparation', 'audit',
+      'financial analysis', 'investing', 'risk management',
+    ],
+    'Human Resources': [
+      'recruiting', 'talent acquisition', 'employee relations',
+      'compensation', 'benefits', 'hris', 'onboarding', 'training',
+      'performance management', 'compliance', 'labor law',
+    ],
   };
 
   const allSkills = extractSkillsFromProofs(proofs);
@@ -170,6 +211,66 @@ export function identifySkillGaps(
       critical: ['docker', 'kubernetes', 'linux', 'ci/cd'],
       important: ['aws', 'terraform', 'ansible', 'github actions'],
       nice_to_have: ['jenkins', 'nginx', 'monitoring', 'logging'],
+    },
+    'designer': {
+      critical: ['figma', 'ui design', 'ux research', 'prototyping'],
+      important: ['photoshop', 'illustrator', 'sketch', 'adobe xd'],
+      nice_to_have: ['css', 'html', 'motion design', 'accessibility'],
+    },
+    'product manager': {
+      critical: ['product strategy', 'user research', 'analytics', 'roadmapping'],
+      important: ['sql', 'jira', 'a/b testing', 'agile'],
+      nice_to_have: ['figma', 'sql', 'wireframing', 'competitive analysis'],
+    },
+    'doctor': {
+      critical: ['patient care', 'diagnosis', 'treatment planning', 'medical knowledge'],
+      important: ['emr', 'clinical research', 'patient education', 'hipaa'],
+      nice_to_have: ['medical writing', 'research', 'telemedicine', 'quality improvement'],
+    },
+    'nurse': {
+      critical: ['patient care', 'medication administration', 'assessment', 'documentation'],
+      important: ['emr', 'patient education', 'care planning', 'triage'],
+      nice_to_have: ['wound care', 'iv therapy', 'bcls', 'charge nurse'],
+    },
+    'teacher': {
+      critical: ['curriculum design', 'student assessment', 'lecturing', 'classroom management'],
+      important: ['mentoring', 'lms', 'educational tech', 'grading'],
+      nice_to_have: ['lesson planning', 'special education', 'e-learning', 'tutoring'],
+    },
+    'professor': {
+      critical: ['research', 'lecturing', 'publication', 'mentoring'],
+      important: ['curriculum design', 'grant writing', 'academic writing', 'student assessment'],
+      nice_to_have: ['conference presentations', 'peer review', 'lab management', 'phd supervision'],
+    },
+    'lawyer': {
+      critical: ['legal research', 'contract drafting', 'litigation', 'legal writing'],
+      important: ['case management', 'client counseling', 'compliance', 'westlaw'],
+      nice_to_have: ['arbitration', 'mediation', 'regulatory', 'due diligence'],
+    },
+    'marketer': {
+      critical: ['seo', 'content strategy', 'social media', 'analytics'],
+      important: ['email marketing', 'copywriting', 'a/b testing', 'ads manager'],
+      nice_to_have: ['google analytics', 'market research', 'brand management', 'crm'],
+    },
+    'content creator': {
+      critical: ['copywriting', 'storytelling', 'content strategy', 'social media'],
+      important: ['seo writing', 'editing', 'research', 'wordpress'],
+      nice_to_have: ['video editing', 'photography', 'podcast', 'community management'],
+    },
+    'consultant': {
+      critical: ['strategy', 'data analysis', 'client management', 'presentations'],
+      important: ['excel', 'powerpoint', 'financial modeling', 'project management'],
+      nice_to_have: ['sql', 'tableau', 'industry expertise', 'change management'],
+    },
+    'hr specialist': {
+      critical: ['recruiting', 'employee relations', 'compensation', 'compliance'],
+      important: ['hris', 'onboarding', 'training', 'performance management'],
+      nice_to_have: ['talent acquisition', 'benefits', 'labor law', 'diversity'],
+    },
+    'financial analyst': {
+      critical: ['financial modeling', 'excel', 'accounting', 'analysis'],
+      important: ['budgeting', 'forecasting', 'sql', 'tableau'],
+      nice_to_have: ['quickbooks', 'tax', 'investing', 'risk management'],
     },
   };
 

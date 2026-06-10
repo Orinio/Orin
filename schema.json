@@ -4721,5 +4721,485 @@
                 "policy_name": "users_insert_self"
             }
         ]
+    },
+    {
+        "table": "follows",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "id",
+                "default": "gen_random_uuid()",
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "follower_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "following_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "created_at",
+                "default": "now()",
+                "nullable": "NO"
+            }
+        ],
+        "indexes": [
+            {
+                "definition": "CREATE UNIQUE INDEX follows_pkey ON public.follows USING btree (id)",
+                "index_name": "follows_pkey"
+            },
+            {
+                "definition": "CREATE UNIQUE INDEX follows_follower_id_following_id_key ON public.follows USING btree (follower_id, following_id)",
+                "index_name": "follows_follower_id_following_id_key"
+            },
+            {
+                "definition": "CREATE INDEX idx_follows_follower ON public.follows USING btree (follower_id)",
+                "index_name": "idx_follows_follower"
+            },
+            {
+                "definition": "CREATE INDEX idx_follows_following ON public.follows USING btree (following_id)",
+                "index_name": "idx_follows_following"
+            }
+        ],
+        "policies": [
+            {
+                "qual": null,
+                "roles": ["public"],
+                "command": "SELECT",
+                "with_check": null,
+                "policy_name": "follows_select_public"
+            },
+            {
+                "qual": null,
+                "roles": ["public"],
+                "command": "INSERT",
+                "with_check": "(auth.uid() = (SELECT auth_user_id FROM users WHERE id = follower_id))",
+                "policy_name": "follows_insert_own"
+            },
+            {
+                "qual": "(auth.uid() = (SELECT auth_user_id FROM users WHERE id = follower_id))",
+                "roles": ["public"],
+                "command": "DELETE",
+                "with_check": null,
+                "policy_name": "follows_delete_own"
+            },
+            {
+                "qual": "is_admin_or_mod()",
+                "roles": ["public"],
+                "command": "ALL",
+                "with_check": "is_admin_or_mod()",
+                "policy_name": "follows_admin_all"
+            }
+        ]
+    },
+    {
+        "table": "likes",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "id",
+                "default": "gen_random_uuid()",
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "user_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "proof_card_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "created_at",
+                "default": "now()",
+                "nullable": "NO"
+            }
+        ],
+        "indexes": [
+            {
+                "definition": "CREATE UNIQUE INDEX likes_pkey ON public.likes USING btree (id)",
+                "index_name": "likes_pkey"
+            },
+            {
+                "definition": "CREATE UNIQUE INDEX likes_user_id_proof_card_id_key ON public.likes USING btree (user_id, proof_card_id)",
+                "index_name": "likes_user_id_proof_card_id_key"
+            },
+            {
+                "definition": "CREATE INDEX idx_likes_user ON public.likes USING btree (user_id)",
+                "index_name": "idx_likes_user"
+            },
+            {
+                "definition": "CREATE INDEX idx_likes_proof ON public.likes USING btree (proof_card_id)",
+                "index_name": "idx_likes_proof"
+            }
+        ],
+        "policies": [
+            {
+                "qual": null,
+                "roles": ["public"],
+                "command": "SELECT",
+                "with_check": null,
+                "policy_name": "likes_select_public"
+            },
+            {
+                "qual": null,
+                "roles": ["public"],
+                "command": "INSERT",
+                "with_check": "(auth.uid() = (SELECT auth_user_id FROM users WHERE id = user_id))",
+                "policy_name": "likes_insert_own"
+            },
+            {
+                "qual": "(auth.uid() = (SELECT auth_user_id FROM users WHERE id = user_id))",
+                "roles": ["public"],
+                "command": "DELETE",
+                "with_check": null,
+                "policy_name": "likes_delete_own"
+            },
+            {
+                "qual": "is_admin_or_mod()",
+                "roles": ["public"],
+                "command": "ALL",
+                "with_check": "is_admin_or_mod()",
+                "policy_name": "likes_admin_all"
+            }
+        ]
+    },
+    {
+        "table": "comments",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "id",
+                "default": "gen_random_uuid()",
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "user_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "proof_card_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "text",
+                "column": "content",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "parent_id",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "created_at",
+                "default": "now()",
+                "nullable": "NO"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "updated_at",
+                "default": "now()",
+                "nullable": "NO"
+            }
+        ],
+        "indexes": [
+            {
+                "definition": "CREATE UNIQUE INDEX comments_pkey ON public.comments USING btree (id)",
+                "index_name": "comments_pkey"
+            },
+            {
+                "definition": "CREATE INDEX idx_comments_proof ON public.comments USING btree (proof_card_id)",
+                "index_name": "idx_comments_proof"
+            },
+            {
+                "definition": "CREATE INDEX idx_comments_user ON public.comments USING btree (user_id)",
+                "index_name": "idx_comments_user"
+            },
+            {
+                "definition": "CREATE INDEX idx_comments_parent ON public.comments USING btree (parent_id) WHERE (parent_id IS NOT NULL)",
+                "index_name": "idx_comments_parent"
+            }
+        ],
+        "policies": [
+            {
+                "qual": null,
+                "roles": ["public"],
+                "command": "SELECT",
+                "with_check": null,
+                "policy_name": "comments_select_public"
+            },
+            {
+                "qual": null,
+                "roles": ["public"],
+                "command": "INSERT",
+                "with_check": "(auth.uid() = (SELECT auth_user_id FROM users WHERE id = user_id))",
+                "policy_name": "comments_insert_own"
+            },
+            {
+                "qual": "(auth.uid() = (SELECT auth_user_id FROM users WHERE id = user_id))",
+                "roles": ["public"],
+                "command": "UPDATE",
+                "with_check": "(auth.uid() = (SELECT auth_user_id FROM users WHERE id = user_id))",
+                "policy_name": "comments_update_own"
+            },
+            {
+                "qual": "(auth.uid() = (SELECT auth_user_id FROM users WHERE id = user_id) OR auth.uid() = (SELECT u.auth_user_id FROM users u JOIN proof_cards pc ON pc.user_id = u.id WHERE pc.id = proof_card_id))",
+                "roles": ["public"],
+                "command": "DELETE",
+                "with_check": null,
+                "policy_name": "comments_delete_own"
+            },
+            {
+                "qual": "is_admin_or_mod()",
+                "roles": ["public"],
+                "command": "ALL",
+                "with_check": "is_admin_or_mod()",
+                "policy_name": "comments_admin_all"
+            }
+        ]
+    },
+    {
+        "table": "conversations",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "id",
+                "default": "gen_random_uuid()",
+                "nullable": "NO"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "created_at",
+                "default": "now()",
+                "nullable": "NO"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "updated_at",
+                "default": "now()",
+                "nullable": "NO"
+            }
+        ],
+        "indexes": [
+            {
+                "definition": "CREATE UNIQUE INDEX conversations_pkey ON public.conversations USING btree (id)",
+                "index_name": "conversations_pkey"
+            }
+        ],
+        "policies": [
+            {
+                "qual": "EXISTS (SELECT 1 FROM conversation_participants WHERE conversation_id = id AND user_id = (SELECT id FROM users WHERE auth_user_id = auth.uid()))",
+                "roles": ["public"],
+                "command": "SELECT",
+                "with_check": null,
+                "policy_name": "conversations_select_own"
+            },
+            {
+                "qual": "(auth.uid() IS NOT NULL)",
+                "roles": ["public"],
+                "command": "INSERT",
+                "with_check": "(auth.uid() IS NOT NULL)",
+                "policy_name": "conversations_insert_auth"
+            },
+            {
+                "qual": "is_admin_or_mod()",
+                "roles": ["public"],
+                "command": "ALL",
+                "with_check": "is_admin_or_mod()",
+                "policy_name": "conversations_admin_all"
+            }
+        ]
+    },
+    {
+        "table": "conversation_participants",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "id",
+                "default": "gen_random_uuid()",
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "conversation_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "user_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "joined_at",
+                "default": "now()",
+                "nullable": "NO"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "last_read_at",
+                "default": null,
+                "nullable": "YES"
+            }
+        ],
+        "indexes": [
+            {
+                "definition": "CREATE UNIQUE INDEX conversation_participants_pkey ON public.conversation_participants USING btree (id)",
+                "index_name": "conversation_participants_pkey"
+            },
+            {
+                "definition": "CREATE UNIQUE INDEX conversation_participants_conversation_id_user_id_key ON public.conversation_participants USING btree (conversation_id, user_id)",
+                "index_name": "conversation_participants_conversation_id_user_id_key"
+            },
+            {
+                "definition": "CREATE INDEX idx_conv_participants_user ON public.conversation_participants USING btree (user_id)",
+                "index_name": "idx_conv_participants_user"
+            },
+            {
+                "definition": "CREATE INDEX idx_conv_participants_conv ON public.conversation_participants USING btree (conversation_id)",
+                "index_name": "idx_conv_participants_conv"
+            }
+        ],
+        "policies": [
+            {
+                "qual": "EXISTS (SELECT 1 FROM conversation_participants cp WHERE cp.conversation_id = conversation_participants.conversation_id AND cp.user_id = (SELECT id FROM users WHERE auth_user_id = auth.uid()))",
+                "roles": ["public"],
+                "command": "SELECT",
+                "with_check": null,
+                "policy_name": "conv_participants_select_own"
+            },
+            {
+                "qual": "(EXISTS (SELECT 1 FROM conversation_participants cp WHERE cp.conversation_id = conversation_participants.conversation_id AND cp.user_id = (SELECT id FROM users WHERE auth_user_id = auth.uid())) OR (auth.uid() IS NOT NULL))",
+                "roles": ["public"],
+                "command": "INSERT",
+                "with_check": "(EXISTS (SELECT 1 FROM conversation_participants cp WHERE cp.conversation_id = conversation_participants.conversation_id AND cp.user_id = (SELECT id FROM users WHERE auth_user_id = auth.uid())) OR (auth.uid() IS NOT NULL))",
+                "policy_name": "conv_participants_insert_own"
+            },
+            {
+                "qual": "(user_id = (SELECT id FROM users WHERE auth_user_id = auth.uid()))",
+                "roles": ["public"],
+                "command": "UPDATE",
+                "with_check": "(user_id = (SELECT id FROM users WHERE auth_user_id = auth.uid()))",
+                "policy_name": "conv_participants_update_own"
+            },
+            {
+                "qual": "is_admin_or_mod()",
+                "roles": ["public"],
+                "command": "ALL",
+                "with_check": "is_admin_or_mod()",
+                "policy_name": "conv_participants_admin_all"
+            }
+        ]
+    },
+    {
+        "table": "messages",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "id",
+                "default": "gen_random_uuid()",
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "conversation_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "uuid",
+                "column": "sender_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "text",
+                "column": "content",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "created_at",
+                "default": "now()",
+                "nullable": "NO"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "read_at",
+                "default": null,
+                "nullable": "YES"
+            }
+        ],
+        "indexes": [
+            {
+                "definition": "CREATE UNIQUE INDEX messages_pkey ON public.messages USING btree (id)",
+                "index_name": "messages_pkey"
+            },
+            {
+                "definition": "CREATE INDEX idx_messages_conversation ON public.messages USING btree (conversation_id, created_at)",
+                "index_name": "idx_messages_conversation"
+            },
+            {
+                "definition": "CREATE INDEX idx_messages_sender ON public.messages USING btree (sender_id)",
+                "index_name": "idx_messages_sender"
+            },
+            {
+                "definition": "CREATE INDEX idx_messages_unread ON public.messages USING btree (conversation_id, sender_id, read_at) WHERE (read_at IS NULL)",
+                "index_name": "idx_messages_unread"
+            }
+        ],
+        "policies": [
+            {
+                "qual": "EXISTS (SELECT 1 FROM conversation_participants WHERE conversation_id = messages.conversation_id AND user_id = (SELECT id FROM users WHERE auth_user_id = auth.uid()))",
+                "roles": ["public"],
+                "command": "SELECT",
+                "with_check": null,
+                "policy_name": "messages_select_own"
+            },
+            {
+                "qual": "(sender_id = (SELECT id FROM users WHERE auth_user_id = auth.uid()) AND EXISTS (SELECT 1 FROM conversation_participants WHERE conversation_id = messages.conversation_id AND user_id = (SELECT id FROM users WHERE auth_user_id = auth.uid())))",
+                "roles": ["public"],
+                "command": "INSERT",
+                "with_check": "(sender_id = (SELECT id FROM users WHERE auth_user_id = auth.uid()) AND EXISTS (SELECT 1 FROM conversation_participants WHERE conversation_id = messages.conversation_id AND user_id = (SELECT id FROM users WHERE auth_user_id = auth.uid())))",
+                "policy_name": "messages_insert_own"
+            },
+            {
+                "qual": "EXISTS (SELECT 1 FROM conversation_participants WHERE conversation_id = messages.conversation_id AND user_id = (SELECT id FROM users WHERE auth_user_id = auth.uid()))",
+                "roles": ["public"],
+                "command": "UPDATE",
+                "with_check": "EXISTS (SELECT 1 FROM conversation_participants WHERE conversation_id = messages.conversation_id AND user_id = (SELECT id FROM users WHERE auth_user_id = auth.uid()))",
+                "policy_name": "messages_update_own"
+            },
+            {
+                "qual": "is_admin_or_mod()",
+                "roles": ["public"],
+                "command": "ALL",
+                "with_check": "is_admin_or_mod()",
+                "policy_name": "messages_admin_all"
+            }
+        ]
     }
 ]

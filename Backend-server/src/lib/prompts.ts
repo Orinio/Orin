@@ -20,9 +20,9 @@ function sanitizeForPrompt(input: string | undefined | null): string {
 }
 
 export function buildSystemPrompt(): string {
-  return `You are Orin AI Coach, a personalized career coach for students and early-career developers.
+  return `You are Orin AI Coach, a personalized career coach for professionals across all industries.
 
-Your role is to analyze a developer's proof portfolio and provide actionable, specific career advice.
+Your role is to analyze a professional's proof portfolio and provide actionable, specific career advice.
 
  Guidelines:
 - Be encouraging but honest
@@ -32,6 +32,7 @@ Your role is to analyze a developer's proof portfolio and provide actionable, sp
 - Keep responses concise (2-4 sentences for tips, 1 paragraph for insights)
 - Use a professional but friendly tone
 - Always end with a clear call-to-action when applicable
+- Adapt advice to their specific profession (tech, medical, education, legal, creative, business, etc.)
 
  Response Format:
 You MUST respond with valid JSON in this exact format:
@@ -55,12 +56,12 @@ export function buildDailyTipPrompt(context: CoachPromptContext): string {
   const topSkills = skillAnalysis.topSkills.slice(0, 5).map((s) => s.name).join(', ');
   const gaps = skillAnalysis.skillGaps.slice(0, 3).map((g) => g.skill).join(', ');
 
-  return `Generate a daily career tip for this developer.
+  return `Generate a daily career tip for this professional.
 
-Developer Profile:
+Professional Profile:
 - Name: ${sanitizeForPrompt(user.fullName || user.username)}
-- College: ${sanitizeForPrompt(user.college)}
-- Year: ${sanitizeForPrompt(user.year)}
+- Headline: ${sanitizeForPrompt(user.headline)}
+- Location: ${sanitizeForPrompt(user.location)}
 
 Portfolio Summary:
 - Total proofs: ${proofs.length}
@@ -82,12 +83,12 @@ export function buildWeeklyInsightPrompt(context: CoachPromptContext): string {
   const recentProofs = proofs.slice(0, 5);
   const skillGaps = skillAnalysis.skillGaps.slice(0, 5);
 
-  return `Generate a weekly insight summary for this developer.
+  return `Generate a weekly insight summary for this professional.
 
-Developer Profile:
+Professional Profile:
 - Name: ${sanitizeForPrompt(user.fullName || user.username)}
-- College: ${sanitizeForPrompt(user.college)}
-- Year: ${sanitizeForPrompt(user.year)}
+- Headline: ${sanitizeForPrompt(user.headline)}
+- Location: ${sanitizeForPrompt(user.location)}
 
 This Week's Activity:
 - Total proofs: ${proofs.length}
@@ -118,11 +119,11 @@ export function buildMilestonePrompt(context: CoachPromptContext): string {
   const { user, skillAnalysis, proofs, milestone } = context;
   const verifiedCount = proofs.filter((p) => p.verificationStatus === 'verified').length;
 
-  return `Generate a milestone celebration note for this developer.
+  return `Generate a milestone celebration note for this professional.
 
-Developer Profile:
+Professional Profile:
 - Name: ${sanitizeForPrompt(user.fullName || user.username)}
-- College: ${sanitizeForPrompt(user.college)}
+- Headline: ${sanitizeForPrompt(user.headline)}
 
 Milestone Achieved: ${sanitizeForPrompt(milestone) || 'New milestone reached'}
 
@@ -150,12 +151,12 @@ export function buildAdHocPrompt(
   const topSkills = skillAnalysis.topSkills.slice(0, 5).map((s) => s.name).join(', ');
   const skillGaps = skillAnalysis.skillGaps.slice(0, 5);
 
-  return `A developer is asking for career advice. Provide personalized guidance based on their portfolio.
+  return `A professional is asking for career advice. Provide personalized guidance based on their portfolio.
 
-Developer Profile:
+Professional Profile:
 - Name: ${sanitizeForPrompt(user.fullName || user.username)}
-- College: ${sanitizeForPrompt(user.college)}
-- Year: ${sanitizeForPrompt(user.year)}
+- Headline: ${sanitizeForPrompt(user.headline)}
+- Location: ${sanitizeForPrompt(user.location)}
 
 Portfolio Summary:
 - Total proofs: ${proofs.length}
@@ -180,17 +181,17 @@ Respond with JSON only.`;
 export function buildOnboardingPrompt(context: CoachPromptContext): string {
   const { user } = context;
 
-  return `Generate an onboarding welcome note for a new developer joining Orin.
+  return `Generate an onboarding welcome note for a new professional joining Orin.
 
-Developer Profile:
+Professional Profile:
 - Name: ${sanitizeForPrompt(user.fullName || user.username)}
-- College: ${sanitizeForPrompt(user.college)}
-- Year: ${sanitizeForPrompt(user.year)}
+- Headline: ${sanitizeForPrompt(user.headline)}
+- Location: ${sanitizeForPrompt(user.location)}
 
 This is their first interaction with the AI coach. Welcome them and:
 1. Acknowledge their decision to join Orin
 2. Highlight the key features they should explore
-3. Suggest their first action (connecting GitHub or adding a proof)
+3. Suggest their first action (connecting platforms or adding a proof)
 4. Keep it warm, welcoming, and motivating
 
 Respond with JSON only.`;

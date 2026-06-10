@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import type { Metadata } from 'next';
 import { getServerSupabase } from '@/lib/supabase-server';
 import ProofCard from '@/components/ProofCard';
 import { mapDbUserToUser, mapDbProofToProof, getProofTypeColor } from '@/lib/utils';
@@ -8,6 +9,62 @@ import type { User, Proof } from '@/lib/types';
 
 interface PublicProfilePageProps {
   params: Promise<{ username: string }>;
+}
+
+export async function generateMetadata({ params }: PublicProfilePageProps): Promise<Metadata> {
+  const { username } = await params;
+  const supabase = await getServerSupabase();
+
+  const { data: userData } = await supabase
+    .from('users')
+    .select('full_name, headline, bio, avatar_url, username')
+    .eq('username', username)
+    .is('deleted_at', null)
+    .maybeSingle();
+
+  if (!userData) {
+    return { title: 'Profile Not Found — Orin' };
+  }
+
+  const displayName = userData.full_name || userData.username;
+  const title = `${displayName} — Verified Proof Profile | Orin`;
+  const description = userData.headline
+    ? `${userData.headline} — View ${displayName}'s verified skills and proof cards on Orin.`
+    : `${displayName}'s verified career proof profile on Orin. View skills, projects, and achievements backed by real proof.`;
+
+  const ogImage = userData.avatar_url
+    ? `https://orin.app/api/og?title=${encodeURIComponent(displayName)}&subtitle=${encodeURIComponent(userData.headline || 'Verified Proof Profile')}&avatar=${encodeURIComponent(userData.avatar_url)}`
+    : `https://orin.app/api/og?title=${encodeURIComponent(displayName)}&subtitle=${encodeURIComponent(userData.headline || 'Verified Proof Profile')}`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: `https://orin.app/${userData.username}`,
+      siteName: 'Orin',
+      images: [
+        {
+          url: ogImage,
+          width: 1200,
+          height: 630,
+          alt: `${displayName}'s Orin Profile`,
+        },
+      ],
+      locale: 'en_US',
+      type: 'profile',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [ogImage],
+    },
+    alternates: {
+      canonical: `https://orin.app/${userData.username}`,
+    },
+  };
 }
 
 const sourceTypeLabels: Record<string, string> = {
@@ -89,8 +146,35 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
   const totalViewCount = proofs.reduce((sum, p) => sum + p.viewCount, 0);
   const totalProofsCount = proofs.length;
 
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@type': 'ProfilePage',
+    name: user.fullName || user.username,
+    description: user.bio || user.headline || `Verified proof profile on Orin`,
+    url: `https://orin.app/${user.username}`,
+    mainEntity: {
+      '@type': 'Person',
+      name: user.fullName || user.username,
+      headline: user.headline,
+      description: user.bio,
+      image: user.avatarUrl,
+      url: `https://orin.app/${user.username}`,
+      sameAs: [
+        user.githubUrl,
+        user.linkedinUrl,
+        user.twitterUrl,
+        user.websiteUrl,
+      ].filter(Boolean),
+      knowsAbout: allSkills,
+    },
+  };
+
   return (
     <main id="main-content" className="min-h-screen" style={{ backgroundColor: 'var(--color-paper)' }}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
       {/* ═══════════════ HERO SECTION ═══════════════ */}
       <section className="relative pt-20 pb-24 px-6 overflow-hidden">
         {/* Background ambience — matches landing page */}

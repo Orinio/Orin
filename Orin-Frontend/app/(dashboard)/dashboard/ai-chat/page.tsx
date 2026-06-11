@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
-import { PanelLeftClose, Sparkles, ArrowDown, Loader2, Brain, Zap } from 'lucide-react';
+import { PanelLeftClose, Sparkles, ArrowDown, Loader2, Brain, Zap, Shield, BarChart3, Target, BookOpen, Code, Globe, ChevronRight } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { chatStore } from '@/lib/chat-store';
 import type { ChatConversation } from '@/lib/chat-types';
@@ -67,15 +67,20 @@ function UsageBar({ session, onRefreshRef }: { session: any; onRefreshRef?: Reac
     <div
       className="flex items-center gap-3 px-4 py-1.5 text-xs"
       style={{
-        backgroundColor: isExhausted ? 'rgba(239,68,68,0.08)' : 'var(--color-surface)',
+        backgroundColor: isExhausted ? 'rgba(239,68,68,0.06)' : 'rgba(255,255,255,0.6)',
         borderBottom: '1px solid var(--color-border)',
         color: 'var(--color-mist)',
+        backdropFilter: 'blur(12px)',
       }}
     >
       <span
-        className="px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider"
+        className="px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider"
         style={{
-          backgroundColor: usage.plan === 'pro' ? 'rgba(139,92,246,0.12)' : usage.plan === 'team' ? 'rgba(59,130,246,0.12)' : 'rgba(107,114,128,0.12)',
+          background: usage.plan === 'pro'
+            ? 'linear-gradient(135deg, rgba(139,92,246,0.12), rgba(99,102,241,0.12))'
+            : usage.plan === 'team'
+            ? 'linear-gradient(135deg, rgba(59,130,246,0.12), rgba(37,99,235,0.12))'
+            : 'rgba(107,114,128,0.1)',
           color: usage.plan === 'pro' ? '#8b5cf6' : usage.plan === 'team' ? '#3b82f6' : '#6b7280',
         }}
       >
@@ -577,39 +582,115 @@ export default function SuperAgentChat() {
           <div
             ref={scrollContainerRef}
             onScroll={handleScroll}
-            className="flex-1 flex flex-col overflow-y-auto"
+            className="flex-1 flex flex-col overflow-y-auto relative"
             style={{
               scrollBehavior: 'smooth',
               maxWidth: activityOpen ? '50%' : '100%',
               transition: 'max-width 0.3s ease',
+              background: 'linear-gradient(180deg, var(--color-paper) 0%, rgba(249,250,251,0.5) 50%, var(--color-paper) 100%)',
             }}
           >
             {isWelcome ? (
-              <div className="h-full flex flex-col items-center justify-center px-4">
+              <div className="h-full flex flex-col items-center justify-center px-4 relative overflow-hidden">
+                {/* Ambient gradient background */}
                 <div
-                  className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6"
-                  style={{ backgroundColor: 'var(--color-ink)', boxShadow: '0 8px 32px rgba(0,0,0,0.12)' }}
-                >
-                  <Sparkles className="w-6 h-6" style={{ color: 'var(--color-spark)' }} />
-                </div>
-                <h1
-                  className="text-2xl sm:text-3xl font-bold mb-2 text-center"
-                  style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-ink)' }}
-                >
-                  What can I help you with?
-                </h1>
-                <p
-                  className="text-sm mb-10 text-center max-w-md leading-relaxed"
-                  style={{ color: 'var(--color-mist)', fontFamily: 'var(--font-body)' }}
-                >
-                  I&apos;m your AI career assistant. Pick a model, then ask me anything about your portfolio, skills, or job search.
-                </p>
-                <Composer
-                  onSend={handleSend}
-                  disabled={isStreaming}
-                  selectedModel={selectedModel}
-                  onModelChange={setSelectedModel}
+                  className="absolute inset-0 pointer-events-none"
+                  style={{
+                    background: 'radial-gradient(ellipse 80% 60% at 50% 40%, rgba(11,171,119,0.06) 0%, transparent 60%), radial-gradient(ellipse 60% 50% at 80% 20%, rgba(99,102,241,0.05) 0%, transparent 50%), radial-gradient(ellipse 50% 40% at 20% 80%, rgba(246,146,38,0.04) 0%, transparent 50%)',
+                  }}
                 />
+
+                <div className="relative z-10 flex flex-col items-center max-w-2xl mx-auto">
+                  {/* Logo mark with glow */}
+                  <div className="relative mb-8">
+                    <div
+                      className="w-20 h-20 rounded-3xl flex items-center justify-center relative"
+                      style={{
+                        background: 'linear-gradient(135deg, var(--color-ink) 0%, #1a1a2e 50%, #16213e 100%)',
+                        boxShadow: '0 8px 40px rgba(0,0,0,0.15), 0 0 0 1px rgba(255,255,255,0.05) inset',
+                      }}
+                    >
+                      <Sparkles className="w-9 h-9" style={{ color: 'var(--color-spark)' }} />
+                      <div
+                        className="absolute -inset-1 rounded-3xl opacity-30 blur-xl"
+                        style={{ background: 'linear-gradient(135deg, var(--color-bloom), #6366f1, var(--color-ember))' }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Heading */}
+                  <h1
+                    className="text-3xl sm:text-4xl font-bold mb-3 text-center leading-tight"
+                    style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-ink)' }}
+                  >
+                    What can I help you with?
+                  </h1>
+
+                  {/* Subtitle */}
+                  <p
+                    className="text-sm sm:text-base mb-10 text-center max-w-lg leading-relaxed"
+                    style={{ color: 'var(--color-mist)', fontFamily: 'var(--font-body)' }}
+                  >
+                    I&apos;m your AI career agent. Ask me anything about your portfolio, skills, job search, or professional growth.
+                  </p>
+
+                  {/* Feature cards */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-10 w-full max-w-xl">
+                    {[
+                      { icon: BarChart3, label: 'Analyze portfolio', color: 'var(--color-bloom)', gradient: 'rgba(11,171,119,0.08)' },
+                      { icon: Target, label: 'Find opportunities', color: 'var(--color-ember)', gradient: 'rgba(246,146,38,0.08)' },
+                      { icon: BookOpen, label: 'Learning paths', color: '#6366f1', gradient: 'rgba(99,102,241,0.08)' },
+                      { icon: Code, label: 'Verify projects', color: 'var(--color-pulse)', gradient: 'rgba(238,66,102,0.08)' },
+                    ].map(({ icon: Icon, label, color, gradient }) => (
+                      <button
+                        key={label}
+                        onClick={() => {
+                          const textMap: Record<string, string> = {
+                            'Analyze portfolio': 'Analyze my portfolio and suggest improvements',
+                            'Find opportunities': 'Find job opportunities that match my skills',
+                            'Learning paths': 'Create a learning path for my career goals',
+                            'Verify projects': 'Verify my GitHub projects and certifications',
+                          };
+                          handleSend(textMap[label] || label);
+                        }}
+                        className="group flex flex-col items-center gap-2.5 p-4 rounded-2xl transition-all duration-300 hover:scale-[1.03] hover:shadow-lg active:scale-[0.98]"
+                        style={{
+                          backgroundColor: gradient,
+                          border: '1px solid var(--color-border)',
+                        }}
+                      >
+                        <div
+                          className="w-10 h-10 rounded-xl flex items-center justify-center transition-transform duration-300 group-hover:scale-110"
+                          style={{ backgroundColor: `${color}12` }}
+                        >
+                          <Icon className="w-5 h-5" style={{ color }} />
+                        </div>
+                        <span
+                          className="text-[11px] font-semibold text-center leading-tight"
+                          style={{ color: 'var(--color-ink)', fontFamily: 'var(--font-body)' }}
+                        >
+                          {label}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Composer */}
+                  <div className="w-full max-w-2xl">
+                    <Composer
+                      onSend={handleSend}
+                      disabled={isStreaming}
+                      selectedModel={selectedModel}
+                      onModelChange={setSelectedModel}
+                    />
+                  </div>
+
+                  {/* Model hint */}
+                  <div className="flex items-center gap-1.5 mt-4 text-[10px] opacity-40" style={{ fontFamily: 'var(--font-mono)' }}>
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: currentModel.badgeColor || 'var(--color-bloom)' }} />
+                    {currentModel.name} selected
+                  </div>
+                </div>
               </div>
             ) : (
               <div className="py-4 max-w-4xl mx-auto w-full">
@@ -632,8 +713,13 @@ export default function SuperAgentChat() {
             {showScrollDown && !isWelcome && (
               <button
                 onClick={() => { isUserScrolledRef.current = false; messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }}
-                className="fixed bottom-24 left-1/2 -translate-x-1/2 z-10 w-9 h-9 rounded-full flex items-center justify-center shadow-lg transition-all duration-200 hover:scale-110"
-                style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-ink)' }}
+                className="fixed bottom-28 left-1/2 -translate-x-1/2 z-10 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95"
+                style={{
+                  background: 'linear-gradient(135deg, var(--color-surface), white)',
+                  border: '1px solid var(--color-border)',
+                  color: 'var(--color-ink)',
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.02)',
+                }}
               >
                 <ArrowDown className="w-4 h-4" />
               </button>
@@ -663,7 +749,11 @@ export default function SuperAgentChat() {
       {!isWelcome && (
         <div
           className="flex-shrink-0"
-          style={{ borderTop: '1px solid var(--color-border)' }}
+          style={{
+            borderTop: '1px solid var(--color-border)',
+            backgroundColor: 'rgba(255,255,255,0.8)',
+            backdropFilter: 'blur(20px)',
+          }}
         >
           <Composer
             onSend={handleSend}

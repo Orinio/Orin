@@ -83,7 +83,7 @@ export default function StatusChip({ state, label, className = '' }: StatusChipP
 
   return (
     <div
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all duration-300 ${className}`}
+      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all duration-300 ${className}`}
       style={{
         backgroundColor: config.bgColor,
         color: config.color,

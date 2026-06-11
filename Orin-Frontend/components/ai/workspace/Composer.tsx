@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
-import { Send, Paperclip, StopCircle, ChevronDown, Sparkles } from 'lucide-react';
+import { Send, Paperclip, StopCircle, ChevronDown, Sparkles, ArrowUp } from 'lucide-react';
 import { CHAT_MODELS } from '@/components/ai/ChatInput';
 
 interface ComposerProps {
@@ -14,10 +14,10 @@ interface ComposerProps {
 }
 
 const SUGGESTIONS = [
-  { label: 'Analyze my portfolio', icon: '📊' },
-  { label: 'Find opportunities for me', icon: '🎯' },
-  { label: 'Create a learning path', icon: '📚' },
-  { label: 'Verify my GitHub projects', icon: '✓' },
+  { label: 'Analyze my portfolio', icon: '📊', prompt: 'Analyze my portfolio and suggest improvements for my target role' },
+  { label: 'Find opportunities', icon: '🎯', prompt: 'Find job opportunities that match my skills and experience' },
+  { label: 'Learning path', icon: '📚', prompt: 'Create a personalized learning path for my career goals' },
+  { label: 'Verify projects', icon: '✓', prompt: 'Verify my GitHub projects and certifications' },
 ];
 
 export default function Composer({
@@ -70,8 +70,8 @@ export default function Composer({
     setFiles(prev => prev.filter((_, i) => i !== idx));
   }, []);
 
-  const handleSuggestion = useCallback((label: string) => {
-    setInput(label);
+  const handleSuggestion = useCallback((prompt: string) => {
+    setInput(prompt);
     textareaRef.current?.focus();
   }, []);
 
@@ -81,20 +81,21 @@ export default function Composer({
     <div className="px-3 pb-3" style={{ backgroundColor: 'var(--color-surface)' }}>
       {/* Suggestions row (only when empty) */}
       {!hasInput && files.length === 0 && (
-        <div className="flex flex-wrap gap-1.5 mb-2">
+        <div className="flex flex-wrap gap-2 mb-3 justify-center">
           {SUGGESTIONS.map((s) => (
             <button
               key={s.label}
-              onClick={() => handleSuggestion(s.label)}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all duration-200 hover:scale-[1.02]"
+              onClick={() => handleSuggestion(s.prompt)}
+              className="group flex items-center gap-2 px-3 py-2 rounded-xl text-[11px] font-medium transition-all duration-300 hover:scale-[1.02] hover:shadow-md active:scale-[0.98]"
               style={{
-                backgroundColor: 'var(--color-surface-dim)',
+                backgroundColor: 'var(--color-surface)',
                 border: '1px solid var(--color-border)',
                 color: 'var(--color-ink)',
               }}
             >
               <span className="text-xs">{s.icon}</span>
               <span>{s.label}</span>
+              <ArrowUp className="w-3 h-3 opacity-0 -ml-1 transition-all duration-200 group-hover:opacity-40 group-hover:ml-0" />
             </button>
           ))}
         </div>
@@ -106,16 +107,21 @@ export default function Composer({
           {files.map((f, i) => (
             <span
               key={`${f.name}-${i}`}
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px]"
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-medium transition-all duration-200"
               style={{
                 backgroundColor: 'var(--color-surface-dim)',
                 color: 'var(--color-ink)',
                 border: '1px solid var(--color-border)',
               }}
             >
-              <Paperclip className="w-2.5 h-2.5 opacity-50" />
+              <Paperclip className="w-2.5 h-2.5 opacity-40" />
               {f.name}
-              <button onClick={() => removeFile(i)} className="ml-0.5 opacity-50 hover:opacity-100">×</button>
+              <button
+                onClick={() => removeFile(i)}
+                className="ml-0.5 w-3.5 h-3.5 rounded-full flex items-center justify-center opacity-40 hover:opacity-100 hover:bg-black/10 transition-all"
+              >
+                ×
+              </button>
             </span>
           ))}
         </div>
@@ -123,19 +129,21 @@ export default function Composer({
 
       {/* Input container */}
       <div
-        className="relative flex items-end gap-2 rounded-2xl transition-all duration-200"
+        className="relative flex items-end gap-2 rounded-2xl transition-all duration-300"
         style={{
           backgroundColor: 'var(--color-surface)',
-          border: '1.5px solid var(--color-border)',
-          boxShadow: hasInput ? '0 0 0 2px var(--color-pulse), 0 4px 12px rgba(0,0,0,0.06)' : '0 2px 8px rgba(0,0,0,0.04)',
-          padding: '8px 10px',
+          border: hasInput ? '1.5px solid var(--color-bloom)' : '1.5px solid var(--color-border)',
+          boxShadow: hasInput
+            ? '0 0 0 3px rgba(11,171,119,0.1), 0 4px 16px rgba(0,0,0,0.06)'
+            : '0 2px 8px rgba(0,0,0,0.04)',
+          padding: '10px 12px',
         }}
       >
         {/* Attach button */}
         <button
           onClick={() => fileInputRef.current?.click()}
           disabled={disabled}
-          className="flex-shrink-0 p-1.5 rounded-lg transition-colors duration-150 hover:bg-black/5"
+          className="flex-shrink-0 p-1.5 rounded-lg transition-all duration-200 hover:bg-black/[0.04] active:scale-95"
           style={{ color: 'var(--color-mist)' }}
           title="Attach files"
         >
@@ -160,7 +168,7 @@ export default function Composer({
           placeholder="Ask Orin anything..."
           rows={1}
           disabled={disabled}
-          className="flex-1 resize-none bg-transparent py-1.5 text-sm leading-relaxed focus:outline-none placeholder:opacity-40 disabled:opacity-40"
+          className="flex-1 resize-none bg-transparent py-1.5 text-sm leading-relaxed focus:outline-none placeholder:opacity-30 disabled:opacity-40"
           style={{
             color: 'var(--color-ink)',
             fontFamily: 'var(--font-body)',
@@ -173,7 +181,7 @@ export default function Composer({
           <button
             onClick={() => setModelOpen(!modelOpen)}
             disabled={disabled}
-            className="flex items-center gap-1 px-1.5 py-1 rounded-lg text-[10px] font-medium transition-all duration-150 hover:bg-black/5 whitespace-nowrap"
+            className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-[10px] font-medium transition-all duration-200 hover:bg-black/[0.04] whitespace-nowrap"
             style={{
               border: '1px solid var(--color-border)',
               color: 'var(--color-ink)',
@@ -181,49 +189,63 @@ export default function Composer({
             }}
           >
             <span
-              className="w-1.5 h-1.5 rounded-full"
+              className="w-2 h-2 rounded-full"
               style={{ backgroundColor: currentModel.badgeColor || 'var(--color-bloom)' }}
             />
             <span className="hidden sm:inline">{currentModel.name.split(' ').slice(0, 2).join(' ')}</span>
-            <ChevronDown className="w-3 h-3 opacity-40" />
+            <ChevronDown className="w-3 h-3 opacity-30" />
           </button>
 
           {modelOpen && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setModelOpen(false)} />
               <div
-                className="absolute bottom-full right-0 mb-2 w-64 rounded-xl overflow-hidden z-50"
+                className="absolute bottom-full right-0 mb-2 w-72 rounded-2xl overflow-hidden z-50"
                 style={{
                   backgroundColor: 'var(--color-paper)',
                   border: '1px solid var(--color-border)',
-                  boxShadow: '0 12px 40px rgba(0,0,0,0.15)',
+                  boxShadow: '0 16px 48px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.02)',
                 }}
               >
-                <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-mono)' }}>
+                <div className="px-4 py-2.5 text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-mono)' }}>
                   Select Model
                 </div>
-                <div className="max-h-60 overflow-y-auto">
+                <div className="max-h-64 overflow-y-auto px-1.5 pb-1.5">
                   {CHAT_MODELS.map((model) => (
                     <button
                       key={model.id}
                       onClick={() => { onModelChange(model.id); setModelOpen(false); }}
-                      className="w-full text-left px-3 py-2 flex items-center gap-2 transition-colors duration-100"
+                      className="w-full text-left px-3 py-2.5 flex items-center gap-2.5 rounded-xl transition-all duration-150"
                       style={{
-                        backgroundColor: model.id === currentModel.id ? 'var(--color-surface-dim)' : undefined,
-                        borderTop: '1px solid var(--color-border)',
+                        backgroundColor: model.id === currentModel.id ? `${model.badgeColor || 'var(--color-bloom)'}10` : undefined,
+                        border: model.id === currentModel.id ? `1px solid ${model.badgeColor || 'var(--color-bloom)'}20` : '1px solid transparent',
                       }}
-                      onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--color-surface-dim)'}
+                      onMouseEnter={e => { if (model.id !== currentModel.id) e.currentTarget.style.backgroundColor = 'var(--color-surface-dim)'; }}
                       onMouseLeave={e => { if (model.id !== currentModel.id) e.currentTarget.style.backgroundColor = 'transparent'; }}
                     >
                       <span
-                        className="w-2 h-2 rounded-full flex-shrink-0"
+                        className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                         style={{ backgroundColor: model.badgeColor || 'var(--color-bloom)' }}
                       />
                       <div className="flex-1 min-w-0">
-                        <div className="text-[11px] font-medium truncate" style={{ color: 'var(--color-ink)' }}>
+                        <div className="text-[11px] font-semibold truncate" style={{ color: 'var(--color-ink)' }}>
                           {model.name}
                         </div>
+                        <div className="text-[10px] truncate" style={{ color: 'var(--color-text-tertiary)' }}>
+                          {model.provider}
+                        </div>
                       </div>
+                      {model.badge && (
+                        <span
+                          className="text-[9px] px-1.5 py-0.5 rounded-full font-bold flex-shrink-0"
+                          style={{
+                            backgroundColor: `${model.badgeColor || 'var(--color-bloom)'}15`,
+                            color: model.badgeColor || 'var(--color-bloom)',
+                          }}
+                        >
+                          {model.badge}
+                        </span>
+                      )}
                     </button>
                   ))}
                 </div>
@@ -236,8 +258,12 @@ export default function Composer({
         {isStreaming ? (
           <button
             onClick={onStop}
-            className="flex-shrink-0 p-2 rounded-xl transition-all duration-200"
-            style={{ backgroundColor: 'var(--color-pulse)', color: 'white' }}
+            className="flex-shrink-0 p-2.5 rounded-xl transition-all duration-200 active:scale-95"
+            style={{
+              background: 'linear-gradient(135deg, var(--color-pulse), #dc2626)',
+              color: 'white',
+              boxShadow: '0 2px 8px rgba(238,66,102,0.3)',
+            }}
             title="Stop generating"
           >
             <StopCircle className="w-4 h-4" />
@@ -246,19 +272,22 @@ export default function Composer({
           <button
             onClick={handleSubmit}
             disabled={disabled || !hasInput}
-            className="flex-shrink-0 p-2 rounded-xl transition-all duration-200 disabled:opacity-20"
+            className="flex-shrink-0 p-2.5 rounded-xl transition-all duration-200 disabled:opacity-20 active:scale-95"
             style={{
-              backgroundColor: hasInput ? 'var(--color-ink)' : 'var(--color-border)',
-              color: hasInput ? 'var(--color-paper)' : 'var(--color-mist)',
+              background: hasInput
+                ? 'linear-gradient(135deg, var(--color-bloom), #0A9A6A)'
+                : 'var(--color-border)',
+              color: hasInput ? 'white' : 'var(--color-mist)',
+              boxShadow: hasInput ? '0 2px 8px rgba(11,171,119,0.3)' : 'none',
             }}
           >
-            <Send className="w-4 h-4" />
+            <ArrowUp className="w-4 h-4" />
           </button>
         )}
       </div>
 
       {/* Hint */}
-      <p className="text-center text-[10px] mt-1.5 opacity-30" style={{ fontFamily: 'var(--font-body)' }}>
+      <p className="text-center text-[10px] mt-2 opacity-25" style={{ fontFamily: 'var(--font-body)' }}>
         Shift+Enter for new line · Enter to send
       </p>
     </div>

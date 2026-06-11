@@ -252,23 +252,31 @@ export default function SuperMessage({ message, onRate, onRetry, onFollowUp }: {
   const showLiveFeed = isStreaming && (!message.content || message.content.length === 0);
 
   return (
-    <div className="group" style={{ animation: 'fadeInUp 0.25s ease-out' }}>
-      <div className="max-w-4xl mx-auto px-4 py-4">
+    <div className="group" style={{ animation: 'fadeInUp 0.3s ease-out' }}>
+      <div className="max-w-4xl mx-auto px-4 py-3">
         <div className="flex gap-3">
           {/* Avatar */}
           {!isUser && (
             <div
-              className="flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-[11px] font-bold mt-0.5 select-none"
-              style={{ backgroundColor: agent.color, color: 'white', fontFamily: 'var(--font-mono)' }}
+              className="flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center text-[11px] font-bold mt-0.5 select-none relative"
+              style={{
+                background: `linear-gradient(135deg, ${agent.color}, ${agent.color}cc)`,
+                color: 'white',
+                fontFamily: 'var(--font-mono)',
+                boxShadow: `0 2px 8px ${agent.color}30`,
+              }}
             >
               {agent.letter}
             </div>
           )}
 
+          {/* Spacer for user messages to align with assistant */}
+          {isUser && <div className="flex-shrink-0 w-8" />}
+
           <div className="flex-1 min-w-0">
             {/* Agent label */}
             {!isUser && (
-              <div className="flex items-center gap-2 mb-2">
+              <div className="flex items-center gap-2 mb-1.5">
                 <span
                   className="text-[10px] font-bold tracking-widest uppercase"
                   style={{ color: agent.color, fontFamily: 'var(--font-mono)' }}
@@ -296,11 +304,18 @@ export default function SuperMessage({ message, onRate, onRetry, onFollowUp }: {
 
             {/* User message */}
             {isUser ? (
-              <div
-                className="inline-block px-4 py-2.5 rounded-2xl rounded-tr-md text-sm leading-relaxed max-w-[85%]"
-                style={{ backgroundColor: 'var(--color-ink)', color: 'var(--color-paper)', fontFamily: 'var(--font-body)' }}
-              >
-                {message.content}
+              <div className="flex justify-end">
+                <div
+                  className="inline-block px-4 py-2.5 rounded-2xl rounded-tr-md text-sm leading-relaxed max-w-[85%]"
+                  style={{
+                    background: 'linear-gradient(135deg, var(--color-ink), #1a1a2e)',
+                    color: 'var(--color-paper)',
+                    fontFamily: 'var(--font-body)',
+                    boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+                  }}
+                >
+                  {message.content}
+                </div>
               </div>
             ) : (
               <>

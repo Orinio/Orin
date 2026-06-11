@@ -83,6 +83,12 @@ const MODEL_FALLBACKS: Record<string, string[]> = {
     'qwen/qwen3.5-122b-a10b',
     'meta/llama-3.3-70b-instruct',
   ],
+  // Google DiffusionGemma models
+  'google/diffusiongemma-26b-a4b-it': [
+    'openai/gpt-oss-20b',
+    'google/gemma-4-31b-it',
+    'qwen/qwen3.5-122b-a10b',
+  ],
 };
 
 export interface ChatMessage {

@@ -300,7 +300,7 @@ aiRouter.post('/chat-stream', userRateLimitMiddleware('ai-chat-stream'), async (
     const history = req.body.history || (bodyMessages?.length
       ? bodyMessages.slice(0, -1).map((m: any) => ({ role: m.role, content: m.content }))
       : []);
-    const model = req.body.model;
+    const model = req.body.model === 'auto' ? undefined : req.body.model;
     if (!message) { res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'Message is required' } }); return; }
 
     const context = await buildAgentContext(authUserId);

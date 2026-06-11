@@ -370,6 +370,11 @@ export class AgentOrchestrator {
     context: { userId?: string; authUserId?: string; conversationHistory?: AgentMessage[]; modelOverride?: string },
     onEvent: (event: string, data: any) => void
   ): Promise<void> {
+    // Normalize "auto" to undefined so smart routing kicks in
+    if (context.modelOverride === 'auto') {
+      context.modelOverride = undefined;
+    }
+
     // Auto-route to specialist unless user selected a specific model
     let actualAgentId = agentId;
     if (!context.modelOverride && agentId === 'chat') {

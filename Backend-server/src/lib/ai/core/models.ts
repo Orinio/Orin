@@ -86,6 +86,11 @@ export const MODELS = {
   code: {
     primary: 'qwen/qwen3-coder-480b-a35b-instruct', // Best code understanding
     fast: 'nvidia/llama-3.1-nemotron-nano-8b-v1',    // Quick analysis
+  },
+
+  // Diffusion Models
+  diffusion: {
+    primary: 'google/diffusiongemma-26b-a4b-it',     // DiffusionGemma 26B
   }
 };
 
@@ -175,6 +180,16 @@ export const MODEL_METADATA = {
     reasoning: true,
     contextWindow: '32K',
     description: 'Google Gemma with thinking mode. Reveals step-by-step reasoning.'
+  },
+  'google/diffusiongemma-26b-a4b-it': {
+    name: 'DiffusionGemma 26B',
+    provider: 'Google',
+    category: 'Diffusion',
+    speed: 'fast',
+    quality: 'high',
+    toolCalling: false,
+    contextWindow: '32K',
+    description: 'Google DiffusionGemma for multimodal generation and understanding'
   }
 };
 

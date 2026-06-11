@@ -27,6 +27,7 @@ export const CHAT_MODELS: ChatModel[] = [
   { id: 'nvidia/nemotron-3-super-120b-a12b', name: 'Nemotron-3 Super 120B', provider: 'NVIDIA' },
   { id: 'meta/llama-4-maverick-17b-128e-instruct', name: 'Llama 4 Maverick', provider: 'Meta' },
   { id: 'mistralai/mistral-large-3-675b-instruct-2512', name: 'Mistral Large 3 675B', provider: 'Mistral' },
+  { id: 'google/diffusiongemma-26b-a4b-it', name: 'DiffusionGemma 26B', provider: 'Google', badge: 'Diffusion', badgeColor: '#06b6d4' },
 ];
 
 interface ChatInputProps {

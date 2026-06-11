@@ -149,6 +149,13 @@ export default function SuperAgentChat() {
   const isUserScrolledRef = useRef(false);
   const usageRefreshRef = useRef<(() => void) | null>(null);
 
+  // Cleanup: abort streaming on unmount
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+    };
+  }, []);
+
   // ─── Conversation management ──────────────────────────
   const createConversation = useCallback(() => {
     const conv = chatStore.newConversation(user?.id || null, 'chat');
@@ -392,6 +399,21 @@ export default function SuperAgentChat() {
               });
               break;
             }
+            case 'progress': {
+              // Show iteration progress in activity panel, ignore keepalive pings
+              if (data.iteration !== undefined && !data.keepalive) {
+                addActivity({
+                  id: `act_progress_${data.iteration}`,
+                  type: 'step',
+                  name: 'progress',
+                  label: `Iteration ${data.iteration}`,
+                  status: 'running',
+                  description: data.elapsed ? `Elapsed: ${(data.elapsed / 1000).toFixed(1)}s` : undefined,
+                  timestamp: new Date(),
+                });
+              }
+              break;
+            }
             case 'answer':
               if (data.content) {
                 fullContent += data.content;
@@ -432,7 +454,10 @@ export default function SuperAgentChat() {
               });
               break;
           }
-        } catch {}
+        } catch (err) {
+          // Log parse errors for debugging malformed SSE events
+          console.warn('[AI Chat] SSE parse error:', err, 'Raw:', dataStr?.slice(0, 100));
+        }
       };
 
       while (true) {
@@ -534,6 +559,37 @@ export default function SuperAgentChat() {
       }
     }
   }, [messages, handleSend]);
+
+  const handleRegenerate = useCallback((messageId: string) => {
+    const idx = messages.findIndex(m => m.id === messageId);
+    if (idx === -1) return;
+    // Find the preceding user message and re-send
+    for (let i = idx - 1; i >= 0; i--) {
+      if (messages[i].role === 'user') {
+        // Remove the assistant message and re-send
+        setMessages(prev => prev.filter(m => m.id !== messageId));
+        handleSend(messages[i].content);
+        return;
+      }
+    }
+  }, [messages, handleSend]);
+
+  const handleEditMessage = useCallback((messageId: string, newContent: string) => {
+    const idx = messages.findIndex(m => m.id === messageId);
+    if (idx === -1) return;
+    // Update the user message content and re-send
+    setMessages(prev => {
+      const updated = [...prev];
+      updated[idx] = { ...updated[idx], content: newContent };
+      return updated.filter((_, i) => i > idx);
+    });
+    // Re-send with edited content
+    handleSend(newContent);
+  }, [messages, handleSend]);
+
+  const handleCopyMessage = useCallback((_content: string) => {
+    // Optional: track copy events for analytics
+  }, []);
 
   const handleNew = useCallback(() => { createConversation(); setSidebarOpen(false); }, [createConversation]);
 
@@ -712,7 +768,16 @@ export default function SuperAgentChat() {
             ) : (
               <div className="py-4 max-w-4xl mx-auto w-full">
                 {messages.map((msg) => (
-                  <SuperMessage key={msg.id} message={msg} onRate={handleRate} onRetry={handleRetry} onFollowUp={handleSend} />
+                  <SuperMessage
+                    key={msg.id}
+                    message={msg}
+                    onRate={handleRate}
+                    onRetry={handleRetry}
+                    onFollowUp={handleSend}
+                    onCopy={handleCopyMessage}
+                    onRegenerate={handleRegenerate}
+                    onEdit={handleEditMessage}
+                  />
                 ))}
 
                 {/* Live reasoning card during streaming */}

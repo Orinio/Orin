@@ -353,7 +353,7 @@ export async function* chatCompletionStream(
  */
 export async function* chatCompletionStreamWithReasoning(
   options: ChatCompletionOptions
-): AsyncGenerator<{ type: 'reasoning' | 'content'; text: string }, void, unknown> {
+): AsyncGenerator<{ type: 'reasoning' | 'content' | 'usage'; text: string; usage?: { prompt_tokens: number; completion_tokens: number; total_tokens: number } }, void, unknown> {
   if (!NVIDIA_API_KEY) {
     throw Errors.notConfigured('NVIDIA_API_KEY');
   }
@@ -376,6 +376,7 @@ export async function* chatCompletionStreamWithReasoning(
             temperature: options.temperature ?? 0.7,
             max_tokens: options.max_tokens ?? 4096,
             stream: true,
+            stream_options: { include_usage: true },
             ...(options.tools && options.tools.length > 0 ? { tools: options.tools, tool_choice: options.tool_choice ?? 'auto' } : {}),
           }),
           signal: AbortSignal.timeout(options.timeoutMs ?? API_TIMEOUT_MS),
@@ -414,6 +415,12 @@ export async function* chatCompletionStreamWithReasoning(
               const content = delta.content;
               if (content) {
                 yield { type: 'content', text: content };
+              }
+
+              // Parse usage from final chunk (stream_options: include_usage)
+              const usage = parsed.usage;
+              if (usage) {
+                yield { type: 'usage', text: '', usage: { prompt_tokens: usage.prompt_tokens || 0, completion_tokens: usage.completion_tokens || 0, total_tokens: usage.total_tokens || 0 } };
               }
             } catch {
               // Skip invalid JSON chunks

@@ -23,6 +23,11 @@ import {
   BookOpen,
   Brain,
   Zap,
+  Copy,
+  Check,
+  Pencil,
+  Share2,
+  RotateCcw,
 } from 'lucide-react';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { SourcesDisplay } from './SourcesDisplay';
@@ -236,14 +241,20 @@ function LiveActivityFeed({ thinking, steps, content, agent }: {
   );
 }
 
-export default function SuperMessage({ message, onRate, onRetry, onFollowUp }: {
+export default function SuperMessage({ message, onRate, onRetry, onFollowUp, onCopy, onRegenerate, onEdit }: {
   message: SuperMessageData;
   onRate?: (messageId: string, rating: 'positive' | 'negative' | 'flagged', feedback?: string) => void;
   onRetry?: (messageId: string) => void;
   onFollowUp?: (content: string) => void;
+  onCopy?: (content: string) => void;
+  onRegenerate?: (messageId: string) => void;
+  onEdit?: (messageId: string, newContent: string) => void;
 }) {
   const [thinkingOpen, setThinkingOpen] = useState(false);
   const [artifactsOpen, setArtifactsOpen] = useState<Record<string, boolean>>({});
+  const [copied, setCopied] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editContent, setEditContent] = useState(message.content);
 
   const isUser = message.role === 'user';
   const agent = AGENT_ACCENTS[message.agentId || 'chat'] || AGENT_ACCENTS.chat;
@@ -441,6 +452,134 @@ export default function SuperMessage({ message, onRate, onRetry, onFollowUp }: {
                     messageId={message.id}
                     onRate={onRate}
                   />
+                </div>
+              )}
+
+              {/* Message Actions — hover-only */}
+              {!isStreaming && message.content && (
+                <div className="mt-1.5 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  {/* Copy */}
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(message.content);
+                      setCopied(true);
+                      onCopy?.(message.content);
+                      setTimeout(() => setCopied(false), 2000);
+                    }}
+                    className="p-1.5 rounded-lg transition-all duration-200 hover:bg-black/[0.04] active:scale-95"
+                    title="Copy message"
+                    style={{ color: '#8a8580' }}
+                  >
+                    {copied ? <Check className="w-3.5 h-3.5" style={{ color: '#10b981' }} /> : <Copy className="w-3.5 h-3.5" />}
+                  </button>
+
+                  {/* Regenerate (assistant only) */}
+                  {!isUser && onRegenerate && (
+                    <button
+                      onClick={() => onRegenerate(message.id)}
+                      className="p-1.5 rounded-lg transition-all duration-200 hover:bg-black/[0.04] active:scale-95"
+                      title="Regenerate response"
+                      style={{ color: '#8a8580' }}
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+
+                  {/* Edit (user only) */}
+                  {isUser && onEdit && (
+                    <button
+                      onClick={() => {
+                        if (editing) {
+                          onEdit(message.id, editContent);
+                          setEditing(false);
+                        } else {
+                          setEditContent(message.content);
+                          setEditing(true);
+                        }
+                      }}
+                      className="p-1.5 rounded-lg transition-all duration-200 hover:bg-black/[0.04] active:scale-95"
+                      title={editing ? 'Save edit' : 'Edit message'}
+                      style={{ color: editing ? '#c96442' : '#8a8580' }}
+                    >
+                      {editing ? <Check className="w-3.5 h-3.5" /> : <Pencil className="w-3.5 h-3.5" />}
+                    </button>
+                  )}
+
+                  {/* Share */}
+                  <button
+                    onClick={async () => {
+                      try {
+                        const res = await fetch('/api/ai/share', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            content: message.content,
+                            role: message.role,
+                            agentName: message.agentName || agent.label,
+                            thinking: message.thinking,
+                          }),
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                          const url = `${window.location.origin}${data.shareUrl}`;
+                          navigator.clipboard.writeText(url);
+                          setCopied(true);
+                          setTimeout(() => setCopied(false), 2000);
+                        }
+                      } catch {
+                        // Fallback: copy message content directly
+                        navigator.clipboard.writeText(message.content);
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 2000);
+                      }
+                    }}
+                    className="p-1.5 rounded-lg transition-all duration-200 hover:bg-black/[0.04] active:scale-95"
+                    title="Copy share link"
+                    style={{ color: '#8a8580' }}
+                  >
+                    {copied ? <Check className="w-3.5 h-3.5" style={{ color: '#10b981' }} /> : <Share2 className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+              )}
+
+              {/* Edit mode textarea (user messages) */}
+              {editing && isUser && (
+                <div className="mt-2">
+                  <textarea
+                    value={editContent}
+                    onChange={e => setEditContent(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl text-sm resize-none focus:outline-none focus:ring-2"
+                    style={{
+                      backgroundColor: '#f0ece3',
+                      border: '1px solid #e5e0d6',
+                      color: '#1a1a1a',
+                      fontFamily: 'var(--font-body)',
+                      minHeight: '60px',
+                    } as React.CSSProperties}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        onEdit?.(message.id, editContent);
+                        setEditing(false);
+                      }
+                    }}
+                  />
+                  <div className="flex gap-2 mt-1.5">
+                    <button
+                      onClick={() => setEditing(false)}
+                      className="text-[11px] px-2.5 py-1 rounded-lg"
+                      style={{ color: '#8a8580', border: '1px solid #e5e0d6' }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => { onEdit?.(message.id, editContent); setEditing(false); }}
+                      className="text-[11px] px-2.5 py-1 rounded-lg"
+                      style={{ backgroundColor: '#c96442', color: 'white' }}
+                    >
+                      Save & Resend
+                    </button>
+                  </div>
                 </div>
               )}
 

@@ -5201,5 +5201,82 @@
                 "policy_name": "messages_admin_all"
             }
         ]
+    },
+    {
+        "table": "shared_messages",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "id",
+                "default": "gen_random_uuid()",
+                "nullable": "NO"
+            },
+            {
+                "type": "text",
+                "column": "share_id",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "text",
+                "column": "content",
+                "default": null,
+                "nullable": "NO"
+            },
+            {
+                "type": "text",
+                "column": "role",
+                "default": "'assistant'",
+                "nullable": "NO"
+            },
+            {
+                "type": "text",
+                "column": "agent_name",
+                "default": "'Orin'",
+                "nullable": "NO"
+            },
+            {
+                "type": "text",
+                "column": "thinking",
+                "default": null,
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "created_at",
+                "default": "NOW()",
+                "nullable": "YES"
+            },
+            {
+                "type": "timestamp with time zone",
+                "column": "expires_at",
+                "default": "(NOW() + INTERVAL '30 days')",
+                "nullable": "YES"
+            }
+        ],
+        "primary_key": ["id"],
+        "indexes": [
+            {
+                "index_name": "idx_shared_messages_share_id",
+                "columns": ["share_id"],
+                "unique": true
+            }
+        ],
+        "policies": [
+            {
+                "qual": "true",
+                "roles": ["public"],
+                "command": "SELECT",
+                "with_check": null,
+                "policy_name": "Public can read shared messages"
+            },
+            {
+                "qual": "(auth.role() = 'authenticated')",
+                "roles": ["public"],
+                "command": "INSERT",
+                "with_check": "(auth.role() = 'authenticated')",
+                "policy_name": "Authenticated users can create shared messages"
+            }
+        ]
     }
 ]

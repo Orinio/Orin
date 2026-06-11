@@ -538,6 +538,18 @@ export class AgentOrchestrator {
               Math.max(remainingBudget, 5000) // At least 5s per tool
             );
 
+            // Keepalive: emit progress pings every 15s during long tool executions
+            // Prevents proxies/load balancers from killing idle SSE connections
+            let keepaliveInterval: ReturnType<typeof setInterval> | null = null;
+            keepaliveInterval = setInterval(() => {
+              onEvent('progress', {
+                iteration: iterations,
+                keepalive: true,
+                tool: tool.name,
+                elapsedMs: Date.now() - toolStartTime,
+              });
+            }, 15000);
+
             let result: ToolResult;
             try {
               result = await Promise.race([
@@ -548,6 +560,8 @@ export class AgentOrchestrator {
               ]);
             } catch (err) {
               result = { success: false, error: err instanceof Error ? err.message : 'Tool execution failed' };
+            } finally {
+              if (keepaliveInterval) clearInterval(keepaliveInterval);
             }
 
             const toolDurationMs = Date.now() - toolStartTime;
@@ -598,6 +612,8 @@ export class AgentOrchestrator {
                 streamedReasoning += chunk.text;
                 thinking = streamedReasoning;
                 onEvent('thinking', { content: chunk.text });
+              } else if (chunk.type === 'usage' && chunk.usage) {
+                totalTokens += chunk.usage.total_tokens;
               } else {
                 streamedAnswer += chunk.text;
                 onEvent('answer', { content: chunk.text });

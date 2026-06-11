@@ -534,3 +534,73 @@ aiRouter.post('/safety', userRateLimitMiddleware('ai-safety'), async (req, res) 
     res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } });
   }
 });
+
+// POST /ai/share — Create a shareable link for a message
+aiRouter.post('/share', async (req, res) => {
+  try {
+    const { content, role, agentName, thinking } = req.body;
+    if (!content) {
+      res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'Content is required' } });
+      return;
+    }
+
+    // Generate a short unique ID (8 chars)
+    const shareId = Math.random().toString(36).substring(2, 10);
+
+    // Store in Supabase (create table if needed via migration)
+    const { error } = await supabase
+      .from('shared_messages')
+      .insert({
+        share_id: shareId,
+        content,
+        role: role || 'assistant',
+        agent_name: agentName || 'Orin',
+        thinking: thinking || null,
+      });
+
+    if (error) {
+      // If table doesn't exist, fall back to returning a URL with encoded content
+      logger.warn({ err: error }, 'shared_messages table not found, using URL encoding fallback');
+      const encoded = Buffer.from(JSON.stringify({ content, role, agentName, thinking })).toString('base64url');
+      res.json({ success: true, shareUrl: `/share/${shareId}`, shareId, fallback: true, data: encoded });
+      return;
+    }
+
+    res.json({ success: true, shareUrl: `/share/${shareId}`, shareId });
+  } catch (err) {
+    logger.error({ err }, 'Share error');
+    res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } });
+  }
+});
+
+// GET /ai/share/:shareId — Retrieve a shared message
+aiRouter.get('/share/:shareId', async (req, res) => {
+  try {
+    const { shareId } = req.params;
+
+    const { data, error } = await supabase
+      .from('shared_messages')
+      .select('*')
+      .eq('share_id', shareId)
+      .single();
+
+    if (error || !data) {
+      res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Shared message not found' } });
+      return;
+    }
+
+    res.json({
+      success: true,
+      data: {
+        content: data.content,
+        role: data.role,
+        agentName: data.agent_name,
+        thinking: data.thinking,
+        createdAt: data.created_at,
+      },
+    });
+  } catch (err) {
+    logger.error({ err }, 'Share fetch error');
+    res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } });
+  }
+});

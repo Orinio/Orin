@@ -21,6 +21,8 @@ import {
   Home,
   Crown,
   Users,
+  GraduationCap,
+  Target,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
@@ -155,6 +157,7 @@ export default function Navigation() {
     { href: '/dashboard', label: 'Dashboard', icon: LayoutGrid },
     { href: '/dashboard/feed', label: 'Feed', icon: Home },
     { href: '/dashboard/ai-chat', label: 'AI Chat', icon: Sparkles },
+    { href: '/dashboard/skill-gap', label: 'Skill Gaps', icon: Target },
     { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart3 },
     { href: '/dashboard/network', label: 'Network', icon: User },
     { href: '/opportunities', label: 'Opportunities', icon: Briefcase },
@@ -166,6 +169,7 @@ export default function Navigation() {
     { href: '/dashboard/messages', label: 'Messages', icon: Bell, badge: 0 },
     { href: '/dashboard/billing', label: 'Billing', icon: Crown },
     { href: '/dashboard/team', label: 'Team', icon: Users },
+    { href: '/dashboard/university', label: 'University', icon: GraduationCap },
     { href: '/employer/portal', label: 'Employer Portal', icon: Briefcase },
     { href: '/notifications', label: 'Notifications', icon: Bell, badge: unreadCount },
     { href: '/settings', label: 'Settings', icon: Settings },

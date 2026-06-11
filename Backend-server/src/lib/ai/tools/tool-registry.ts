@@ -8,6 +8,7 @@ import { registerTool } from '../core/tool-registry.js';
 import { logger } from '../../logger.js';
 import { supabase } from '../../supabase.js';
 import { generateEmbedding } from '../services/embedding.service.js';
+import { analyzeSkillGaps, getAvailableRoles, calculateSkillLevel } from '../../skill-gap-engine.js';
 
 // ============================================================
 // VERIFICATION TOOLS
@@ -1829,6 +1830,291 @@ registerTool({
       return { success: false, error: `Failed to generate diagram: ${error instanceof Error ? error.message : 'Unknown error'}` };
     }
   },
+});
+
+// ============================================================
+// SKILL GAP ENGINE TOOLS
+// ============================================================
+
+registerTool({
+  name: 'analyze_skill_gaps',
+  description: 'Analyze skill gaps for a target role and generate an actionable 1-2 week plan. Use this when the user wants to know what skills they need to develop for a specific role.',
+  category: 'analysis',
+  parameters: {
+    type: 'object',
+    properties: {
+      targetRole: { type: 'string', description: 'Target role (e.g., "frontend developer", "data scientist", "product manager")' },
+      userId: { type: 'string', description: 'User ID to fetch their current skills from (optional, uses context if not provided)' }
+    },
+    required: ['targetRole']
+  },
+  execute: async (args, context) => {
+    try {
+      const userId = args.userId || context?.userId;
+      if (!userId) return { success: false, error: 'User ID required' };
+
+      // Fetch user's proofs to extract skills
+      const { data: proofs } = await supabase
+        .from('proof_cards')
+        .select('skills_extracted, skills_user_added, verification_status, created_at')
+        .eq('user_id', userId)
+        .is('deleted_at', null);
+
+      if (!proofs || proofs.length === 0) {
+        return {
+          success: true,
+          data: {
+            message: 'No proofs found. Add some proof cards first to analyze your skill gaps.',
+            gaps: [],
+            actionPlan: [],
+            readinessScore: 0
+          }
+        };
+      }
+
+      // Extract and calculate skill levels
+      const skillMap = new Map<string, { count: number; verified: number; recent: boolean }>();
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+      for (const proof of proofs) {
+        const allSkills = [...(proof.skills_extracted || []), ...(proof.skills_user_added || [])];
+        const isRecent = new Date(proof.created_at) >= thirtyDaysAgo;
+        const isVerified = proof.verification_status === 'verified';
+
+        for (const skill of allSkills) {
+          const existing = skillMap.get(skill) || { count: 0, verified: 0, recent: false };
+          skillMap.set(skill, {
+            count: existing.count + 1,
+            verified: existing.verified + (isVerified ? 1 : 0),
+            recent: existing.recent || isRecent,
+          });
+        }
+      }
+
+      // Convert to skill levels
+      const currentSkills = Array.from(skillMap.entries()).map(([name, stats]) => ({
+        name,
+        level: calculateSkillLevel(name, stats.count, stats.verified, stats.recent),
+      }));
+
+      // Analyze gaps
+      const analysis = analyzeSkillGaps(currentSkills, args.targetRole);
+
+      return {
+        success: true,
+        data: {
+          targetRole: analysis.targetRole,
+          readinessScore: analysis.readinessScore,
+          estimatedWeeks: analysis.estimatedWeeks,
+          estimatedTotalHours: analysis.estimatedTotalHours,
+          gaps: analysis.gaps.map(g => ({
+            skill: g.skill,
+            currentLevel: g.currentLevel,
+            targetLevel: g.targetLevel,
+            gap: g.gap,
+            importance: g.importance,
+            estimatedHours: g.estimatedHours,
+          })),
+          actionPlan: analysis.actionPlan.map(p => ({
+            week: p.week,
+            focus: p.focus,
+            totalHours: p.totalHours,
+            tasks: p.tasks.map(t => ({
+              title: t.title,
+              skill: t.skill,
+              hours: t.hours,
+              resource: t.resource,
+            })),
+          })),
+        }
+      };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Failed to analyze skill gaps' };
+    }
+  }
+});
+
+registerTool({
+  name: 'get_target_roles',
+  description: 'Get list of available target roles for skill gap analysis',
+  category: 'analysis',
+  parameters: {
+    type: 'object',
+    properties: {},
+    required: []
+  },
+  execute: async () => {
+    const roles = getAvailableRoles();
+    return {
+      success: true,
+      data: {
+        roles,
+        count: roles.length,
+        message: 'Available target roles for skill gap analysis'
+      }
+    };
+  }
+});
+
+// ============================================================
+// PROOF WALLET TOOLS
+// ============================================================
+
+registerTool({
+  name: 'get_proof_wallet_summary',
+  description: 'Get a summary of the user proof wallet including stats, recent proofs, and confidence score',
+  category: 'career',
+  parameters: {
+    type: 'object',
+    properties: {
+      userId: { type: 'string', description: 'User ID' }
+    },
+    required: ['userId']
+  },
+  execute: async (args) => {
+    try {
+      if (!supabase) {
+        return { success: false, error: 'Database not available' };
+      }
+
+      // Get user's proofs
+      const { data: proofs, error: proofsError } = await supabase
+        .from('proof_cards')
+        .select('*')
+        .eq('user_id', args.userId)
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false });
+
+      if (proofsError) throw proofsError;
+
+      // Calculate stats
+      const totalProofs = proofs?.length || 0;
+      const verifiedProofs = proofs?.filter(p => p.verification_status === 'verified').length || 0;
+      const verificationRate = totalProofs > 0 ? Math.round((verifiedProofs / totalProofs) * 100) : 0;
+
+      // Get top skills
+      const skillCounts: Record<string, number> = {};
+      proofs?.forEach(proof => {
+        if (proof.skills && Array.isArray(proof.skills)) {
+          proof.skills.forEach((skill: string) => {
+            skillCounts[skill] = (skillCounts[skill] || 0) + 1;
+          });
+        }
+      });
+
+      const topSkills = Object.entries(skillCounts)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 10)
+        .map(([skill, count]) => ({ skill, count }));
+
+      // Get recent proofs (last 5)
+      const recentProofs = proofs?.slice(0, 5).map(p => ({
+        id: p.id,
+        title: p.title,
+        sourceType: p.source_type,
+        verificationStatus: p.verification_status,
+        createdAt: p.created_at
+      })) || [];
+
+      return {
+        success: true,
+        data: {
+          totalProofs,
+          verifiedProofs,
+          verificationRate,
+          topSkills,
+          recentProofs,
+          message: `Proof wallet summary: ${totalProofs} proofs, ${verifiedProofs} verified (${verificationRate}% rate)`
+        }
+      };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Failed to get proof wallet summary' };
+    }
+  }
+});
+
+registerTool({
+  name: 'suggest_next_proof',
+  description: 'Suggest the next proof card to add based on skill gaps and target role',
+  category: 'career',
+  parameters: {
+    type: 'object',
+    properties: {
+      userId: { type: 'string', description: 'User ID' },
+      targetRole: { type: 'string', description: 'Target role for skill gap analysis' }
+    },
+    required: ['userId']
+  },
+  execute: async (args) => {
+    try {
+      if (!supabase) {
+        return { success: false, error: 'Database not available' };
+      }
+
+      // Get user's current skills from proofs
+      const { data: proofs } = await supabase
+        .from('proof_cards')
+        .select('skills')
+        .eq('user_id', args.userId)
+        .is('deleted_at', null);
+
+      const currentSkills = new Set<string>();
+      proofs?.forEach(proof => {
+        if (proof.skills && Array.isArray(proof.skills)) {
+          proof.skills.forEach((skill: string) => currentSkills.add(skill));
+        }
+      });
+
+      // Analyze skill gaps if target role provided
+      let suggestedProofs: Array<{ title: string; reason: string; skills: string[] }> = [];
+
+      if (args.targetRole) {
+        // Convert skills to the format expected by analyzeSkillGaps
+        const skillArray = Array.from(currentSkills).map(name => ({ name, level: 50 }));
+        const gapAnalysis = analyzeSkillGaps(skillArray, args.targetRole);
+
+        // Suggest proofs based on gaps
+        gapAnalysis.gaps.slice(0, 3).forEach(gap => {
+          suggestedProofs.push({
+            title: `Project demonstrating ${gap.skill}`,
+            reason: `Fill skill gap: ${gap.skill} (${gap.importance})`,
+            skills: [gap.skill]
+          });
+        });
+      } else {
+        // Generic suggestions
+        suggestedProofs = [
+          {
+            title: 'GitHub repository with README',
+            reason: 'Showcase coding skills with verifiable source',
+            skills: ['Programming', 'Documentation']
+          },
+          {
+            title: 'Online course certificate',
+            reason: 'Verified credential from trusted platform',
+            skills: ['Learning', 'Certification']
+          },
+          {
+            title: 'Open source contribution',
+            reason: 'Demonstrate collaboration and code quality',
+            skills: ['Collaboration', 'Code Review']
+          }
+        ];
+      }
+
+      return {
+        success: true,
+        data: {
+          currentSkills: Array.from(currentSkills),
+          suggestedProofs,
+          message: `Suggested ${suggestedProofs.length} proof cards to add next`
+        }
+      };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Failed to suggest next proof' };
+    }
+  }
 });
 
 // ============================================================

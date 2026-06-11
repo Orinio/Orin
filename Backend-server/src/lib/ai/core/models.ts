@@ -75,6 +75,13 @@ export const MODELS = {
     fallback: 'minimaxai/minimax-m2.7',         // Also correct
   },
 
+  // Reasoning Models (Chain-of-thought / thinking)
+  reasoning: {
+    primary: 'openai/gpt-oss-120b',             // Best reasoning with reasoning_content
+    fast: 'openai/gpt-oss-20b',                 // Smaller, faster reasoning
+    gemma: 'google/gemma-4-31b-it',             // Gemma with enable_thinking
+  },
+
   // Code Analysis Models
   code: {
     primary: 'qwen/qwen3-coder-480b-a35b-instruct', // Best code understanding
@@ -146,6 +153,28 @@ export const MODEL_METADATA = {
     category: 'Safety',
     speed: 'fastest',
     description: 'PII detection and extraction'
+  },
+  'openai/gpt-oss-20b': {
+    name: 'GPT-OSS 20B',
+    provider: 'OpenAI',
+    category: 'Reasoning',
+    speed: 'fast',
+    quality: 'high',
+    toolCalling: true,
+    reasoning: true,
+    contextWindow: '32K',
+    description: 'Fast reasoning model with chain-of-thought. Shows reasoning process.'
+  },
+  'google/gemma-4-31b-it': {
+    name: 'Gemma 4 31B',
+    provider: 'Google',
+    category: 'Reasoning',
+    speed: 'fast',
+    quality: 'high',
+    toolCalling: false,
+    reasoning: true,
+    contextWindow: '32K',
+    description: 'Google Gemma with thinking mode. Reveals step-by-step reasoning.'
   }
 };
 

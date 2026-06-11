@@ -4,7 +4,7 @@
 
 # Orin
 
-### *Turn Work Into Career Proof*
+### *A verified proof layer for student talent, with AI that turns evidence into career action.*
 
 [![CI](https://github.com/your-username/Orin/actions/workflows/ci.yml/badge.svg)](https://github.com/your-username/Orin/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-4ade80.svg)](https://opensource.org/licenses/MIT)
@@ -12,7 +12,7 @@
 [![React](https://img.shields.io/badge/React-19-61dafb?logo=react)](https://react.dev)
 [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ecf8e?logo=supabase)](https://supabase.com)
 
-**Orin** is an AI-powered career development platform that transforms scattered work — projects, commits, certificates, competitions — into verified **Proof Cards** that showcase real skills. It features a multi-agent AI system, real-time coaching, opportunity matching, and a Claude-inspired chat experience.
+**Orin** turns scattered student work — GitHub repos, certificates, competitions, projects — into verified, portable **Proof Cards** with confidence scores. Each claim traces back to a source. Every profile ends with "what to do next."
 
 [Get Started](#-getting-started) · [Features](#-features) · [Architecture](#-architecture) · [AI System](#-ai-system) · [API Reference](#-api-routes) · [Deploy](#-deployment)
 
@@ -42,25 +42,29 @@
 
 ## Features
 
-### Core Platform
+### Proof Layer (Core Product)
 | Feature | Description |
 |---|---|
-| **Proof Cards** | Turn projects, commits, and certificates into verified, shareable achievements |
-| **Skill Tracking** | Extract, track, and visualize skills with confidence levels and demand data |
-| **Opportunity Matching** | AI matches your proof portfolio to jobs, internships, scholarships, and hackathons |
-| **Public Profiles** | Shareable profile pages at `/[username]` for recruiters |
-| **Source Connections** | Link GitHub repos, Kaggle, LinkedIn, and certificate sources |
-| **Real-time Notifications** | Verification updates, opportunity matches, and coaching tips |
+| **Proof Wallet** | Connect GitHub, certificates, Kaggle, LinkedIn, and projects in one place |
+| **Verified Profile** | Auto-generated clean profile with source links and confidence scores |
+| **Skill Gap Engine** | See what you're missing for a target role with 1-2 week action plans |
+| **Portable Proof Cards** | Shareable, recruiter-readable achievements that trace back to sources |
+| **Confidence Scoring** | Every claim has a verification confidence score based on source reliability |
 
-### AI System
+### AI That Serves Proof
 | Feature | Description |
 |---|---|
-| **8 Specialized Agents** | Chat, Coach, Learning Path, Opportunity Matcher, Portfolio Scorer, Safety Guard, Skill Analysis, Verification |
-| **Multi-Agent Orchestrator** | Coordinates agent execution with memory, tool calling, and streaming responses |
-| **Tool Calling** | 20+ tools for data fetching, verification, analysis, search, and memory operations |
-| **AI Memory System** | Persistent conversations, user preferences, skill memory, learning progress, goals, and facts |
-| **Claude-Inspired Chat UX** | Split-pane artifacts, inline web search citations, streaming markdown, stop generation, file upload |
-| **Real-time Streaming** | Server-Sent Events with structured `thinking`, `tool_start`, `tool_result`, `answer` events |
+| **Proof-Aware Coach** | AI reads your proof wallet and gives concrete next steps |
+| **Role-Specific Plans** | Action plans based on your actual gaps, not generic advice |
+| **Skill Extraction** | Auto-detect skills from GitHub repos, certificates, and projects |
+| **Verification Engine** | Cryptographic verification against source APIs |
+
+### Distribution
+| Feature | Description |
+|---|---|
+| **Public Profiles** | SEO-optimized profile pages at `/[username]` for recruiters |
+| **Embeddable Proof Cards** | Add to GitHub READMEs, personal websites, portfolios |
+| **University Dashboard** | Career services can track student outcomes at scale |
 
 ### Engineering
 | Feature | Description |
@@ -69,8 +73,6 @@
 | **Production-Grade Security** | Helmet, CSP, CORS allowlist, rate limiting, input sanitization, SSRF protection |
 | **Full Test Coverage** | 17 test files across frontend and backend with Vitest |
 | **CI/CD Pipeline** | GitHub Actions with lint, typecheck, test, build, and deploy stages |
-| **Error Monitoring** | Sentry integration for client, server, and edge environments |
-| **Docker Support** | Multi-stage Alpine build for backend deployment |
 
 ---
 

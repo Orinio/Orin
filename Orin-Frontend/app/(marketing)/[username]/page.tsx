@@ -4,6 +4,7 @@ import Image from 'next/image';
 import type { Metadata } from 'next';
 import { getServerSupabase } from '@/lib/supabase-server';
 import ProofCard from '@/components/ProofCard';
+import ProfileActions from '@/components/ProfileActions';
 import { mapDbUserToUser, mapDbProofToProof, getProofTypeColor } from '@/lib/utils';
 import type { User, Proof } from '@/lib/types';
 
@@ -305,6 +306,9 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
                     ))}
                   </div>
                 )}
+
+                {/* Follow / Message Actions */}
+                <ProfileActions profileUserId={user.id} username={user.username} />
               </div>
             </div>
           </div>

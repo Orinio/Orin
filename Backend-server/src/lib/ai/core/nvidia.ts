@@ -77,6 +77,12 @@ const MODEL_FALLBACKS: Record<string, string[]> = {
     'mistralai/mistral-small-4-119b-2603',
     'meta/llama-3.3-70b-instruct',
   ],
+  // Google Gemma models
+  'google/gemma-4-31b-it': [
+    'openai/gpt-oss-20b',
+    'qwen/qwen3.5-122b-a10b',
+    'meta/llama-3.3-70b-instruct',
+  ],
 };
 
 export interface ChatMessage {
@@ -292,6 +298,7 @@ export async function* chatCompletionStream(
             temperature: options.temperature ?? 0.7,
             max_tokens: options.max_tokens ?? 500,
             stream: true,
+            ...(options.tools && options.tools.length > 0 ? { tools: options.tools, tool_choice: options.tool_choice ?? 'auto' } : {}),
           }),
           signal: AbortSignal.timeout(options.timeoutMs ?? API_TIMEOUT_MS),
         },
@@ -317,7 +324,9 @@ export async function* chatCompletionStream(
             if (data === '[DONE]') return;
             try {
               const parsed = JSON.parse(data);
-              const content = parsed.choices?.[0]?.delta?.content;
+              const delta = parsed.choices?.[0]?.delta;
+              // Yield content tokens
+              const content = delta?.content;
               if (content) yield content;
             } catch {
               // Skip invalid JSON chunks
@@ -327,6 +336,93 @@ export async function* chatCompletionStream(
       }
 
       return; // Success — don't try fallbacks
+    } catch (err) {
+      if (err instanceof AppError && err.code === 'RATE_LIMITED' && model !== modelsToTry[modelsToTry.length - 1]) {
+        logger.warn({ failedModel: model }, 'Stream model rate limited, trying fallback');
+        continue;
+      }
+      throw err;
+    }
+  }
+}
+
+/**
+ * Streaming chat completion that yields both reasoning and content tokens.
+ * For models that support reasoning_content (GPT-OSS, Gemma), reasoning is yielded first.
+ * Yields { type: 'reasoning' | 'content', text: string } objects.
+ */
+export async function* chatCompletionStreamWithReasoning(
+  options: ChatCompletionOptions
+): AsyncGenerator<{ type: 'reasoning' | 'content'; text: string }, void, unknown> {
+  if (!NVIDIA_API_KEY) {
+    throw Errors.notConfigured('NVIDIA_API_KEY');
+  }
+
+  const modelsToTry = [options.model, ...(MODEL_FALLBACKS[options.model] || [])];
+
+  for (const model of modelsToTry) {
+    try {
+      const response = await fetchWithRetry(
+        `${NVIDIA_BASE_URL}/chat/completions`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${NVIDIA_API_KEY}`,
+          },
+          body: JSON.stringify({
+            model,
+            messages: options.messages,
+            temperature: options.temperature ?? 0.7,
+            max_tokens: options.max_tokens ?? 4096,
+            stream: true,
+            ...(options.tools && options.tools.length > 0 ? { tools: options.tools, tool_choice: options.tool_choice ?? 'auto' } : {}),
+          }),
+          signal: AbortSignal.timeout(options.timeoutMs ?? API_TIMEOUT_MS),
+        },
+      );
+
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('No response stream');
+
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6).trim();
+            if (data === '[DONE]') return;
+            try {
+              const parsed = JSON.parse(data);
+              const delta = parsed.choices?.[0]?.delta;
+              if (!delta) continue;
+
+              // Some models return reasoning_content in the delta
+              const reasoning = (delta as any).reasoning_content;
+              if (reasoning) {
+                yield { type: 'reasoning', text: reasoning };
+              }
+
+              const content = delta.content;
+              if (content) {
+                yield { type: 'content', text: content };
+              }
+            } catch {
+              // Skip invalid JSON chunks
+            }
+          }
+        }
+      }
+
+      return;
     } catch (err) {
       if (err instanceof AppError && err.code === 'RATE_LIMITED' && model !== modelsToTry[modelsToTry.length - 1]) {
         logger.warn({ failedModel: model }, 'Stream model rate limited, trying fallback');

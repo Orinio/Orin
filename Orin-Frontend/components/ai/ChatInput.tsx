@@ -19,11 +19,13 @@ export const CHAT_MODELS: ChatModel[] = [
   { id: 'z-ai/glm-5.1', name: 'GLM-5.1', provider: 'Z.AI', badge: '58.4%', badgeColor: '#06b6d4' },
   { id: 'deepseek-ai/deepseek-v4-pro', name: 'DeepSeek V4 Pro', provider: 'DeepSeek', badge: 'Pro', badgeColor: 'var(--color-pulse)' },
   { id: 'deepseek-ai/deepseek-v4-flash', name: 'DeepSeek V4 Flash', provider: 'DeepSeek', badge: 'Flash', badgeColor: 'var(--color-spark)' },
+  { id: 'openai/gpt-oss-120b', name: 'GPT-OSS 120B', provider: 'OpenAI', badge: 'Think', badgeColor: '#6366f1' },
+  { id: 'openai/gpt-oss-20b', name: 'GPT-OSS 20B', provider: 'OpenAI', badge: 'Think', badgeColor: '#8b5cf6' },
+  { id: 'google/gemma-4-31b-it', name: 'Gemma 4 31B', provider: 'Google', badge: 'Think', badgeColor: '#06b6d4' },
   { id: 'minimaxai/minimax-m2.7', name: 'MiniMax M2.7', provider: 'MiniMax' },
   { id: 'nvidia/nemotron-3-super-120b-a12b', name: 'Nemotron-3 Super 120B', provider: 'NVIDIA' },
   { id: 'meta/llama-4-maverick-17b-128e-instruct', name: 'Llama 4 Maverick', provider: 'Meta' },
   { id: 'mistralai/mistral-large-3-675b-instruct-2512', name: 'Mistral Large 3 675B', provider: 'Mistral' },
-  { id: 'openai/gpt-oss-120b', name: 'GPT-OSS 120B', provider: 'OpenAI' },
 ];
 
 interface ChatInputProps {

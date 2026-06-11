@@ -21,6 +21,7 @@ import {
   type WorkspaceArtifact,
   type AgentState,
 } from '@/components/ai/workspace';
+import ThinkingCard from '@/components/ai/ThinkingCard';
 
 // ─── Usage Bar ───────────────────────────────────────────
 interface UsageData {
@@ -619,7 +620,7 @@ export default function SuperAgentChat() {
                 {/* Live reasoning card during streaming */}
                 {isStreaming && currentReasoning && (
                   <div className="max-w-4xl mx-auto px-4 py-2">
-                    <ReasoningSummaryCard content={currentReasoning} />
+                    <ThinkingCard content={currentReasoning} isStreaming={isStreaming} />
                   </div>
                 )}
 

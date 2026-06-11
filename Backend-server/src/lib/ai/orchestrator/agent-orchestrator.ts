@@ -5,7 +5,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from '../../logger.js';
-import { chatCompletion, isNvidiaConfigured } from '../core/nvidia.js';
+import { chatCompletion, chatCompletionStreamWithReasoning, isNvidiaConfigured } from '../core/nvidia.js';
 import type { ChatMessage, ToolCallResponse } from '../core/nvidia.js';
 import { createMemoryManager, type MemoryManager } from '../memory/memory-manager.js';
 import { getToolsByNames, toolsToOpenAITools } from '../core/tool-registry.js';
@@ -479,6 +479,16 @@ export class AgentOrchestrator {
 
         // Case 1: Model wants to call tools (native tool_calls in response)
         if (message.tool_calls && message.tool_calls.length > 0) {
+          // Emit model's reasoning as thinking events (content before tool calls)
+          if (message.content) {
+            thinking += message.content;
+            // Emit in chunks for smooth UX
+            const thinkChunk = 80;
+            for (let i = 0; i < message.content.length; i += thinkChunk) {
+              onEvent('thinking', { content: message.content.substring(i, i + thinkChunk) });
+            }
+          }
+
           // Add the assistant message with tool_calls to history
           messages.push({
             role: 'assistant',
@@ -570,13 +580,43 @@ export class AgentOrchestrator {
           continue; // Next iteration — model will process tool results
         }
 
-        // Case 2: Model returned text content — this is the final answer
+        // Case 2: Model returned text content — stream it token-by-token
         if (message.content) {
-          finalAnswer = sanitizeAnswer(message.content);
-          // Stream the answer in chunks for smooth UX
-          const chunkSize = 20;
-          for (let i = 0; i < finalAnswer.length; i += chunkSize) {
-            onEvent('answer', { content: finalAnswer.substring(i, i + chunkSize) });
+          // Use streaming API for true token-by-token delivery with reasoning support
+          try {
+            let streamedAnswer = '';
+            let streamedReasoning = '';
+            const stream = chatCompletionStreamWithReasoning({
+              model: context.modelOverride || agent.model,
+              messages,
+              temperature: agent.temperature,
+              max_tokens: agent.maxTokens,
+            });
+
+            for await (const chunk of stream) {
+              if (chunk.type === 'reasoning') {
+                streamedReasoning += chunk.text;
+                thinking = streamedReasoning;
+                onEvent('thinking', { content: chunk.text });
+              } else {
+                streamedAnswer += chunk.text;
+                onEvent('answer', { content: chunk.text });
+              }
+            }
+
+            finalAnswer = sanitizeAnswer(streamedAnswer || message.content);
+            // If we got a different answer from streaming, emit the final version
+            if (streamedAnswer && streamedAnswer !== finalAnswer) {
+              onEvent('answer', { content: finalAnswer.substring(streamedAnswer.length) });
+            }
+          } catch (streamErr) {
+            // Fallback: emit the non-streamed answer
+            logger.warn({ err: streamErr }, 'Streaming failed, falling back to non-streamed answer');
+            finalAnswer = sanitizeAnswer(message.content);
+            const chunkSize = 200;
+            for (let i = 0; i < finalAnswer.length; i += chunkSize) {
+              onEvent('answer', { content: finalAnswer.substring(i, i + chunkSize) });
+            }
           }
           break;
         }

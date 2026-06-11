@@ -28,6 +28,7 @@ import { MarkdownRenderer } from './MarkdownRenderer';
 import { SourcesDisplay } from './SourcesDisplay';
 import { MessageRating } from './MessageRating';
 import { VisualRenderer } from '@/components/visuals/VisualRenderer';
+import ThinkingCard from './ThinkingCard';
 
 export interface SuperMessageData {
   id: string;
@@ -104,15 +105,22 @@ function StreamingText({ content }: { content: string }) {
 
   useEffect(() => {
     if (!content) return;
+    // If content arrived all at once (non-streamed fallback), show it instantly
+    if (content.length > 500) {
+      setDisplayed(content);
+      indexRef.current = content.length;
+      return;
+    }
     const interval = setInterval(() => {
       if (indexRef.current < content.length) {
-        const end = Math.min(indexRef.current + 3, content.length);
+        // Show 8 chars at a time for faster perceived streaming
+        const end = Math.min(indexRef.current + 8, content.length);
         setDisplayed(content.substring(0, end));
         indexRef.current = end;
       } else {
         clearInterval(interval);
       }
-    }, 15);
+    }, 10);
     return () => clearInterval(interval);
   }, [content]);
 
@@ -296,6 +304,13 @@ export default function SuperMessage({ message, onRate, onRetry, onFollowUp }: {
               </div>
             ) : (
               <>
+                {/* Live thinking card during streaming — shows reasoning process */}
+                {isStreaming && message.thinking && (
+                  <div className="mb-2">
+                    <ThinkingCard content={message.thinking} isStreaming={isStreaming} />
+                  </div>
+                )}
+
                 {/* Live activity feed during streaming (before content arrives) */}
                 {showLiveFeed && (
                   <LiveActivityFeed

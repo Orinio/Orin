@@ -7,6 +7,9 @@ export interface CoachPromptContext {
   skillAnalysis: SkillAnalysis;
   noteType: 'daily' | 'weekly' | 'milestone' | 'ad_hoc';
   milestone?: string;
+  confidenceScore?: number;
+  targetRole?: string;
+  skillGaps?: Array<{ skill: string; importance: string; actionPlan: string[] }>;
 }
 
 // Sanitize user input to prevent prompt injection
@@ -20,21 +23,26 @@ function sanitizeForPrompt(input: string | undefined | null): string {
 }
 
 export function buildSystemPrompt(): string {
-  return `You are Orin AI Coach, a personalized career coach for professionals across all industries.
+  return `You are Orin AI Coach, a proof-aware career coach that helps professionals build verified proof portfolios.
 
-Your role is to analyze a professional's proof portfolio and provide actionable, specific career advice.
+Your role is to analyze a professional's proof wallet and provide actionable, specific career advice that helps them:
+1. Add new proof cards to their portfolio
+2. Verify existing proofs for higher confidence scores
+3. Fill skill gaps with concrete projects and activities
+4. Share proof cards with recruiters and hiring managers
 
- Guidelines:
+Guidelines:
 - Be encouraging but honest
 - Provide specific, actionable advice (not generic platitudes)
-- Reference their actual work and skills
-- Focus on concrete next steps
+- Reference their actual proofs, skills, and verification status
+- Focus on concrete next steps that build proof cards
 - Keep responses concise (2-4 sentences for tips, 1 paragraph for insights)
 - Use a professional but friendly tone
 - Always end with a clear call-to-action when applicable
 - Adapt advice to their specific profession (tech, medical, education, legal, creative, business, etc.)
+- Reference confidence scores when relevant
 
- Response Format:
+Response Format:
 You MUST respond with valid JSON in this exact format:
 {
   "content": "Your coaching advice here",
@@ -51,52 +59,56 @@ Priority scale: -10 (lowest) to 10 (highest)
 }
 
 export function buildDailyTipPrompt(context: CoachPromptContext): string {
-  const { user, skillAnalysis, proofs } = context;
+  const { user, skillAnalysis, proofs, confidenceScore } = context;
   const verifiedCount = proofs.filter((p) => p.verificationStatus === 'verified').length;
   const topSkills = skillAnalysis.topSkills.slice(0, 5).map((s) => s.name).join(', ');
   const gaps = skillAnalysis.skillGaps.slice(0, 3).map((g) => g.skill).join(', ');
 
-  return `Generate a daily career tip for this professional.
+  return `Generate a daily career tip for this professional based on their proof wallet.
 
 Professional Profile:
 - Name: ${sanitizeForPrompt(user.fullName || user.username)}
 - Headline: ${sanitizeForPrompt(user.headline)}
 - Location: ${sanitizeForPrompt(user.location)}
 
-Portfolio Summary:
+Proof Wallet Summary:
 - Total proofs: ${proofs.length}
 - Verified proofs: ${verifiedCount}
+- Verification rate: ${proofs.length > 0 ? Math.round((verifiedCount / proofs.length) * 100) : 0}%
+- Confidence score: ${confidenceScore || 'Not calculated'}
 - Top skills: ${topSkills || 'None yet'}
 - Skill gaps: ${gaps || 'None identified'}
 
-Provide a specific, actionable tip based on their current portfolio. Focus on:
-1. One thing they can do TODAY to improve their profile
+Provide a specific, actionable tip based on their proof wallet. Focus on:
+1. One thing they can do TODAY to add a new proof card
 2. Reference their actual skills or proofs when possible
 3. Keep it concise and actionable
+4. Mention how this will improve their confidence score
 
 Respond with JSON only.`;
 }
 
 export function buildWeeklyInsightPrompt(context: CoachPromptContext): string {
-  const { user, skillAnalysis, proofs } = context;
+  const { user, skillAnalysis, proofs, confidenceScore } = context;
   const verifiedCount = proofs.filter((p) => p.verificationStatus === 'verified').length;
   const recentProofs = proofs.slice(0, 5);
   const skillGaps = skillAnalysis.skillGaps.slice(0, 5);
 
-  return `Generate a weekly insight summary for this professional.
+  return `Generate a weekly insight summary for this professional based on their proof wallet.
 
 Professional Profile:
 - Name: ${sanitizeForPrompt(user.fullName || user.username)}
 - Headline: ${sanitizeForPrompt(user.headline)}
 - Location: ${sanitizeForPrompt(user.location)}
 
-This Week's Activity:
+This Week's Proof Activity:
 - Total proofs: ${proofs.length}
 - Verified proofs: ${verifiedCount}
-- Verification rate: ${Math.round(skillAnalysis.verificationRate * 100)}%
+- Verification rate: ${proofs.length > 0 ? Math.round((verifiedCount / proofs.length) * 100) : 0}%
+- Confidence score: ${confidenceScore || 'Not calculated'}
 
 Recent Proofs:
-${recentProofs.map((p) => `- ${p.title} (${p.sourceType})`).join('\n') || 'No recent proofs'}
+${recentProofs.map((p) => `- ${p.title} (${p.sourceType}) [${p.verificationStatus}]`).join('\n') || 'No recent proofs'}
 
 Skill Analysis:
 - Total unique skills: ${skillAnalysis.uniqueSkills}
@@ -107,16 +119,16 @@ Skill Gaps to Address:
 ${skillGaps.map((g) => `- ${g.skill} (${g.importance})`).join('\n') || 'No gaps identified'}
 
 Provide a comprehensive weekly summary that includes:
-1. What they accomplished this week
-2. Areas of strength
-3. One specific improvement suggestion
-4. A motivational insight
+1. What proofs they added or verified this week
+2. Areas of strength (high-confidence proofs)
+3. One specific proof card they should add next
+4. How their confidence score changed
 
 Respond with JSON only.`;
 }
 
 export function buildMilestonePrompt(context: CoachPromptContext): string {
-  const { user, skillAnalysis, proofs, milestone } = context;
+  const { user, skillAnalysis, proofs, milestone, confidenceScore } = context;
   const verifiedCount = proofs.filter((p) => p.verificationStatus === 'verified').length;
 
   return `Generate a milestone celebration note for this professional.
@@ -127,16 +139,17 @@ Professional Profile:
 
 Milestone Achieved: ${sanitizeForPrompt(milestone) || 'New milestone reached'}
 
-Portfolio Stats:
+Proof Wallet Stats:
 - Total proofs: ${proofs.length}
 - Verified proofs: ${verifiedCount}
 - Unique skills: ${skillAnalysis.uniqueSkills}
-- Verification rate: ${Math.round(skillAnalysis.verificationRate * 100)}%
+- Verification rate: ${proofs.length > 0 ? Math.round((verifiedCount / proofs.length) * 100) : 0}%
+- Confidence score: ${confidenceScore || 'Not calculated'}
 
 Celebrate their achievement and:
 1. Acknowledge their specific accomplishment
-2. Put it in context of their overall journey
-3. Suggest what to aim for next
+2. Put it in context of their proof portfolio growth
+3. Suggest what proof card to add next
 4. Keep it enthusiastic but professional
 
 Respond with JSON only.`;
@@ -146,34 +159,36 @@ export function buildAdHocPrompt(
   context: CoachPromptContext,
   userQuery?: string
 ): string {
-  const { user, skillAnalysis, proofs } = context;
+  const { user, skillAnalysis, proofs, confidenceScore, targetRole, skillGaps } = context;
   const verifiedCount = proofs.filter((p) => p.verificationStatus === 'verified').length;
   const topSkills = skillAnalysis.topSkills.slice(0, 5).map((s) => s.name).join(', ');
-  const skillGaps = skillAnalysis.skillGaps.slice(0, 5);
 
-  return `A professional is asking for career advice. Provide personalized guidance based on their portfolio.
+  return `A professional is asking for career advice. Provide personalized guidance based on their proof wallet.
 
 Professional Profile:
 - Name: ${sanitizeForPrompt(user.fullName || user.username)}
 - Headline: ${sanitizeForPrompt(user.headline)}
 - Location: ${sanitizeForPrompt(user.location)}
 
-Portfolio Summary:
+Proof Wallet Summary:
 - Total proofs: ${proofs.length}
 - Verified proofs: ${verifiedCount}
 - Top skills: ${topSkills || 'None yet'}
-- Verification rate: ${Math.round(skillAnalysis.verificationRate * 100)}%
+- Verification rate: ${proofs.length > 0 ? Math.round((verifiedCount / proofs.length) * 100) : 0}%
+- Confidence score: ${confidenceScore || 'Not calculated'}
+- Target role: ${targetRole || 'Not specified'}
 
 Skill Gaps:
-${skillGaps.map((g) => `- ${g.skill} (${g.importance})`).join('\n') || 'No gaps identified'}
+${skillGaps?.map((g) => `- ${g.skill} (${g.importance})`).join('\n') || skillAnalysis.skillGaps.slice(0, 5).map((g) => `- ${g.skill} (${g.importance})`).join('\n') || 'No gaps identified'}
 
-  ${userQuery ? `User's question: "${sanitizeForPrompt(userQuery)}"` : 'Provide general career advice based on their profile.'}
+  ${userQuery ? `User's question: "${sanitizeForPrompt(userQuery)}"` : 'Provide general career advice based on their proof wallet.'}
 
 Provide personalized advice that:
-1. References their actual skills and proofs
+1. References their actual proofs and verification status
 2. Addresses their specific question or situation
-3. Gives concrete, actionable next steps
-4. Is encouraging but realistic
+3. Gives concrete next steps to add new proof cards
+4. Explains how this will improve their confidence score
+5. Is encouraging but realistic
 
 Respond with JSON only.`;
 }
@@ -190,7 +205,7 @@ Professional Profile:
 
 This is their first interaction with the AI coach. Welcome them and:
 1. Acknowledge their decision to join Orin
-2. Highlight the key features they should explore
+2. Explain the proof wallet concept (verified proof cards)
 3. Suggest their first action (connecting platforms or adding a proof)
 4. Keep it warm, welcoming, and motivating
 

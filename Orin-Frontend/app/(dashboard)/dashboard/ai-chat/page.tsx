@@ -67,21 +67,20 @@ function UsageBar({ session, onRefreshRef }: { session: any; onRefreshRef?: Reac
     <div
       className="flex items-center gap-3 px-4 py-1.5 text-xs"
       style={{
-        backgroundColor: isExhausted ? 'rgba(239,68,68,0.06)' : 'rgba(255,255,255,0.6)',
-        borderBottom: '1px solid var(--color-border)',
-        color: 'var(--color-mist)',
-        backdropFilter: 'blur(12px)',
+        backgroundColor: isExhausted ? 'rgba(220,38,38,0.06)' : '#f0ece3',
+        borderBottom: '1px solid #e5e0d6',
+        color: '#8a8580',
       }}
     >
       <span
         className="px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider"
         style={{
           background: usage.plan === 'pro'
-            ? 'linear-gradient(135deg, rgba(139,92,246,0.12), rgba(99,102,241,0.12))'
+            ? 'rgba(139,92,246,0.1)'
             : usage.plan === 'team'
-            ? 'linear-gradient(135deg, rgba(59,130,246,0.12), rgba(37,99,235,0.12))'
-            : 'rgba(107,114,128,0.1)',
-          color: usage.plan === 'pro' ? '#8b5cf6' : usage.plan === 'team' ? '#3b82f6' : '#6b7280',
+            ? 'rgba(59,130,246,0.1)'
+            : 'rgba(176,170,160,0.15)',
+          color: usage.plan === 'pro' ? '#8b5cf6' : usage.plan === 'team' ? '#3b82f6' : '#8a8580',
         }}
       >
         {usage.planName}
@@ -547,7 +546,7 @@ export default function SuperAgentChat() {
   return (
     <div
       className="h-screen flex flex-col overflow-hidden -mx-4 -mt-8"
-      style={{ backgroundColor: 'var(--color-paper)' }}
+      style={{ backgroundColor: '#faf9f5' }}
     >
       {/* ── Header ── */}
       <ProjectHeader
@@ -587,95 +586,113 @@ export default function SuperAgentChat() {
               scrollBehavior: 'smooth',
               maxWidth: activityOpen ? '50%' : '100%',
               transition: 'max-width 0.3s ease',
-              background: 'linear-gradient(180deg, var(--color-paper) 0%, rgba(249,250,251,0.5) 50%, var(--color-paper) 100%)',
+              background: 'linear-gradient(180deg, #faf9f5 0%, #f5f3ee 50%, #faf9f5 100%)',
             }}
           >
             {isWelcome ? (
               <div className="h-full flex flex-col items-center justify-center px-4 relative overflow-hidden">
-                {/* Ambient gradient background */}
+                {/* Ambient warm gradient background — Claude-inspired */}
                 <div
                   className="absolute inset-0 pointer-events-none"
                   style={{
-                    background: 'radial-gradient(ellipse 80% 60% at 50% 40%, rgba(11,171,119,0.06) 0%, transparent 60%), radial-gradient(ellipse 60% 50% at 80% 20%, rgba(99,102,241,0.05) 0%, transparent 50%), radial-gradient(ellipse 50% 40% at 20% 80%, rgba(246,146,38,0.04) 0%, transparent 50%)',
+                    background: 'radial-gradient(ellipse 80% 60% at 50% 30%, rgba(201,100,66,0.06) 0%, transparent 60%), radial-gradient(ellipse 60% 50% at 70% 70%, rgba(11,171,119,0.04) 0%, transparent 50%), radial-gradient(ellipse 40% 40% at 20% 50%, rgba(99,102,241,0.03) 0%, transparent 50%)',
                   }}
                 />
 
+                {/* Floating orbs — ambient motion */}
+                <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                  <div
+                    className="absolute w-[500px] h-[500px] rounded-full opacity-[0.03] blur-3xl"
+                    style={{
+                      background: 'radial-gradient(circle, var(--color-bloom), transparent 70%)',
+                      top: '10%',
+                      left: '60%',
+                      animation: 'float 20s ease-in-out infinite',
+                    }}
+                  />
+                  <div
+                    className="absolute w-[400px] h-[400px] rounded-full opacity-[0.03] blur-3xl"
+                    style={{
+                      background: 'radial-gradient(circle, #c96442, transparent 70%)',
+                      bottom: '10%',
+                      left: '20%',
+                      animation: 'float 25s ease-in-out infinite reverse',
+                    }}
+                  />
+                </div>
+
+                <style>{`
+                  @keyframes float {
+                    0%, 100% { transform: translate(0, 0) scale(1); }
+                    33% { transform: translate(30px, -20px) scale(1.05); }
+                    66% { transform: translate(-20px, 20px) scale(0.95); }
+                  }
+                `}</style>
+
                 <div className="relative z-10 flex flex-col items-center max-w-2xl mx-auto">
-                  {/* Logo mark with glow */}
-                  <div className="relative mb-8">
+                  {/* Logo mark — editorial style */}
+                  <div className="relative mb-6">
                     <div
-                      className="w-20 h-20 rounded-3xl flex items-center justify-center relative"
+                      className="w-16 h-16 rounded-2xl flex items-center justify-center relative"
                       style={{
-                        background: 'linear-gradient(135deg, var(--color-ink) 0%, #1a1a2e 50%, #16213e 100%)',
-                        boxShadow: '0 8px 40px rgba(0,0,0,0.15), 0 0 0 1px rgba(255,255,255,0.05) inset',
+                        background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
+                        boxShadow: '0 4px 24px rgba(0,0,0,0.12)',
                       }}
                     >
-                      <Sparkles className="w-9 h-9" style={{ color: 'var(--color-spark)' }} />
-                      <div
-                        className="absolute -inset-1 rounded-3xl opacity-30 blur-xl"
-                        style={{ background: 'linear-gradient(135deg, var(--color-bloom), #6366f1, var(--color-ember))' }}
-                      />
+                      <Sparkles className="w-7 h-7" style={{ color: '#c96442' }} />
                     </div>
                   </div>
 
-                  {/* Heading */}
+                  {/* Heading — serif, editorial */}
                   <h1
-                    className="text-3xl sm:text-4xl font-bold mb-3 text-center leading-tight"
-                    style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-ink)' }}
+                    className="text-3xl sm:text-4xl font-normal mb-3 text-center leading-tight tracking-tight"
+                    style={{ fontFamily: 'Georgia, "Times New Roman", serif', color: 'var(--color-ink)' }}
                   >
-                    What can I help you with?
+                    How can I help you today?
                   </h1>
 
                   {/* Subtitle */}
                   <p
-                    className="text-sm sm:text-base mb-10 text-center max-w-lg leading-relaxed"
-                    style={{ color: 'var(--color-mist)', fontFamily: 'var(--font-body)' }}
+                    className="text-sm mb-8 text-center max-w-md leading-relaxed"
+                    style={{ color: '#8a8580', fontFamily: 'var(--font-body)' }}
                   >
-                    I&apos;m your AI career agent. Ask me anything about your portfolio, skills, job search, or professional growth.
+                    Your AI career agent. Ask about your portfolio, skills, opportunities, or professional growth.
                   </p>
 
-                  {/* Feature cards */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-10 w-full max-w-xl">
+                  {/* Mode tabs — Claude-style rounded chips */}
+                  <div className="flex flex-wrap justify-center gap-2 mb-8">
                     {[
-                      { icon: BarChart3, label: 'Analyze portfolio', color: 'var(--color-bloom)', gradient: 'rgba(11,171,119,0.08)' },
-                      { icon: Target, label: 'Find opportunities', color: 'var(--color-ember)', gradient: 'rgba(246,146,38,0.08)' },
-                      { icon: BookOpen, label: 'Learning paths', color: '#6366f1', gradient: 'rgba(99,102,241,0.08)' },
-                      { icon: Code, label: 'Verify projects', color: 'var(--color-pulse)', gradient: 'rgba(238,66,102,0.08)' },
-                    ].map(({ icon: Icon, label, color, gradient }) => (
+                      { label: 'Code', icon: Code, prompt: 'Help me with code for my project', color: '#6366f1' },
+                      { label: 'Create', icon: Sparkles, prompt: 'Help me create something new', color: '#c96442' },
+                      { label: 'Write', icon: BookOpen, prompt: 'Help me write professional content', color: 'var(--color-bloom)' },
+                      { label: 'Learn', icon: Target, prompt: 'Help me learn a new skill', color: 'var(--color-ember)' },
+                      { label: 'Analyze', icon: BarChart3, prompt: 'Analyze my portfolio and career', color: '#8b5cf6' },
+                    ].map(({ label, icon: Icon, prompt, color }) => (
                       <button
                         key={label}
-                        onClick={() => {
-                          const textMap: Record<string, string> = {
-                            'Analyze portfolio': 'Analyze my portfolio and suggest improvements',
-                            'Find opportunities': 'Find job opportunities that match my skills',
-                            'Learning paths': 'Create a learning path for my career goals',
-                            'Verify projects': 'Verify my GitHub projects and certifications',
-                          };
-                          handleSend(textMap[label] || label);
-                        }}
-                        className="group flex flex-col items-center gap-2.5 p-4 rounded-2xl transition-all duration-300 hover:scale-[1.03] hover:shadow-lg active:scale-[0.98]"
+                        onClick={() => handleSend(prompt)}
+                        className="group flex items-center gap-2 px-4 py-2 rounded-full text-xs font-medium transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
                         style={{
-                          backgroundColor: gradient,
                           border: '1px solid var(--color-border)',
+                          color: 'var(--color-ink)',
+                          backgroundColor: 'transparent',
+                        }}
+                        onMouseEnter={e => {
+                          e.currentTarget.style.borderColor = `${color}40`;
+                          e.currentTarget.style.backgroundColor = `${color}08`;
+                        }}
+                        onMouseLeave={e => {
+                          e.currentTarget.style.borderColor = 'var(--color-border)';
+                          e.currentTarget.style.backgroundColor = 'transparent';
                         }}
                       >
-                        <div
-                          className="w-10 h-10 rounded-xl flex items-center justify-center transition-transform duration-300 group-hover:scale-110"
-                          style={{ backgroundColor: `${color}12` }}
-                        >
-                          <Icon className="w-5 h-5" style={{ color }} />
-                        </div>
-                        <span
-                          className="text-[11px] font-semibold text-center leading-tight"
-                          style={{ color: 'var(--color-ink)', fontFamily: 'var(--font-body)' }}
-                        >
-                          {label}
-                        </span>
+                        <Icon className="w-3.5 h-3.5" style={{ color }} />
+                        {label}
                       </button>
                     ))}
                   </div>
 
-                  {/* Composer */}
+                  {/* Composer — borderless, warm */}
                   <div className="w-full max-w-2xl">
                     <Composer
                       onSend={handleSend}
@@ -686,9 +703,9 @@ export default function SuperAgentChat() {
                   </div>
 
                   {/* Model hint */}
-                  <div className="flex items-center gap-1.5 mt-4 text-[10px] opacity-40" style={{ fontFamily: 'var(--font-mono)' }}>
+                  <div className="flex items-center gap-1.5 mt-3 text-[10px] opacity-30" style={{ fontFamily: 'var(--font-mono)' }}>
                     <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: currentModel.badgeColor || 'var(--color-bloom)' }} />
-                    {currentModel.name} selected
+                    {currentModel.name}
                   </div>
                 </div>
               </div>
@@ -715,10 +732,9 @@ export default function SuperAgentChat() {
                 onClick={() => { isUserScrolledRef.current = false; messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }}
                 className="fixed bottom-28 left-1/2 -translate-x-1/2 z-10 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95"
                 style={{
-                  background: 'linear-gradient(135deg, var(--color-surface), white)',
-                  border: '1px solid var(--color-border)',
-                  color: 'var(--color-ink)',
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.02)',
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #e5e0d6',
+                  color: '#3d3a35',
                 }}
               >
                 <ArrowDown className="w-4 h-4" />
@@ -750,9 +766,8 @@ export default function SuperAgentChat() {
         <div
           className="flex-shrink-0"
           style={{
-            borderTop: '1px solid var(--color-border)',
-            backgroundColor: 'rgba(255,255,255,0.8)',
-            backdropFilter: 'blur(20px)',
+            borderTop: '1px solid #e5e0d6',
+            backgroundColor: '#faf9f5',
           }}
         >
           <Composer

@@ -11,8 +11,7 @@ interface ThinkingCardProps {
 
 /**
  * Collapsible card that shows AI reasoning/thinking during streaming.
- * Auto-collapses when the real answer starts arriving.
- * Shows a live-updating preview of the thinking process.
+ * Claude-style: warm cream, minimal chrome, blur reveal.
  */
 export default function ThinkingCard({ content, isStreaming, className = '' }: ThinkingCardProps) {
   const [expanded, setExpanded] = useState(false);
@@ -41,9 +40,8 @@ export default function ThinkingCard({ content, isStreaming, className = '' }: T
     <div
       className={`rounded-xl overflow-hidden transition-all duration-300 ${className}`}
       style={{
-        backgroundColor: 'var(--color-surface)',
-        border: '1px solid var(--color-border)',
-        boxShadow: isStreaming ? '0 0 0 1px rgba(99, 102, 241, 0.1)' : 'none',
+        backgroundColor: '#f0ece3',
+        border: '1px solid #e5e0d6',
       }}
     >
       <button
@@ -51,13 +49,13 @@ export default function ThinkingCard({ content, isStreaming, className = '' }: T
         className="w-full flex items-center gap-2 px-3 py-2.5 text-left transition-colors hover:bg-black/[0.02]"
       >
         {isStreaming ? (
-          <Loader2 className="w-3.5 h-3.5 animate-spin flex-shrink-0" style={{ color: '#6366f1' }} />
+          <Loader2 className="w-3.5 h-3.5 animate-spin flex-shrink-0" style={{ color: '#c96442' }} />
         ) : (
-          <Brain className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#6366f1' }} />
+          <Brain className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#c96442' }} />
         )}
         <span
           className="text-[11px] font-semibold uppercase tracking-wider flex-shrink-0"
-          style={{ color: '#6366f1', fontFamily: 'var(--font-mono)' }}
+          style={{ color: '#c96442', fontFamily: 'var(--font-mono)' }}
         >
           {isStreaming ? 'Thinking' : 'Reasoning'}
         </span>
@@ -67,7 +65,7 @@ export default function ThinkingCard({ content, isStreaming, className = '' }: T
               <span
                 key={i}
                 className="w-1 h-1 rounded-full animate-pulse"
-                style={{ backgroundColor: '#6366f1', animationDelay: `${i * 0.2}s` }}
+                style={{ backgroundColor: '#c96442', animationDelay: `${i * 0.2}s` }}
               />
             ))}
           </span>
@@ -75,7 +73,7 @@ export default function ThinkingCard({ content, isStreaming, className = '' }: T
         {!expanded && hasContent && (
           <span
             className="text-[11px] flex-1 truncate ml-1"
-            style={{ color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-body)' }}
+            style={{ color: '#b0aaa0', fontFamily: 'var(--font-body)' }}
           >
             {preview}
           </span>
@@ -83,14 +81,14 @@ export default function ThinkingCard({ content, isStreaming, className = '' }: T
         {!expanded && !hasContent && isStreaming && (
           <span
             className="text-[11px] flex-1 ml-1"
-            style={{ color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-body)' }}
+            style={{ color: '#b0aaa0', fontFamily: 'var(--font-body)' }}
           >
             Analyzing your request...
           </span>
         )}
         {hasContent && (
           <span
-            className="text-[10px] flex-shrink-0 opacity-40"
+            className="text-[10px] flex-shrink-0 opacity-30"
             style={{ fontFamily: 'var(--font-mono)' }}
           >
             {lineCount} lines
@@ -106,15 +104,15 @@ export default function ThinkingCard({ content, isStreaming, className = '' }: T
           ref={contentRef}
           className="px-3 pb-3 text-xs leading-relaxed whitespace-pre-wrap max-h-64 overflow-y-auto"
           style={{
-            color: 'var(--color-text-secondary)',
+            color: '#5b5950',
             fontFamily: 'var(--font-mono)',
-            borderTop: '1px solid var(--color-border)',
+            borderTop: '1px solid #e5e0d6',
             paddingTop: '8px',
           }}
         >
           {content}
           {isStreaming && (
-            <span className="inline-block w-[6px] h-[12px] ml-0.5 align-middle animate-pulse" style={{ backgroundColor: '#6366f1' }} />
+            <span className="inline-block w-[6px] h-[12px] ml-0.5 align-middle animate-pulse" style={{ backgroundColor: '#c96442' }} />
           )}
         </div>
       )}

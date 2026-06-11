@@ -127,15 +127,13 @@ export default function Composer({
         </div>
       )}
 
-      {/* Input container */}
+      {/* Input container — Claude-style: borderless, warm */}
       <div
         className="relative flex items-end gap-2 rounded-2xl transition-all duration-300"
         style={{
-          backgroundColor: 'var(--color-surface)',
-          border: hasInput ? '1.5px solid var(--color-bloom)' : '1.5px solid var(--color-border)',
-          boxShadow: hasInput
-            ? '0 0 0 3px rgba(11,171,119,0.1), 0 4px 16px rgba(0,0,0,0.06)'
-            : '0 2px 8px rgba(0,0,0,0.04)',
+          backgroundColor: '#ffffff',
+          border: hasInput ? '1px solid #c96442' : '1px solid #e5e0d6',
+          boxShadow: 'none',
           padding: '10px 12px',
         }}
       >
@@ -254,15 +252,14 @@ export default function Composer({
           )}
         </div>
 
-        {/* Send / Stop button */}
+        {/* Send / Stop button — coral accent like Claude */}
         {isStreaming ? (
           <button
             onClick={onStop}
             className="flex-shrink-0 p-2.5 rounded-xl transition-all duration-200 active:scale-95"
             style={{
-              background: 'linear-gradient(135deg, var(--color-pulse), #dc2626)',
+              backgroundColor: '#c96442',
               color: 'white',
-              boxShadow: '0 2px 8px rgba(238,66,102,0.3)',
             }}
             title="Stop generating"
           >
@@ -274,11 +271,8 @@ export default function Composer({
             disabled={disabled || !hasInput}
             className="flex-shrink-0 p-2.5 rounded-xl transition-all duration-200 disabled:opacity-20 active:scale-95"
             style={{
-              background: hasInput
-                ? 'linear-gradient(135deg, var(--color-bloom), #0A9A6A)'
-                : 'var(--color-border)',
-              color: hasInput ? 'white' : 'var(--color-mist)',
-              boxShadow: hasInput ? '0 2px 8px rgba(11,171,119,0.3)' : 'none',
+              backgroundColor: hasInput ? '#c96442' : '#e5e0d6',
+              color: hasInput ? 'white' : '#b0aaa0',
             }}
           >
             <ArrowUp className="w-4 h-4" />

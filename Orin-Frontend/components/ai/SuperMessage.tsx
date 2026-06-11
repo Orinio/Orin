@@ -253,252 +253,226 @@ export default function SuperMessage({ message, onRate, onRetry, onFollowUp }: {
 
   return (
     <div className="group" style={{ animation: 'fadeInUp 0.3s ease-out' }}>
-      <div className="max-w-4xl mx-auto px-4 py-3">
-        <div className="flex gap-3">
-          {/* Avatar */}
-          {!isUser && (
+      <div className="max-w-3xl mx-auto px-4 py-3">
+        {/* User message — warm beige bubble, right-aligned */}
+        {isUser ? (
+          <div className="flex justify-end">
             <div
-              className="flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center text-[11px] font-bold mt-0.5 select-none relative"
+              className="inline-block px-4 py-2.5 rounded-2xl rounded-tr-md text-sm leading-[1.65] max-w-[80%]"
               style={{
-                background: `linear-gradient(135deg, ${agent.color}, ${agent.color}cc)`,
-                color: 'white',
-                fontFamily: 'var(--font-mono)',
-                boxShadow: `0 2px 8px ${agent.color}30`,
+                backgroundColor: '#e5e0d6',
+                color: '#1a1a1a',
+                fontFamily: 'var(--font-body)',
               }}
             >
-              {agent.letter}
+              {message.content}
             </div>
-          )}
-
-          {/* Spacer for user messages to align with assistant */}
-          {isUser && <div className="flex-shrink-0 w-8" />}
-
-          <div className="flex-1 min-w-0">
-            {/* Agent label */}
-            {!isUser && (
-              <div className="flex items-center gap-2 mb-1.5">
-                <span
-                  className="text-[10px] font-bold tracking-widest uppercase"
-                  style={{ color: agent.color, fontFamily: 'var(--font-mono)' }}
-                >
-                  {message.agentName || agent.label}
-                </span>
-                {isStreaming && (
-                  <span className="flex items-center gap-0.5">
-                    {[0, 1, 2].map(i => (
-                      <span
-                        key={i}
-                        className="w-1 h-1 rounded-full animate-pulse"
-                        style={{ backgroundColor: agent.color, animationDelay: `${i * 0.15}s` }}
-                      />
-                    ))}
+          </div>
+        ) : (
+          <>
+            {/* Assistant message — Claude-style: no avatar, no bubble, text on cream */}
+            <div className="max-w-[85%]">
+              {/* Agent label — minimal */}
+              {!isUser && (
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span
+                    className="text-[10px] font-bold tracking-widest uppercase"
+                    style={{ color: agent.color, fontFamily: 'var(--font-mono)' }}
+                  >
+                    {message.agentName || agent.label}
                   </span>
-                )}
-                {message.durationMs && !isStreaming && (
-                  <span className="text-[10px] opacity-30" style={{ fontFamily: 'var(--font-mono)' }}>
-                    {(message.durationMs / 1000).toFixed(1)}s
-                  </span>
-                )}
+                  {isStreaming && (
+                    <span className="flex items-center gap-0.5">
+                      {[0, 1, 2].map(i => (
+                        <span
+                          key={i}
+                          className="w-1 h-1 rounded-full animate-pulse"
+                          style={{ backgroundColor: agent.color, animationDelay: `${i * 0.15}s` }}
+                        />
+                      ))}
+                    </span>
+                  )}
+                  {message.durationMs && !isStreaming && (
+                    <span className="text-[10px] opacity-30" style={{ fontFamily: 'var(--font-mono)' }}>
+                      {(message.durationMs / 1000).toFixed(1)}s
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* Live thinking card during streaming — shows reasoning process */}
+              {isStreaming && message.thinking && (
+                <div className="mb-2">
+                  <ThinkingCard content={message.thinking} isStreaming={isStreaming} />
+                </div>
+              )}
+
+              {/* Live activity feed during streaming (before content arrives) */}
+              {showLiveFeed && (
+                <LiveActivityFeed
+                  thinking={message.thinking}
+                  steps={message.steps}
+                  content={message.content}
+                  agent={agent}
+                />
+              )}
+
+              {/* Collapsed step summary (after streaming done) */}
+              {!isStreaming && hasSteps && (
+                <StepSummary steps={message.steps!} />
+              )}
+
+              {/* Main content — serif for editorial feel, on cream background */}
+              <div
+                className="text-sm leading-[1.65]"
+                style={{ color: '#3d3a35', fontFamily: 'Georgia, "Times New Roman", serif' }}
+              >
+                {isStreaming && message.content ? (
+                  <StreamingText content={message.content} />
+                ) : !isStreaming && message.content ? (
+                  <MarkdownRenderer content={message.content} />
+                ) : null}
               </div>
-            )}
 
-            {/* User message */}
-            {isUser ? (
-              <div className="flex justify-end">
+              {/* Thinking toggle — minimal */}
+              {message.thinking && !isStreaming && (
+                <button
+                  onClick={() => setThinkingOpen(!thinkingOpen)}
+                  className="flex items-center gap-1.5 mt-2 text-[10px] opacity-30 hover:opacity-60 transition-opacity"
+                  style={{ fontFamily: 'var(--font-mono)' }}
+                >
+                  {thinkingOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                  <Brain className="w-3 h-3" />
+                  reasoning
+                </button>
+              )}
+              {thinkingOpen && message.thinking && (
                 <div
-                  className="inline-block px-4 py-2.5 rounded-2xl rounded-tr-md text-sm leading-relaxed max-w-[85%]"
+                  className="mt-1 p-3 rounded-lg text-xs leading-relaxed whitespace-pre-wrap max-h-64 overflow-y-auto"
                   style={{
-                    background: 'linear-gradient(135deg, var(--color-ink), #1a1a2e)',
-                    color: 'var(--color-paper)',
-                    fontFamily: 'var(--font-body)',
-                    boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+                    backgroundColor: '#f0ece3',
+                    color: '#5b5950',
+                    fontFamily: 'var(--font-mono)',
+                    border: '1px solid #e5e0d6',
                   }}
                 >
-                  {message.content}
+                  {message.thinking}
                 </div>
-              </div>
-            ) : (
-              <>
-                {/* Live thinking card during streaming — shows reasoning process */}
-                {isStreaming && message.thinking && (
-                  <div className="mb-2">
-                    <ThinkingCard content={message.thinking} isStreaming={isStreaming} />
-                  </div>
-                )}
+              )}
 
-                {/* Live activity feed during streaming (before content arrives) */}
-                {showLiveFeed && (
-                  <LiveActivityFeed
-                    thinking={message.thinking}
-                    steps={message.steps}
-                    content={message.content}
-                    agent={agent}
-                  />
-                )}
-
-                {/* Collapsed step summary (after streaming done) */}
-                {!isStreaming && hasSteps && (
-                  <StepSummary steps={message.steps!} />
-                )}
-
-                {/* Main content */}
+              {/* Error + Retry */}
+              {message.error && !isStreaming && (
                 <div
-                  className="text-sm leading-[1.75] mt-1"
-                  style={{ color: 'var(--color-ink)', fontFamily: 'var(--font-body)' }}
+                  className="mt-3 flex items-center gap-2 px-3 py-2 rounded-lg text-xs"
+                  style={{
+                    backgroundColor: 'rgba(239,68,68,0.06)',
+                    border: '1px solid rgba(239,68,68,0.15)',
+                    color: '#dc2626',
+                  }}
                 >
-                  {isStreaming && message.content ? (
-                    <StreamingText content={message.content} />
-                  ) : !isStreaming && message.content ? (
-                    <MarkdownRenderer content={message.content} />
-                  ) : null}
+                  <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                  <span className="flex-1">{message.error}</span>
+                  {onRetry && (
+                    <button
+                      onClick={() => onRetry(message.id)}
+                      className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold transition-colors hover:bg-black/5"
+                      style={{ color: '#dc2626' }}
+                    >
+                      <RefreshCw className="w-3 h-3" />
+                      Retry
+                    </button>
+                  )}
                 </div>
+              )}
 
-                {/* Thinking toggle */}
-                {message.thinking && !isStreaming && (
-                  <button
-                    onClick={() => setThinkingOpen(!thinkingOpen)}
-                    className="flex items-center gap-1.5 mt-2 text-[10px] opacity-40 hover:opacity-70 transition-opacity"
-                    style={{ fontFamily: 'var(--font-mono)' }}
-                  >
-                    {thinkingOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-                    <Brain className="w-3 h-3" />
-                    reasoning
-                  </button>
-                )}
-                {thinkingOpen && message.thinking && (
-                  <div
-                    className="mt-1 p-3 rounded-lg text-xs leading-relaxed whitespace-pre-wrap"
-                    style={{
-                      backgroundColor: 'var(--color-surface-dim)',
-                      color: 'var(--color-text-secondary)',
-                      fontFamily: 'var(--font-mono)',
-                      border: '1px solid var(--color-border)',
-                    }}
-                  >
-                    {message.thinking}
-                  </div>
-                )}
+              {/* Sources */}
+              {message.sources && message.sources.length > 0 && (
+                <div className="mt-3">
+                  <SourcesDisplay sources={message.sources} />
+                </div>
+              )}
 
-                {/* Error + Retry */}
-                {message.error && !isStreaming && (
-                  <div
-                    className="mt-3 flex items-center gap-2 px-3 py-2 rounded-lg text-xs"
-                    style={{
-                      backgroundColor: 'rgba(239,68,68,0.06)',
-                      border: '1px solid rgba(239,68,68,0.15)',
-                      color: 'var(--color-pulse)',
-                    }}
-                  >
-                    <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
-                    <span className="flex-1">{message.error}</span>
-                    {onRetry && (
+              {/* Visual Specs */}
+              {message.visualSpecs && message.visualSpecs.length > 0 && !isStreaming && (
+                <div className="mt-4 space-y-4">
+                  {message.visualSpecs.map((spec, i) => (
+                    <VisualRenderer key={i} spec={spec as any} />
+                  ))}
+                </div>
+              )}
+
+              {/* Artifacts */}
+              {message.artifacts && message.artifacts.length > 0 && (
+                <div className="mt-3 space-y-2">
+                  {message.artifacts.map((a) => (
+                    <div
+                      key={a.id}
+                      className="rounded-xl overflow-hidden"
+                      style={{ border: '1px solid #e5e0d6', backgroundColor: '#faf9f5' }}
+                    >
                       <button
-                        onClick={() => onRetry(message.id)}
-                        className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold transition-colors hover:bg-black/5"
-                        style={{ color: 'var(--color-pulse)' }}
+                        onClick={() => setArtifactsOpen(p => ({ ...p, [a.id]: !p[a.id] }))}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium"
+                        style={{ fontFamily: 'var(--font-mono)' }}
                       >
-                        <RefreshCw className="w-3 h-3" />
-                        Retry
+                        {artifactsOpen[a.id] ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                        {a.title}
+                        <span className="ml-auto opacity-30 text-[10px]">{a.type}</span>
                       </button>
-                    )}
-                  </div>
-                )}
+                      {artifactsOpen[a.id] && (
+                        <div className="px-3 pb-3">
+                          <pre
+                            className="p-3 rounded-lg text-xs overflow-x-auto"
+                            style={{ backgroundColor: '#f0ece3', fontFamily: 'var(--font-mono)', color: '#3d3a35' }}
+                          >
+                            {a.content}
+                          </pre>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
 
-                {/* Sources */}
-                {message.sources && message.sources.length > 0 && (
-                  <div className="mt-3">
-                    <SourcesDisplay sources={message.sources} />
-                  </div>
-                )}
+              {/* Rating — hover-only */}
+              {!isStreaming && message.content && onRate && (
+                <div className="mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <MessageRating
+                    messageId={message.id}
+                    onRate={onRate}
+                  />
+                </div>
+              )}
 
-                {/* Visual Specs */}
-                {message.visualSpecs && message.visualSpecs.length > 0 && !isStreaming && (
-                  <div className="mt-4 space-y-4">
-                    {message.visualSpecs.map((spec, i) => (
-                      <VisualRenderer key={i} spec={spec as any} />
-                    ))}
+              {/* Suggested Follow-ups */}
+              {!isStreaming && message.followUps && message.followUps.length > 0 && onFollowUp && (
+                <div className="mt-4">
+                  <div className="text-[10px] font-medium uppercase tracking-wider mb-2" style={{ color: '#b0aaa0' }}>
+                    Suggested
                   </div>
-                )}
-
-                {/* Artifacts */}
-                {message.artifacts && message.artifacts.length > 0 && (
-                  <div className="mt-3 space-y-2">
-                    {message.artifacts.map((a) => (
-                      <div
-                        key={a.id}
-                        className="rounded-xl overflow-hidden"
-                        style={{ border: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface)' }}
+                  <div className="flex flex-wrap gap-2">
+                    {message.followUps.map((fu, i) => (
+                      <button
+                        key={i}
+                        onClick={() => onFollowUp(fu)}
+                        className="text-xs px-3 py-1.5 rounded-full transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                        style={{
+                          border: '1px solid #e5e0d6',
+                          color: '#5b5950',
+                          backgroundColor: 'transparent',
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#f0ece3'; }}
+                        onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
                       >
-                        <button
-                          onClick={() => setArtifactsOpen(p => ({ ...p, [a.id]: !p[a.id] }))}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium"
-                          style={{ fontFamily: 'var(--font-mono)' }}
-                        >
-                          {artifactsOpen[a.id] ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-                          {a.title}
-                          <span className="ml-auto opacity-30 text-[10px]">{a.type}</span>
-                        </button>
-                        {artifactsOpen[a.id] && (
-                          <div className="px-3 pb-3">
-                            <pre
-                              className="p-3 rounded-lg text-xs overflow-x-auto"
-                              style={{ backgroundColor: 'var(--color-surface-dim)', fontFamily: 'var(--font-mono)', color: 'var(--color-ink)' }}
-                            >
-                              {a.content}
-                            </pre>
-                          </div>
-                        )}
-                      </div>
+                        {fu}
+                      </button>
                     ))}
                   </div>
-                )}
-
-                {/* Rating */}
-                {!isStreaming && message.content && onRate && (
-                  <div className="mt-3">
-                    <MessageRating
-                      messageId={message.id}
-                      onRate={onRate}
-                    />
-                  </div>
-                )}
-
-                {/* Suggested Follow-ups */}
-                {!isStreaming && message.followUps && message.followUps.length > 0 && onFollowUp && (
-                  <div className="mt-4">
-                    <div className="text-[10px] font-medium uppercase tracking-wider mb-2" style={{ color: 'var(--color-text-tertiary)' }}>
-                      Suggested
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {message.followUps.map((suggestion, i) => (
-                        <button
-                          key={i}
-                          onClick={() => onFollowUp(suggestion)}
-                          className="px-3 py-1.5 rounded-full text-[11px] font-medium transition-all hover:scale-105"
-                          style={{
-                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                            color: 'rgba(59, 130, 246, 0.9)',
-                            border: '1px solid rgba(59, 130, 246, 0.2)',
-                          }}
-                          onMouseEnter={e => {
-                            e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.2)';
-                            e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.4)';
-                          }}
-                          onMouseLeave={e => {
-                            e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
-                            e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.2)';
-                          }}
-                        >
-                          {suggestion}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        </div>
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

@@ -131,17 +131,17 @@ export default function ActivityPanel({ activities, isStreaming }: ActivityPanel
   const completedCount = successCount + errorCount;
 
   return (
-    <div className="h-full flex flex-col" style={{ backgroundColor: 'var(--color-surface)' }}>
+    <div className="h-full flex flex-col" style={{ backgroundColor: '#faf9f5' }}>
       {/* Header */}
       <div
         className="flex-shrink-0 px-3 py-3 flex items-center justify-between"
-        style={{ borderBottom: '1px solid var(--color-border)' }}
+        style={{ borderBottom: '1px solid #e5e0d6' }}
       >
         <div className="flex items-center gap-2">
-          <Zap className="w-3.5 h-3.5" style={{ color: 'var(--color-ember)' }} />
+          <Zap className="w-3.5 h-3.5" style={{ color: '#c96442' }} />
           <span
             className="text-[11px] font-bold uppercase tracking-wider"
-            style={{ color: 'var(--color-ink)', fontFamily: 'var(--font-mono)' }}
+            style={{ color: '#3d3a35', fontFamily: 'var(--font-mono)' }}
           >
             Activity
           </span>
@@ -152,8 +152,8 @@ export default function ActivityPanel({ activities, isStreaming }: ActivityPanel
               <span
                 className="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
                 style={{
-                  backgroundColor: 'rgba(238, 66, 102, 0.1)',
-                  color: 'var(--color-pulse)',
+                  backgroundColor: 'rgba(201,100,66,0.1)',
+                  color: '#c96442',
                   fontFamily: 'var(--font-mono)',
                 }}
               >
@@ -164,8 +164,8 @@ export default function ActivityPanel({ activities, isStreaming }: ActivityPanel
               <span
                 className="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
                 style={{
-                  backgroundColor: 'rgba(11, 171, 119, 0.1)',
-                  color: 'var(--color-bloom)',
+                  backgroundColor: 'rgba(16,185,129,0.1)',
+                  color: '#10b981',
                   fontFamily: 'var(--font-mono)',
                 }}
               >

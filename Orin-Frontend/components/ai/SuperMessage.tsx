@@ -107,6 +107,7 @@ function StreamingText({ content }: { content: string }) {
   const [displayed, setDisplayed] = useState('');
   const [showCursor, setShowCursor] = useState(true);
   const indexRef = useRef(0);
+  const rafRef = useRef<number>(0);
 
   useEffect(() => {
     if (!content) return;
@@ -116,17 +117,16 @@ function StreamingText({ content }: { content: string }) {
       indexRef.current = content.length;
       return;
     }
-    const interval = setInterval(() => {
+    const tick = () => {
       if (indexRef.current < content.length) {
-        // Show 8 chars at a time for faster perceived streaming
         const end = Math.min(indexRef.current + 8, content.length);
         setDisplayed(content.substring(0, end));
         indexRef.current = end;
-      } else {
-        clearInterval(interval);
+        rafRef.current = requestAnimationFrame(tick);
       }
-    }, 10);
-    return () => clearInterval(interval);
+    };
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
   }, [content]);
 
   useEffect(() => {

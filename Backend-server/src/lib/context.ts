@@ -28,7 +28,6 @@ export async function buildAgentContext(authUserId: string): Promise<AgentContex
 
   if (userError || !userProfile) {
     logger.warn({ authUserId, error: userError }, 'User profile not found for context build');
-    // Return minimal context with auth user ID as fallback
     return {
       userId: authUserId,
       userProfile: null,
@@ -37,23 +36,16 @@ export async function buildAgentContext(authUserId: string): Promise<AgentContex
     };
   }
 
-  const { data: proofs } = await supabase
-    .from('proof_cards')
-    .select('*')
-    .eq('user_id', userProfile.id)
-    .is('deleted_at', null);
+  // Fetch proofs and opportunities in parallel (both only need user.id / is_active)
+  const [proofsResult, opportunitiesResult] = await Promise.all([
+    supabase.from('proof_cards').select('*').eq('user_id', userProfile.id).is('deleted_at', null),
+    supabase.from('opportunities').select('*').eq('is_active', true).is('deleted_at', null).order('created_at', { ascending: false }).limit(20),
+  ]);
 
-  const skillAnalysis = analyzeSkills(proofs || []);
-  const userSkills = extractSkillsFromProofs(proofs || []);
-
-  // Fetch opportunities for richer context
-  const { data: opportunities } = await supabase
-    .from('opportunities')
-    .select('*')
-    .eq('is_active', true)
-    .is('deleted_at', null)
-    .order('created_at', { ascending: false })
-    .limit(20);
+  const proofs = proofsResult.data || [];
+  const opportunities = opportunitiesResult.data || [];
+  const skillAnalysis = analyzeSkills(proofs);
+  const userSkills = extractSkillsFromProofs(proofs);
 
   // Calculate opportunity matches
   const userSkillsSet = new Set(userSkills.map(s => s.toLowerCase()));

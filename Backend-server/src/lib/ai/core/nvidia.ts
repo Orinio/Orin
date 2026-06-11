@@ -5,8 +5,8 @@ import { getRequestId } from '../../request-context.js';
 const NVIDIA_BASE_URL = 'https://integrate.api.nvidia.com/v1';
 const NVIDIA_API_KEY = process.env.NVIDIA_API_KEY;
 const MAX_RETRIES = 3;
-const RETRY_BASE_MS = 1500;
-const API_TIMEOUT_MS = 90000; // 90s for large models (397B+ params need more time)
+const RETRY_BASE_MS = 500;
+const API_TIMEOUT_MS = 30000; // 30s — fail fast, try fallback
 
 // ---- Model Fallback Chain ----
 // When primary model is unavailable (rate limited, overloaded), try fallbacks.

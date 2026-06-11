@@ -2,6 +2,8 @@ import type { AgentDefinition } from '../core/types.js';
 import { verificationAgent } from './verification.agent.js';
 import { coachAgent } from './coach.agent.js';
 import { chatAgent } from './chat.agent.js';
+import { careerAgent } from './career.agent.js';
+import { visualAgent } from './visual.agent.js';
 import { skillAnalysisAgent } from './skill-analysis.agent.js';
 import { opportunityMatcherAgent } from './opportunity-matcher.agent.js';
 import { learningPathAgent } from './learning-path.agent.js';
@@ -13,9 +15,11 @@ const agentRegistry = new Map<string, AgentDefinition>();
 
 const allAgents: AgentDefinition[] = [
   routerAgent,
+  chatAgent,
+  careerAgent,
+  visualAgent,
   verificationAgent,
   coachAgent,
-  chatAgent,
   skillAnalysisAgent,
   opportunityMatcherAgent,
   learningPathAgent,
@@ -41,9 +45,11 @@ export function getAgentIds(): string[] {
 
 export {
   routerAgent,
+  chatAgent,
+  careerAgent,
+  visualAgent,
   verificationAgent,
   coachAgent,
-  chatAgent,
   skillAnalysisAgent,
   opportunityMatcherAgent,
   learningPathAgent,

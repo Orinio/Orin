@@ -284,6 +284,7 @@ aiRouter.post('/chat', userRateLimitMiddleware('ai-chat'), validate(chatMessageS
 // POST /ai/chat-stream — Streaming chat with full agentic behavior
 aiRouter.post('/chat-stream', userRateLimitMiddleware('ai-chat-stream'), async (req, res) => {
   let headersSent = false;
+  let heartbeat: ReturnType<typeof setInterval> | null = null;
   try {
     const authUserId = (req as any).user?.id;
     if (!authUserId) { res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } }); return; }
@@ -310,10 +311,17 @@ aiRouter.post('/chat-stream', userRateLimitMiddleware('ai-chat-stream'), async (
 
     if (wantsStreaming) {
       res.setHeader('Content-Type', 'text/event-stream');
-      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Cache-Control', 'no-cache, no-transform');
       res.setHeader('Connection', 'keep-alive');
       res.setHeader('X-Accel-Buffering', 'no');
+      res.setHeader('X-No-Compression', '1');
+      res.flushHeaders();
       headersSent = true;
+
+      // Heartbeat: prevent proxy/load balancer timeout during long tool executions
+      heartbeat = setInterval(() => {
+        try { res.write(': keepalive\n\n'); } catch {}
+      }, 15000);
 
       const sendEvent = (event: string, data: any) => {
         try { res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`); } catch {}
@@ -333,6 +341,7 @@ aiRouter.post('/chat-stream', userRateLimitMiddleware('ai-chat-stream'), async (
       );
 
       res.write('event: end\ndata: {}\n\n');
+      clearInterval(heartbeat);
       res.end();
     } else {
       // Non-streaming: use orchestrator with full tool calling
@@ -357,6 +366,7 @@ aiRouter.post('/chat-stream', userRateLimitMiddleware('ai-chat-stream'), async (
       });
     }
   } catch (err) {
+    if (heartbeat) clearInterval(heartbeat);
     logger.error({ err }, 'AI chat-stream error');
     if (headersSent) {
       try { res.write(`event: error\ndata: ${JSON.stringify({ message: 'Internal server error' })}\n\n`); } catch {}

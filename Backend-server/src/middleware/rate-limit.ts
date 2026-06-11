@@ -120,27 +120,18 @@ export function userRateLimitMiddleware(endpoint: string) {
     }
 
     try {
-      // Resolve internal user row (id + subscription plan)
-      const { data: userRow } = await supabase
-        .from('users')
-        .select('id')
-        .eq('auth_user_id', authUserId)
-        .maybeSingle();
-      const userId = userRow?.id || authUserId;
+      // Resolve internal user row + subscription plan in parallel
+      const [userResult, subResult] = await Promise.all([
+        supabase.from('users').select('id').eq('auth_user_id', authUserId).maybeSingle(),
+        supabase.from('subscriptions').select('plan, status').eq('user_id', authUserId).in('status', ['active', 'trialing']).order('created_at', { ascending: false }).limit(1).maybeSingle(),
+      ]);
+
+      const userId = userResult.data?.id || authUserId;
       (req as any).internalUserId = userId;
 
-      // Fetch user's active subscription plan
       let plan: SubscriptionPlan = 'free';
-      const { data: sub } = await supabase
-        .from('subscriptions')
-        .select('plan, status')
-        .eq('user_id', userId)
-        .in('status', ['active', 'trialing'])
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (sub?.plan) {
-        plan = sub.plan as SubscriptionPlan;
+      if (subResult.data?.plan) {
+        plan = subResult.data.plan as SubscriptionPlan;
       }
 
       // Check Supabase-based rate limit (plan-aware)

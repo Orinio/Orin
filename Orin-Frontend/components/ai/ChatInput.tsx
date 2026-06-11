@@ -12,6 +12,7 @@ export interface ChatModel {
 }
 
 export const CHAT_MODELS: ChatModel[] = [
+  { id: 'auto', name: 'Auto (Fastest)', provider: 'Smart routing', badge: '⚡', badgeColor: '#10b981' },
   { id: 'qwen/qwen3.5-397b-a17b', name: 'Qwen 3.5 397B', provider: 'Qwen', badge: 'Fast', badgeColor: 'var(--color-bloom)' },
   { id: 'nvidia/nemotron-3-ultra-550b-a55b', name: 'Nemotron-3 Ultra 550B', provider: 'NVIDIA', badge: 'Agent', badgeColor: 'var(--color-ember)' },
   { id: 'qwen/qwen3-coder-480b-a35b-instruct', name: 'Qwen3 Coder 480B', provider: 'Qwen', badge: 'Code', badgeColor: '#6366f1' },

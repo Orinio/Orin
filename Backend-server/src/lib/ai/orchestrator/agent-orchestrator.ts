@@ -370,7 +370,30 @@ export class AgentOrchestrator {
     context: { userId?: string; authUserId?: string; conversationHistory?: AgentMessage[]; modelOverride?: string },
     onEvent: (event: string, data: any) => void
   ): Promise<void> {
-    const agent = this.agents.get(agentId);
+    // Auto-route to specialist unless user selected a specific model
+    let actualAgentId = agentId;
+    if (!context.modelOverride && agentId === 'chat') {
+      try {
+        const routerResult = await chatCompletion({
+          model: 'nvidia/llama-3.1-nemotron-nano-8b-v1',
+          messages: [
+            { role: 'system', content: 'Classify the user message into ONE category. Reply with ONLY the category name:\n- chat: Simple questions, greetings, quick tips\n- career: Portfolio analysis, skills, opportunities\n- verification: GitHub repos, certificates, LinkedIn\n- visual: Charts, diagrams, dashboards\n- action: Save goals, track applications\n\nCategory:' },
+            { role: 'user', content: query },
+          ],
+          max_tokens: 20,
+          temperature: 0.1,
+        });
+        const category = routerResult.choices[0]?.message?.content?.trim().toLowerCase() || 'chat';
+        if (['chat', 'career', 'verification', 'visual', 'action'].includes(category)) {
+          actualAgentId = category;
+          onEvent('thinking', { content: `Routing to ${category} agent...` });
+        }
+      } catch {
+        // Fallback to chat agent on routing failure
+      }
+    }
+
+    const agent = this.agents.get(actualAgentId) || this.agents.get(agentId);
     if (!agent) {
       onEvent('error', { message: `Agent '${agentId}' not found` });
       return;

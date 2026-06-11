@@ -139,8 +139,8 @@ export default function SuperAgentChat() {
   const [workspaceMode, setWorkspaceMode] = useState<WorkspaceMode>('chat');
   const [currentReasoning, setCurrentReasoning] = useState('');
 
-  // Default to GPT-OSS 120B
-  const defaultModelId = CHAT_MODELS.find(m => m.id === 'openai/gpt-oss-120b')?.id ?? CHAT_MODELS[0].id;
+  // Default to Auto (fastest routing)
+  const defaultModelId = CHAT_MODELS.find(m => m.id === 'auto')?.id ?? CHAT_MODELS[0].id;
   const [selectedModel, setSelectedModel] = useState(defaultModelId);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);

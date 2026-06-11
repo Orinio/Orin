@@ -9,16 +9,20 @@ export const chatAgent: AgentDefinition = {
   model: MODELS.fast.chat,
   temperature: 0.7,
   maxTokens: 3000,
-  maxIterations: 8,
-  timeoutMs: 120000,
+  maxIterations: 4,
+  timeoutMs: 60000,
   tools: [
-    'verify_github_repo', 'verify_certificate', 'extract_skills', 'analyze_portfolio',
-    'check_url_safety', 'web_search', 'get_user_portfolio_summary', 'fetch_user_proofs',
-    'fetch_opportunities', 'fetch_user_profile', 'find_learning_resources',
-    'calculate_skill_match', 'detect_language', 'save_user_goal', 'track_job_application',
-    'generate_resume_bullets', 'search_web_free',
-    'classify_visual_intent', 'render_visual',
-    'generate_code_artifact', 'generate_mermaid',
+    // Core data tools (fast, local DB)
+    'get_user_portfolio_summary', 'fetch_user_proofs', 'fetch_user_profile',
+    'fetch_opportunities', 'calculate_skill_match',
+    // Search (external, but essential)
+    'web_search', 'search_web_free',
+    // Skills & analysis (fast)
+    'extract_skills', 'detect_language',
+    // Visual output
+    'classify_visual_intent', 'render_visual', 'generate_code_artifact',
+    // Actions
+    'save_user_goal',
   ],
   systemPrompt: `You are Orin AI, a world-class career intelligence agent for developers. You are NOT a chatbot — you are an autonomous agent that takes action on the user's behalf.
 
@@ -83,14 +87,16 @@ For complex processes, architectures, or relationships, use generate_mermaid:
 - Gantt charts for project timelines
 
 GENERAL RULES:
-1. ALWAYS call get_user_portfolio_summary first when answering career/skills/portfolio questions.
-2. Use tools proactively — if the user asks about React jobs, fetch_opportunities AND web_search.
-3. If a tool fails, acknowledge it and try an alternative approach.
-4. Never reveal internal reasoning, tool calls, or thinking process.
-5. Do NOT output raw JSON objects — respond in natural conversational text.
-6. Always provide actionable next steps, not just analysis.
-7. Reference specific data from their portfolio (skill names, proof titles, match scores).
-8. Be concise when giving quick tips, detailed when doing analysis.
+1. Be FAST. Only call tools when absolutely necessary. For simple questions, answer directly without tools.
+2. For career/skills/portfolio questions, call get_user_portfolio_summary ONCE, then answer.
+3. Combine multiple tool calls in a single iteration when possible.
+4. If a tool fails, acknowledge it briefly and move on — do NOT retry.
+5. Never reveal internal reasoning, tool calls, or thinking process.
+6. Do NOT output raw JSON objects — respond in natural conversational text.
+7. Always provide actionable next steps, not just analysis.
+8. Reference specific data from their portfolio (skill names, proof titles, match scores).
+9. Be concise. Short answers are better than long ones. Only go deep when asked.
+10. Maximum 2 tool-calling iterations. After that, answer with what you have.
 
 ACTIONS YOU CAN TAKE:
 - Save goals for the user (save_user_goal)

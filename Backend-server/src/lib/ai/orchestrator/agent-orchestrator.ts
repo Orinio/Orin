@@ -5,7 +5,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from '../../logger.js';
-import { chatCompletion, chatCompletionStreamWithReasoning, isNvidiaConfigured } from '../core/nvidia.js';
+import { chatCompletion, isNvidiaConfigured } from '../core/nvidia.js';
 import type { ChatMessage, ToolCallResponse } from '../core/nvidia.js';
 import { createMemoryManager, type MemoryManager } from '../memory/memory-manager.js';
 import { getToolsByNames, toolsToOpenAITools } from '../core/tool-registry.js';
@@ -496,20 +496,19 @@ export class AgentOrchestrator {
             tool_calls: message.tool_calls,
           });
 
-          // Execute each tool call
-          for (const toolCall of message.tool_calls) {
+          // Execute all tool calls in parallel (much faster than sequential)
+          const toolPromises = message.tool_calls.map(async (toolCall) => {
             const toolName = toolCall.function.name;
             const tool = tools.find(t => t.name === toolName);
 
             if (!tool) {
-              onEvent('thinking', { content: `Tool '${toolName}' not found. Available: ${tools.map(t => t.name).join(', ')}` });
-              messages.push({
-                role: 'tool',
-                content: JSON.stringify({ error: `Tool '${toolName}' does not exist. Available: ${tools.map(t => t.name).join(', ')}` }),
+              onEvent('thinking', { content: `Tool '${toolName}' not found.` });
+              return {
                 tool_call_id: toolCall.id,
                 name: toolName,
-              });
-              continue;
+                result: { success: false, error: `Tool '${toolName}' does not exist.` } as ToolResult,
+                args: {} as Record<string, any>,
+              };
             }
 
             // Parse arguments
@@ -530,25 +529,12 @@ export class AgentOrchestrator {
             });
 
             const toolStartTime = Date.now();
-            // Budget-aware timeout: min(tool timeout, remaining agent time - 15s buffer)
             const elapsed = Date.now() - agentStartTime;
             const remainingBudget = agent.timeoutMs - elapsed - 15000;
             const toolTimeout = Math.min(
               (tool as any).timeoutMs || DEFAULT_TOOL_TIMEOUT_MS,
-              Math.max(remainingBudget, 5000) // At least 5s per tool
+              Math.max(remainingBudget, 5000)
             );
-
-            // Keepalive: emit progress pings every 15s during long tool executions
-            // Prevents proxies/load balancers from killing idle SSE connections
-            let keepaliveInterval: ReturnType<typeof setInterval> | null = null;
-            keepaliveInterval = setInterval(() => {
-              onEvent('progress', {
-                iteration: iterations,
-                keepalive: true,
-                tool: tool.name,
-                elapsedMs: Date.now() - toolStartTime,
-              });
-            }, 15000);
 
             let result: ToolResult;
             try {
@@ -560,12 +546,9 @@ export class AgentOrchestrator {
               ]);
             } catch (err) {
               result = { success: false, error: err instanceof Error ? err.message : 'Tool execution failed' };
-            } finally {
-              if (keepaliveInterval) clearInterval(keepaliveInterval);
             }
 
             const toolDurationMs = Date.now() - toolStartTime;
-            toolCalls.push({ tool: tool.name, args, result });
 
             onEvent('tool_result', {
               tool: tool.name,
@@ -573,66 +556,41 @@ export class AgentOrchestrator {
               data: result.data,
               error: result.error,
               durationMs: toolDurationMs,
-              step: toolCalls.length,
+              step: toolCalls.length + 1,
             });
 
-            // Emit visual_spec event when tools produce a spec
             if (result.success && result.data?.visualSpec) {
               onEvent('visual_spec', { spec: result.data.visualSpec });
             }
 
-            // Feed tool result back to the model as a tool message
-            const resultStr = JSON.stringify(result).substring(0, MAX_TOOL_RESULT_LENGTH);
+            return { tool_call_id: toolCall.id, name: toolName, result, args };
+          });
+
+          // Wait for all tools to complete
+          const toolResults = await Promise.all(toolPromises);
+
+          // Collect results and feed back to model in order
+          for (const tr of toolResults) {
+            toolCalls.push({ tool: tr.name, args: tr.args, result: tr.result });
+            const resultStr = JSON.stringify(tr.result).substring(0, MAX_TOOL_RESULT_LENGTH);
             messages.push({
               role: 'tool',
               content: resultStr,
-              tool_call_id: toolCall.id,
-              name: toolName,
+              tool_call_id: tr.tool_call_id,
+              name: tr.name,
             });
           }
 
           continue; // Next iteration — model will process tool results
         }
 
-        // Case 2: Model returned text content — stream it token-by-token
+        // Case 2: Model returned text content — emit directly (no duplicate LLM call)
         if (message.content) {
-          // Use streaming API for true token-by-token delivery with reasoning support
-          try {
-            let streamedAnswer = '';
-            let streamedReasoning = '';
-            const stream = chatCompletionStreamWithReasoning({
-              model: context.modelOverride || agent.model,
-              messages,
-              temperature: agent.temperature,
-              max_tokens: agent.maxTokens,
-            });
-
-            for await (const chunk of stream) {
-              if (chunk.type === 'reasoning') {
-                streamedReasoning += chunk.text;
-                thinking = streamedReasoning;
-                onEvent('thinking', { content: chunk.text });
-              } else if (chunk.type === 'usage' && chunk.usage) {
-                totalTokens += chunk.usage.total_tokens;
-              } else {
-                streamedAnswer += chunk.text;
-                onEvent('answer', { content: chunk.text });
-              }
-            }
-
-            finalAnswer = sanitizeAnswer(streamedAnswer || message.content);
-            // If we got a different answer from streaming, emit the final version
-            if (streamedAnswer && streamedAnswer !== finalAnswer) {
-              onEvent('answer', { content: finalAnswer.substring(streamedAnswer.length) });
-            }
-          } catch (streamErr) {
-            // Fallback: emit the non-streamed answer
-            logger.warn({ err: streamErr }, 'Streaming failed, falling back to non-streamed answer');
-            finalAnswer = sanitizeAnswer(message.content);
-            const chunkSize = 200;
-            for (let i = 0; i < finalAnswer.length; i += chunkSize) {
-              onEvent('answer', { content: finalAnswer.substring(i, i + chunkSize) });
-            }
+          finalAnswer = sanitizeAnswer(message.content);
+          // Emit the answer in chunks for smooth streaming UX
+          const chunkSize = 200;
+          for (let i = 0; i < finalAnswer.length; i += chunkSize) {
+            onEvent('answer', { content: finalAnswer.substring(i, i + chunkSize) });
           }
           break;
         }

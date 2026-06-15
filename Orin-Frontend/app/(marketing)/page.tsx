@@ -22,7 +22,7 @@ const HowItWorks = dynamic(() => import('@/components/home/HowItWorks'), {
   loading: () => <SectionSkeleton bg="var(--color-surface)" />,
 });
 const Stats = dynamic(() => import('@/components/home/Stats'), {
-  loading: () => <SectionSkeleton height="py-20" bg="var(--color-ink)" />,
+  loading: () => <SectionSkeleton height="py-24" bg="var(--color-ink)" />,
 });
 const Testimonials = dynamic(() => import('@/components/home/Testimonials'), {
   loading: () => <SectionSkeleton bg="var(--color-surface)" />,
@@ -30,10 +30,13 @@ const Testimonials = dynamic(() => import('@/components/home/Testimonials'), {
 const Pricing = dynamic(() => import('@/components/home/Pricing'), {
   loading: () => <SectionSkeleton />,
 });
+const FinalCTA = dynamic(() => import('@/components/home/FinalCTA'), {
+  loading: () => <SectionSkeleton height="py-28" bg="var(--color-ink)" />,
+});
 
 export default function Home() {
   const router = useRouter();
-  
+
   useEffect(() => {
     const checkUser = async () => {
       if (!supabase) return;
@@ -54,6 +57,7 @@ export default function Home() {
       <Stats />
       <Testimonials />
       <Pricing />
+      <FinalCTA />
     </>
   );
 }

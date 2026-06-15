@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode, type ElementType } from 'react';
+import { motion, useInView } from 'framer-motion';
 
 interface ScrollRevealProps {
   children: ReactNode;
@@ -10,6 +11,7 @@ interface ScrollRevealProps {
   duration?: number;
   once?: boolean;
   threshold?: number;
+  as?: ElementType;
 }
 
 export default function ScrollReveal({
@@ -17,58 +19,104 @@ export default function ScrollReveal({
   className = '',
   delay = 0,
   direction = 'up',
-  duration = 0.6,
+  duration = 0.7,
   once = true,
   threshold = 0.1,
+  as: Tag = 'div',
 }: ScrollRevealProps) {
   const [isVisible, setIsVisible] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
           setIsVisible(true);
-          if (once && ref.current) {
-            observer.unobserve(ref.current);
-          }
-        } else if (!once) {
-          setIsVisible(false);
+          if (once) observer.unobserve(el);
         }
       },
       { threshold }
     );
 
-    if (ref.current) {
-      observer.observe(ref.current);
-    }
-
+    observer.observe(el);
     return () => observer.disconnect();
   }, [once, threshold]);
 
   const getTransform = () => {
     switch (direction) {
-      case 'up': return 'translateY(30px)';
-      case 'down': return 'translateY(-30px)';
-      case 'left': return 'translateX(30px)';
-      case 'right': return 'translateX(-30px)';
+      case 'up': return 'translateY(40px)';
+      case 'down': return 'translateY(-40px)';
+      case 'left': return 'translateX(40px)';
+      case 'right': return 'translateX(-40px)';
       case 'none': return 'none';
-      default: return 'translateY(30px)';
+      default: return 'translateY(40px)';
     }
   };
 
+  const springTransition = `opacity ${duration}s cubic-bezier(0.16, 1, 0.3, 1) ${delay}s, transform ${duration}s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}s`;
+
   return (
-    <div
-      ref={ref}
+    <Tag
+      ref={ref as React.Ref<any>}
       className={className}
       style={{
         opacity: isVisible ? 1 : 0,
         transform: isVisible ? 'none' : getTransform(),
-        transition: `opacity ${duration}s cubic-bezier(0.16, 1, 0.3, 1) ${delay}s, transform ${duration}s cubic-bezier(0.16, 1, 0.3, 1) ${delay}s`,
+        transition: springTransition,
         willChange: 'opacity, transform',
       }}
     >
       {children}
-    </div>
+    </Tag>
+  );
+}
+
+// Framer Motion Wrapper for more complex spring animations
+export function MotionReveal({
+  children,
+  className = '',
+  delay = 0,
+  direction = 'up',
+  duration = 0.7,
+  threshold = 0.1,
+}: {
+  children: ReactNode;
+  className?: string;
+  delay?: number;
+  direction?: 'up' | 'down' | 'left' | 'right';
+  duration?: number;
+  threshold?: number;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: true, amount: threshold });
+
+  const getInitial = () => {
+    switch (direction) {
+      case 'up': return { opacity: 0, y: 60, filter: 'blur(8px)' };
+      case 'down': return { opacity: 0, y: -60, filter: 'blur(8px)' };
+      case 'left': return { opacity: 0, x: 60, filter: 'blur(8px)' };
+      case 'right': return { opacity: 0, x: -60, filter: 'blur(8px)' };
+      default: return { opacity: 0, y: 60, filter: 'blur(8px)' };
+    }
+  };
+
+  return (
+    <motion.div
+      ref={ref}
+      initial={getInitial()}
+      animate={isInView ? { opacity: 1, x: 0, y: 0, filter: 'blur(0px)' } : getInitial()}
+      transition={{
+        duration,
+        delay,
+        ease: [0.16, 1, 0.3, 1],
+      }}
+      className={className}
+      style={{ willChange: 'transform, opacity, filter' }}
+    >
+      {children}
+    </motion.div>
   );
 }

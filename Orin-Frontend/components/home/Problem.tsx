@@ -1,5 +1,9 @@
 'use client';
 
+import { useRef } from 'react';
+import { motion, useInView } from 'framer-motion';
+import ScrollReveal from './ScrollReveal';
+
 const painPoints = [
   {
     icon: (
@@ -43,65 +47,71 @@ const painPoints = [
 ];
 
 export default function Problem() {
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: true, amount: 0.2 });
+
   return (
-    <section className="py-20 px-6 relative overflow-hidden" style={{ backgroundColor: 'var(--color-surface)' }}>
-      {/* Soft background */}
+    <section className="py-32 px-6 relative overflow-hidden grain-overlay" style={{ backgroundColor: 'var(--color-surface)' }}>
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/3 left-1/4 w-96 h-96 rounded-full blur-3xl opacity-[0.04]" style={{ backgroundColor: 'var(--color-pulse)' }} />
         <div className="absolute bottom-1/4 right-1/3 w-80 h-80 rounded-full blur-3xl opacity-[0.03]" style={{ backgroundColor: 'var(--color-ember)' }} />
       </div>
 
       <div className="max-w-6xl mx-auto relative z-10">
-        <div className="grid md:grid-cols-2 gap-12 items-start">
+        <div className="grid md:grid-cols-2 gap-16 items-start">
           {/* Left */}
           <div>
-            <div className="badge-pulse mb-6 animate-fadeInUp">The Problem</div>
-            <h2
-              className="text-4xl font-bold mb-6 leading-tight tracking-tight animate-fadeInUp"
-              style={{ color: 'var(--color-ink)', animationDelay: '0.1s' }}
-            >
-              You built a lot.<br />
-              <span className="relative inline-block">
-                Showing it is impossible.
-                <span
-                  aria-hidden="true"
-                  className="absolute bottom-1 left-0 w-full h-3 -z-10 rounded-sm"
-                  style={{ backgroundColor: 'var(--color-pulse)', opacity: 0.3 }}
-                />
-              </span>
-            </h2>
-            <p
-              className="text-lg leading-relaxed animate-fadeInUp"
-              style={{ color: 'var(--color-text-secondary)', animationDelay: '0.2s' }}
-            >
-              Every student has proof of their skills — scattered across GitHub, Notion, Google Drive, and email.
-              None of it connects. None of it tells a story.
-            </p>
+            <ScrollReveal direction="up" delay={0}>
+              <div className="badge-pulse mb-6">The Problem</div>
+            </ScrollReveal>
+            <ScrollReveal direction="up" delay={0.1}>
+              <h2 className="text-4xl md:text-6xl font-bold mb-6 leading-tight tracking-tight" style={{ color: 'var(--color-ink)' }}>
+                You built a lot.<br />
+                <span className="gradient-text-ember">Showing it is hard.</span>
+              </h2>
+            </ScrollReveal>
+            <ScrollReveal direction="up" delay={0.2}>
+              <p className="text-lg md:text-xl leading-relaxed max-w-md" style={{ color: 'var(--color-text-secondary)', opacity: 0.7 }}>
+                Every student has proof of their skills — scattered across GitHub, Notion, Google Drive, and email. None of it connects. None of it tells a story.
+              </p>
+            </ScrollReveal>
+
+            {/* Decorative line */}
+            <ScrollReveal direction="up" delay={0.35}>
+              <div className="line-reveal mt-10" />
+            </ScrollReveal>
           </div>
 
           {/* Right: Pain points */}
-          <div className="space-y-5">
+          <div className="space-y-5" ref={ref}>
             {painPoints.map((point, i) => (
-              <div
+              <motion.div
                 key={point.title}
-                className={`card-base ${point.accent} p-6 flex items-start gap-4 animate-fadeInUp`}
-                style={{ animationDelay: `${0.1 + i * 0.08}s` }}
+                initial={{ opacity: 0, x: 60 }}
+                animate={isInView ? { opacity: 1, x: 0 } : {}}
+                transition={{
+                  duration: 0.7,
+                  delay: 0.1 + i * 0.1,
+                  ease: [0.16, 1, 0.3, 1],
+                }}
               >
-                <div
-                  className="w-12 h-12 rounded-[var(--radius-lg)] flex items-center justify-center flex-shrink-0 shadow-md"
-                  style={{ background: point.gradient, color: '#fff' }}
-                >
-                  {point.icon}
+                <div className={`card-base ${point.accent} p-6 flex items-start gap-4 glow-border hover-lift`}>
+                  <div
+                    className="w-12 h-12 rounded-[var(--radius-lg)] flex items-center justify-center flex-shrink-0 shadow-md transition-transform duration-500 hover:scale-110"
+                    style={{ background: point.gradient, color: '#fff' }}
+                  >
+                    {point.icon}
+                  </div>
+                  <div>
+                    <h3 className="font-bold mb-1 text-lg" style={{ color: 'var(--color-ink)' }}>
+                      {point.title}
+                    </h3>
+                    <p className="text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)', opacity: 0.8 }}>
+                      {point.desc}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-bold mb-1" style={{ color: 'var(--color-ink)' }}>
-                    {point.title}
-                  </h3>
-                  <p className="text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
-                    {point.desc}
-                  </p>
-                </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>

@@ -137,7 +137,7 @@ export function useSocialFeed(userId: string | null, page: number = 0, limit: nu
 
       const bookmarkedPosts = new Set(((bookmarks || []) as Array<{ post_id: string }>).map((b) => b.post_id));
 
-      return (posts || []).map((post) => ({
+      return (posts || []).map((post: { id: string; [key: string]: unknown }) => ({
         ...post,
         has_liked: (reactionsByPost[post.id] || []).includes('like'),
         has_bookmarked: bookmarkedPosts.has(post.id),
@@ -824,7 +824,7 @@ export function useSearchUsers(query: string, userId: string | null) {
 
         const followingSet = new Set((followData || []).map((f: { following_id: string }) => f.following_id));
 
-        return data.map((user) => ({
+        return data.map((user: { id: string; [key: string]: unknown }) => ({
           ...user,
           is_following: followingSet.has(user.id),
         })) as DiscoverableUser[];

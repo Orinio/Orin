@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSupabase } from '@/lib/supabase-server';
+import { checkAIRateLimit, logAIUsage } from '@/lib/rate-limit';
 import { createMemoryStore, extractMemoryFromMessage } from '@/lib/ai-memory';
 
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3001';
@@ -38,6 +39,30 @@ export async function POST(req: NextRequest) {
   const authHeader = await resolveAuthToken(req);
   if (!authHeader) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  // Rate limit AI chat-stream
+  try {
+    const supabase = await getServerSupabase();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: userData } = await supabase
+        .from('users')
+        .select('id')
+        .eq('auth_user_id', user.id)
+        .maybeSingle();
+      if (userData?.id) {
+        const rateLimit = await checkAIRateLimit(supabase, userData.id, 'ai-chat');
+        if (!rateLimit.allowed) {
+          return NextResponse.json(
+            { error: { code: 'RATE_LIMITED', message: rateLimit.reason || 'Rate limit exceeded' } },
+            { status: 429, headers: { 'Retry-After': rateLimit.nextAllowedAt ? String(Math.ceil((rateLimit.nextAllowedAt.getTime() - Date.now()) / 1000)) : '60' } }
+          );
+        }
+      }
+    }
+  } catch {
+    // Rate limit check is best-effort
   }
 
   // Parse the request body to inject memory context
@@ -127,6 +152,13 @@ export async function POST(req: NextRequest) {
         { status: backendRes.status }
       );
     }
+
+    // Log AI usage fire-and-forget on success
+    try {
+      const supabase = await getServerSupabase();
+      const userId = await resolveUserId(supabase);
+      if (userId) logAIUsage(supabase, userId, 'ai-chat').catch(() => {});
+    } catch {}
 
     // Stream the response
     if (backendRes.headers.get('Content-Type')?.includes('text/event-stream')) {

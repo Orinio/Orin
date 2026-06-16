@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteHandlerClient } from '@/lib/supabase-api';
+import { checkIPRateLimit } from '@/lib/ip-rate-limit';
 
 export async function POST(request: NextRequest) {
+  const rateLimitResponse = checkIPRateLimit(request, 'auth/signin');
+  if (rateLimitResponse) return rateLimitResponse;
+
   let body: { email?: string; password?: string };
   try {
     body = await request.json();

@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
+import { PLANS as PLAN_DEFS, type SubscriptionPlanId } from '@/lib/chat-types';
 
 interface Subscription {
   plan: string;
@@ -23,59 +24,20 @@ interface Subscription {
   expiresAt: string | null;
 }
 
-const PLANS = [
-  {
-    id: 'free',
-    name: 'Free',
-    price: '$0',
-    period: 'forever',
-    description: 'Get started with basic features',
-    features: [
-      '5 Proof Cards',
-      'Basic skill analysis',
-      'Public profile',
-      'Community access',
-    ],
-    color: 'var(--color-text-tertiary)',
-    icon: Sparkles,
-  },
-  {
-    id: 'pro',
-    name: 'Pro',
-    price: '$9',
-    period: '/month',
-    description: 'Everything you need to accelerate your career',
-    features: [
-      'Unlimited Proof Cards',
-      'AI Career Coach',
-      'Advanced analytics',
-      'Priority verification',
-      'Custom profile themes',
-      'Export to PDF',
-    ],
-    color: 'var(--color-bloom)',
-    icon: Crown,
-    popular: true,
-  },
-  {
-    id: 'team',
-    name: 'Team',
-    price: '$29',
-    period: '/month',
-    description: 'For teams and organizations',
-    features: [
-      'Everything in Pro',
-      'Team dashboard',
-      'Bulk verification',
-      'Custom branding',
-      'API access',
-      'Priority support',
-      'SSO integration',
-    ],
-    color: 'var(--color-ember)',
-    icon: Users,
-  },
-];
+const plans = PLAN_DEFS.filter((p) => p.id !== 'university');
+
+const BILLING_PLANS = plans.map((p) => ({
+  id: p.id,
+  name: p.name,
+  price: p.priceMonthly === 0 ? '$0' : `$${p.priceMonthly}`,
+  period: p.priceMonthly === 0 ? 'forever' : '/month',
+  description: p.tagline,
+  features: p.features.filter((f) => f.included).map((f) => f.text),
+  popular: p.popular,
+  color: p.id === 'pro' ? 'var(--color-bloom)' : p.id === 'team' ? 'var(--color-ember)' : 'var(--color-text-tertiary)',
+}));
+
+type BillingPlan = (typeof BILLING_PLANS)[number];
 
 export default function BillingPage() {
   const { user: authUser } = useAuth();
@@ -194,7 +156,7 @@ export default function BillingPage() {
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-lg font-semibold" style={{ color: 'var(--color-ink)' }}>
-                Current Plan: {PLANS.find((p) => p.id === currentPlan)?.name || 'Free'}
+                Current Plan: {BILLING_PLANS.find((p) => p.id === currentPlan)?.name || 'Free'}
               </h2>
               <p className="text-sm mt-1" style={{ color: 'var(--color-text-tertiary)' }}>
                 {subscription.status === 'active'
@@ -223,10 +185,9 @@ export default function BillingPage() {
 
       {/* Plans */}
       <div className="grid gap-6 md:grid-cols-3">
-        {PLANS.map((plan, index) => {
-          const Icon = plan.icon;
+        {BILLING_PLANS.map((plan, index) => {
           const isCurrent = currentPlan === plan.id;
-          const isUpgrade = PLANS.findIndex((p) => p.id === currentPlan) < index;
+          const isUpgrade = BILLING_PLANS.findIndex((p) => p.id === currentPlan) < index;
 
           return (
             <motion.div
@@ -255,7 +216,9 @@ export default function BillingPage() {
                   className="flex h-10 w-10 items-center justify-center rounded-xl"
                   style={{ backgroundColor: `${plan.color}15` }}
                 >
-                  <Icon className="h-5 w-5" style={{ color: plan.color }} />
+                  {plan.id === 'pro' ? <Crown className="h-5 w-5" style={{ color: plan.color }} /> :
+                   plan.id === 'team' ? <Users className="h-5 w-5" style={{ color: plan.color }} /> :
+                   <Sparkles className="h-5 w-5" style={{ color: plan.color }} />}
                 </div>
                 <div>
                   <h3 className="text-lg font-bold" style={{ color: 'var(--color-ink)' }}>

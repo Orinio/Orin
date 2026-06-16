@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
+import { checkAIRateLimit, logAIUsage } from '@/lib/rate-limit';
 
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3001';
 
@@ -25,6 +26,24 @@ export async function POST(
   const { data: { session } } = await supabase.auth.getSession();
   if (!session?.access_token) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  // Resolve user ID for rate limiting
+  const { data: userData } = await supabase
+    .from('users')
+    .select('id')
+    .eq('auth_user_id', session.user.id)
+    .maybeSingle();
+  const userId = userData?.id;
+
+  if (userId) {
+    const rateLimit = await checkAIRateLimit(supabase, userId, 'ai-verify');
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: { code: 'RATE_LIMITED', message: rateLimit.reason || 'Rate limit exceeded' } },
+        { status: 429, headers: { 'Retry-After': rateLimit.nextAllowedAt ? String(Math.ceil((rateLimit.nextAllowedAt.getTime() - Date.now()) / 1000)) : '60' } }
+      );
+    }
   }
 
   // Load the proof card
@@ -111,6 +130,9 @@ export async function POST(
     } catch (err) {
       console.error('Auto-verification error (no URL):', err);
     }
+
+    // Log AI usage for the web search verification attempt
+    if (userId) logAIUsage(supabase, userId, 'ai-verify').catch(() => {});
 
     return NextResponse.json({
       success: true,

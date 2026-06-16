@@ -1,7 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSupabase } from '@/lib/supabase-server';
+import { checkAIRateLimit, logAIUsage } from '@/lib/rate-limit';
 
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3001';
+
+const PATH_TO_RATE_LIMIT_KEY: Record<string, string> = {
+  '/ai/chat': 'ai-chat',
+  '/ai/verify': 'ai-verify',
+  '/ai/match': 'ai-match-opportunities',
+  '/ai/skills': 'ai-skills',
+  '/ai/learning-path': 'ai-chat',
+};
 
 async function resolveAuthToken(req: NextRequest): Promise<string | null> {
   const headerToken = req.headers.get('Authorization');
@@ -28,6 +37,33 @@ export async function forwardToBackend(
   const authHeader = await resolveAuthToken(req);
   if (!authHeader) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  // Rate limit AI endpoints
+  const rateLimitKey = PATH_TO_RATE_LIMIT_KEY[path];
+  if (rateLimitKey) {
+    try {
+      const supabase = await getServerSupabase();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: userData } = await supabase
+          .from('users')
+          .select('id')
+          .eq('auth_user_id', user.id)
+          .maybeSingle();
+        if (userData?.id) {
+          const rateLimit = await checkAIRateLimit(supabase, userData.id, rateLimitKey);
+          if (!rateLimit.allowed) {
+            return NextResponse.json(
+              { error: { code: 'RATE_LIMITED', message: rateLimit.reason || 'Rate limit exceeded' } },
+              { status: 429, headers: { 'Retry-After': rateLimit.nextAllowedAt ? String(Math.ceil((rateLimit.nextAllowedAt.getTime() - Date.now()) / 1000)) : '60' } }
+            );
+          }
+        }
+      }
+    } catch {
+      // Rate limit check is best-effort — don't block if it fails
+    }
   }
 
   const headers: Record<string, string> = {
@@ -111,6 +147,24 @@ export async function forwardToBackend(
       responseData = JSON.parse(responseText);
     } catch {
       responseData = responseText;
+    }
+
+    // Log AI usage on success
+    if (backendRes.ok && rateLimitKey) {
+      try {
+        const supabase = await getServerSupabase();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: userData } = await supabase
+            .from('users')
+            .select('id')
+            .eq('auth_user_id', user.id)
+            .maybeSingle();
+          if (userData?.id) {
+            logAIUsage(supabase, userData.id, rateLimitKey).catch(() => {});
+          }
+        }
+      } catch {}
     }
 
     return NextResponse.json(responseData, { status: backendRes.status });

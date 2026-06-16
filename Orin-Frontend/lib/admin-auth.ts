@@ -111,18 +111,22 @@ export function validateSession(token: string): AdminSession | null {
    ADMIN CREDENTIALS
    ═══════════════════════════════════════════ */
 
-// Pre-computed hash for Orin@0602026 — generated at build time
+// Pre-computed hash for admin password — generated at build time
 // This ensures the password is never stored in plaintext in source code
-const ADMIN_USERNAME = 'Orin@admin';
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME;
+const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH;
 
-// Hash generated with: hashPassword('Orin@0602026')
-// Stored as salt:hash
-const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH || '';
+if (process.env.NODE_ENV === 'production' && !ADMIN_USERNAME) {
+  throw new Error('ADMIN_USERNAME env var is required in production');
+}
+if (process.env.NODE_ENV === 'production' && !ADMIN_PASSWORD_HASH) {
+  throw new Error('ADMIN_PASSWORD_HASH env var is required in production');
+}
 
 let _verifiedHash = '';
 
 export function getAdminUsername(): string {
-  return ADMIN_USERNAME;
+  return ADMIN_USERNAME || 'Orin@admin';
 }
 
 export function getAdminPasswordHash(): string {
@@ -136,6 +140,7 @@ export function verifyAdminCredentials(
   username: string,
   password: string
 ): boolean {
+  if (!ADMIN_USERNAME || !ADMIN_PASSWORD_HASH) return false;
   if (username !== ADMIN_USERNAME) return false;
   const hash = getAdminPasswordHash();
   if (!hash) return false;

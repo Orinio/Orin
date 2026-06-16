@@ -1,10 +1,13 @@
 ﻿import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
 import type { Database } from '@/lib/supabase';
+import { checkIPRateLimit } from '@/lib/ip-rate-limit';
 
 type ContactInsert = Database['public']['Tables']['contact_messages']['Insert'];
 
 export async function POST(request: NextRequest) {
+  const rateLimitResponse = checkIPRateLimit(request, 'contact');
+  if (rateLimitResponse) return rateLimitResponse;
 
   const supabase = getSupabaseAdmin();
 

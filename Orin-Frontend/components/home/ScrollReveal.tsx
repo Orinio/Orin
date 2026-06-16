@@ -22,7 +22,8 @@ function usePrefersReducedMotion(): boolean {
   return prefersReducedMotion;
 }
 
-/* ── ScrollReveal ───────────────────────────────────────── */\ninterface ScrollRevealProps {
+/* ── ScrollReveal ───────────────────────────────────────── */
+interface ScrollRevealProps {
   children: ReactNode;
   className?: string;
   delay?: number;

@@ -48,7 +48,7 @@ export default function AdminDashboard() {
         const [usersRes, proofsRes, flagsRes] = await Promise.all([
           supabase.from('users').select('id, role, created_at', { count: 'exact' }),
           supabase.from('proof_cards').select('id, verification_status', { count: 'exact' }),
-          supabase.from('proof_cards').select('id').eq('verification_status', 'flagged'),
+          supabase.from('proof_cards').select('id').eq('verification_status', 'rejected' as any),
         ]);
 
         const totalUsers = usersRes.count || 0;

@@ -65,9 +65,9 @@ export default function EmployerDashboard() {
           const verifiedProofs = proofsRes.data?.filter(p => p.verification_status === 'verified').length || 0;
 
           // Fetch top skills in demand
-          const { data: skillsData } = await supabase.from('skills').select('name');
+          const { data: skillsData } = await supabase!.from('skills').select('name');
           const skillCounts: Record<string, number> = {};
-          skillsData?.forEach(s => {
+          (skillsData as Array<{ name: string }> | null)?.forEach(s => {
             skillCounts[s.name] = (skillCounts[s.name] || 0) + 1;
           });
           const topSkillsDemand = Object.entries(skillCounts)
@@ -109,7 +109,7 @@ export default function EmployerDashboard() {
                   fullName: u.full_name || 'Unknown',
                   headline: u.headline,
                   avatarUrl: u.avatar_url,
-                  skills: userSkills?.map(s => s.name) || [],
+                  skills: (userSkills as Array<{ name: string }> | null)?.map(s => s.name) || [],
                   proofCount: proofs?.length || 0,
                   matchScore: Math.floor(Math.random() * 30) + 70,
                 };

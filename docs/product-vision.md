@@ -104,7 +104,7 @@ These users already have proof fragments to connect.
 
 | Generic Career Platform | Orin |
 |------------------------|------|
-| Self-reported skills | Cryptographically verified |
+| Self-reported skills | Source-linked verified |
 | Generic AI coaching | Proof-aware coaching |
 | Resume builder | Portable proof cards |
 | Job board | Skill gap engine |

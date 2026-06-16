@@ -3,6 +3,7 @@ import { Inter, Lora } from "next/font/google";
 import { AuthProvider } from "@/lib/auth-context";
 import { PlanProvider } from "@/lib/plan-context";
 import { RoleProvider } from "@/lib/role-context";
+import { FeatureFlagProvider } from "@/lib/feature-flag-context";
 import { ThemeProvider } from "@/lib/theme-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { Toaster } from "@/components/ui/toast";
@@ -68,7 +69,9 @@ export default function RootLayout({
           <ThemeProvider>
             <AuthProvider>
               <PlanProvider>
-                <RoleProvider>{children}</RoleProvider>
+                <RoleProvider>
+                  <FeatureFlagProvider>{children}</FeatureFlagProvider>
+                </RoleProvider>
               </PlanProvider>
             </AuthProvider>
           </ThemeProvider>

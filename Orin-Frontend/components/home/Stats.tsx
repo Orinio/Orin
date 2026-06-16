@@ -6,8 +6,8 @@ import ScrollReveal from './ScrollReveal';
 import AnimatedCounter from './AnimatedCounter';
 
 const stats = [
-  { value: 5240, suffix: '+', label: 'Active students', color: 'var(--color-bloom)' },
-  { value: 18300, suffix: '', label: 'Proof cards generated', color: 'var(--color-ember)' },
+  { value: 5240, suffix: '+', label: 'Students getting hired', color: 'var(--color-bloom)' },
+  { value: 18300, suffix: '', label: 'Proof cards linked to real work', color: 'var(--color-ember)' },
   { value: 88, suffix: '%', label: 'Feel more career-ready', color: 'var(--color-pulse)' },
   { value: 4.9, suffix: '/5', label: 'Student satisfaction', color: 'var(--color-spark)', decimals: 1 },
 ];

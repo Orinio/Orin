@@ -55,7 +55,7 @@ export default function Hero() {
         {/* Left: Copy */}
         <div className="order-1">
           <ScrollReveal direction="up" delay={0}>
-            <div className="badge-spark mb-6">AI Coach For Students</div>
+            <div className="badge-spark mb-6">Get Hired For What You Built</div>
           </ScrollReveal>
 
           <h1
@@ -63,14 +63,14 @@ export default function Hero() {
             style={{ color: 'var(--color-ink)' }}
           >
             <ScrollReveal direction="up" delay={0.05} duration={0.8}>
-              <span className="block">Your scattered</span>
+              <span className="block">Get hired for what</span>
             </ScrollReveal>
             <ScrollReveal direction="up" delay={0.12} duration={0.8}>
-              <span className="block">work becomes</span>
+              <span className="block">you've actually</span>
             </ScrollReveal>
             <ScrollReveal direction="up" delay={0.2} duration={0.8}>
               <span className="relative inline-block">
-                <span className="gradient-text-ember">career proof</span>
+                <span className="gradient-text-ember">built</span>
                 <span
                   aria-hidden="true"
                   className="absolute -bottom-1 left-0 w-full h-3 -z-10 rounded-sm"
@@ -85,23 +85,23 @@ export default function Hero() {
               className="text-lg mb-8 leading-relaxed max-w-lg"
               style={{ color: 'var(--color-text-secondary)' }}
             >
-              GitHub, Kaggle, certificates, projects — all over the place. ORIN transforms them into verified proof cards, an AI coach who guides you daily, and real opportunities that match your proof.
+              You've built real projects on GitHub, won competitions, earned certificates. Recruiters can't see any of it. ORIN turns your work into verified proof they can actually trust — and tells you exactly what to build next.
             </p>
           </ScrollReveal>
 
           <ScrollReveal direction="up" delay={0.4} duration={0.7}>
             <div className="flex gap-4 flex-wrap mb-8">
               <Link href="/signup" className="btn-primary text-base shine-wrap">
-                Start Building Proof
+                Start Building Proof — Free
               </Link>
-              <button type="button" className="btn-outline text-base group">
+              <Link href="/demo" className="btn-outline text-base group">
                 <span className="flex items-center gap-2">
                   <svg className="w-4 h-4 transition-transform group-hover:scale-110" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M8 5v14l11-7z"/>
                   </svg>
-                  Watch Demo
+                  Try Instant Demo
                 </span>
-              </button>
+              </Link>
             </div>
           </ScrollReveal>
 

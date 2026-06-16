@@ -24,12 +24,12 @@ export default function FinalCTA() {
         <ScrollReveal direction="up" delay={0.1}>
           <h2 className="text-4xl md:text-6xl font-bold mb-8 leading-tight tracking-tight text-white">
             Stop collecting certificates.<br />
-            <span className="gradient-text-ember">Start collecting proof.</span>
+            <span className="gradient-text-ember">Start getting hired for what you built.</span>
           </h2>
         </ScrollReveal>
         <ScrollReveal direction="up" delay={0.2}>
           <p className="text-lg md:text-xl mb-10 text-white/70 max-w-xl mx-auto">
-            Join 5,000+ students who turned scattered work into verified career proof. Free forever.
+            Join 5,000+ students who turned their real work into proof recruiters trust. Free forever.
           </p>
         </ScrollReveal>
         <ScrollReveal direction="up" delay={0.3}>

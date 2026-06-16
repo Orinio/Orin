@@ -49,7 +49,7 @@ const features = [
       </svg>
     ),
     title: 'Proof Cards',
-    desc: 'Auto-generated cards from your work, verified with links to the source. Every project, cert, and contribution becomes tangible proof.',
+    desc: 'Auto-generated cards from your work, linked to the source. Every project, cert, and contribution — visible proof recruiters can click through and verify.',
     gradient: 'linear-gradient(135deg, var(--color-bloom) 0%, #059669 100%)',
     span: 'sm:col-span-2',
   },
@@ -100,8 +100,8 @@ const features = [
         <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
       </svg>
     ),
-    title: 'Proof Score',
-    desc: 'A real measure of your career readiness. Track weekly trends and see where you rank among peers.',
+    title: 'Skill Gap Engine',
+    desc: "Pick a target role. See exactly what you're missing. Get a 2-week action plan: Ship one deployed project this week and you're 90% ready.",
     gradient: 'linear-gradient(135deg, var(--color-spark) 0%, #d69e2e 100%)',
     span: 'sm:col-span-2',
   },
@@ -136,12 +136,12 @@ export default function Features() {
         <ScrollReveal direction="up" delay={0.1}>
           <h2 className="text-4xl md:text-6xl font-bold tracking-tight mb-5" style={{ color: 'var(--color-ink)' }}>
             Everything you need to{' '}
-            <span className="gradient-text-bloom">prove it</span>
+            <span className="gradient-text-bloom">get hired</span>
           </h2>
         </ScrollReveal>
         <ScrollReveal direction="up" delay={0.2}>
           <p className="text-lg md:text-xl max-w-2xl mx-auto leading-relaxed" style={{ color: 'var(--color-text-secondary)', opacity: 0.7 }}>
-            No more sending PDFs and hoping they open them. One link. Verified proof. Real results.
+            No more sending resumes into the void. One link. Verified proof from real work. Jobs that actually match your skills.
           </p>
         </ScrollReveal>
       </div>

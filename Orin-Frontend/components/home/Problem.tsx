@@ -27,7 +27,7 @@ const painPoints = [
       </svg>
     ),
     title: 'Proof feels scattered',
-    desc: 'Hard to show employers what you can actually do when your work is everywhere.',
+    desc: 'Hard to show employers what you can actually do when your work is everywhere — GitHub, Notion, Google Drive, and that email attachment you almost lost.',
     gradient: 'linear-gradient(135deg, var(--color-pulse) 0%, #d53f8c 100%)',
     accent: 'card-accent-pulse',
   },
@@ -39,8 +39,8 @@ const painPoints = [
         <line x1="8" y1="11" x2="14" y2="11" />
       </svg>
     ),
-    title: 'No guidance',
-    desc: 'You built things but have no idea what to build next to stand out.',
+    title: 'No direction',
+    desc: 'You built things but have no idea what to build next to get hired. No one tells you the gap between your skills and the job you want.',
     gradient: 'linear-gradient(135deg, var(--color-spark) 0%, #d69e2e 100%)',
     accent: 'card-accent-spark',
   },
@@ -67,12 +67,12 @@ export default function Problem() {
             <ScrollReveal direction="up" delay={0.1}>
               <h2 className="text-4xl md:text-6xl font-bold mb-6 leading-tight tracking-tight" style={{ color: 'var(--color-ink)' }}>
                 You built a lot.<br />
-                <span className="gradient-text-ember">Showing it is hard.</span>
+                <span className="gradient-text-ember">Recruiters can't see it.</span>
               </h2>
             </ScrollReveal>
             <ScrollReveal direction="up" delay={0.2}>
               <p className="text-lg md:text-xl leading-relaxed max-w-md" style={{ color: 'var(--color-text-secondary)', opacity: 0.7 }}>
-                Every student has proof of their skills — scattered across GitHub, Notion, Google Drive, and email. None of it connects. None of it tells a story.
+                You've shipped code, won competitions, earned certificates. But recruiters see none of it — just a PDF resume that says "proficient in Python." Says who? Your proof is scattered. None of it connects. None of it gets you hired.
               </p>
             </ScrollReveal>
 

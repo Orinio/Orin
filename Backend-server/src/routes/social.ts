@@ -1,820 +1,660 @@
-import { Router } from 'express';
-import { z } from 'zod';
+import { Router, type Request, type Response } from 'express';
 import { supabase } from '../lib/supabase.js';
+import { authMiddleware } from '../middleware/auth.js';
 import { logger } from '../lib/logger.js';
 
-export const socialRouter = Router();
+const socialRouter = Router();
 
-// ───────────────────────────────────────────────────────────────
-// FOLLOW
-// ───────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════
+// POSTS
+// ═══════════════════════════════════════════
 
-socialRouter.get('/follow/status', async (req, res) => {
+// Create a new post
+socialRouter.post('/posts', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user?.id;
-    if (!userId) {
-      res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } });
+    const { userId, content, mediaUrls, postType, visibility, hashtags, mentions } = req.body;
+
+    if (!userId || !content) {
+      res.status(400).json({ error: { code: 'MISSING_FIELDS', message: 'userId and content are required' } });
       return;
     }
 
-    const { targetUserId } = req.query;
-    if (!targetUserId || typeof targetUserId !== 'string') {
-      res.status(400).json({ error: { code: 'INVALID_INPUT', message: 'targetUserId is required' } });
+    if (content.length > 280) {
+      res.status(400).json({ error: { code: 'CONTENT_TOO_LONG', message: 'Content must be 280 characters or less' } });
       return;
     }
 
-    const { data: currentDbUser } = await supabase
-      .from('users')
-      .select('id')
-      .eq('auth_user_id', userId)
-      .maybeSingle();
-
-    if (!currentDbUser) {
-      res.status(404).json({ error: { code: 'NOT_FOUND', message: 'User not found' } });
-      return;
-    }
-
-    const [{ data: followData }, { count: followerCount }, { count: followingCount }] = await Promise.all([
-      supabase
-        .from('follows')
-        .select('id')
-        .eq('follower_id', currentDbUser.id)
-        .eq('following_id', targetUserId)
-        .maybeSingle(),
-      supabase
-        .from('follows')
-        .select('id', { count: 'exact', head: true })
-        .eq('following_id', targetUserId),
-      supabase
-        .from('follows')
-        .select('id', { count: 'exact', head: true })
-        .eq('follower_id', targetUserId),
-    ]);
-
-    res.json({
-      success: true,
-      data: {
-        isFollowing: !!followData,
-        followerCount: followerCount || 0,
-        followingCount: followingCount || 0,
-      },
-    });
-  } catch (err) {
-    logger.error({ err }, 'Follow status error');
-    res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } });
-  }
-});
-
-const toggleFollowSchema = z.object({
-  followingId: z.string().uuid(),
-});
-
-socialRouter.post('/follow/toggle', async (req, res) => {
-  try {
-    const userId = (req as any).user?.id;
-    if (!userId) {
-      res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } });
-      return;
-    }
-
-    const parsed = toggleFollowSchema.safeParse(req.body);
-    if (!parsed.success) {
-      res.status(400).json({ error: { code: 'INVALID_INPUT', message: parsed.error.errors[0].message } });
-      return;
-    }
-
-    const { data: currentDbUser } = await supabase
-      .from('users')
-      .select('id')
-      .eq('auth_user_id', userId)
-      .maybeSingle();
-
-    if (!currentDbUser) {
-      res.status(404).json({ error: { code: 'NOT_FOUND', message: 'User not found' } });
-      return;
-    }
-
-    if (currentDbUser.id === parsed.data.followingId) {
-      res.status(400).json({ error: { code: 'INVALID_INPUT', message: 'Cannot follow yourself' } });
-      return;
-    }
-
-    const { data: existing } = await supabase
-      .from('follows')
-      .select('id')
-      .eq('follower_id', currentDbUser.id)
-      .eq('following_id', parsed.data.followingId)
-      .maybeSingle();
-
-    if (existing) {
-      await supabase.from('follows').delete().eq('id', existing.id);
-      res.json({ success: true, data: { isFollowing: false } });
-    } else {
-      const { error } = await supabase
-        .from('follows')
-        .insert({ follower_id: currentDbUser.id, following_id: parsed.data.followingId });
-
-      if (error) {
-        res.status(500).json({ error: { code: 'DB_ERROR', message: error.message } });
-        return;
-      }
-      res.json({ success: true, data: { isFollowing: true } });
-    }
-  } catch (err) {
-    logger.error({ err }, 'Follow toggle error');
-    res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } });
-  }
-});
-
-// ───────────────────────────────────────────────────────────────
-// LIKE
-// ───────────────────────────────────────────────────────────────
-
-socialRouter.get('/like/status', async (req, res) => {
-  try {
-    const userId = (req as any).user?.id;
-    if (!userId) {
-      res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } });
-      return;
-    }
-
-    const { proofCardId } = req.query;
-    if (!proofCardId || typeof proofCardId !== 'string') {
-      res.status(400).json({ error: { code: 'INVALID_INPUT', message: 'proofCardId is required' } });
-      return;
-    }
-
-    const { data: currentDbUser } = await supabase
-      .from('users')
-      .select('id')
-      .eq('auth_user_id', userId)
-      .maybeSingle();
-
-    if (!currentDbUser) {
-      res.status(404).json({ error: { code: 'NOT_FOUND', message: 'User not found' } });
-      return;
-    }
-
-    const [{ data }, { count }] = await Promise.all([
-      supabase
-        .from('likes')
-        .select('id')
-        .eq('user_id', currentDbUser.id)
-        .eq('proof_card_id', proofCardId)
-        .maybeSingle(),
-      supabase
-        .from('likes')
-        .select('id', { count: 'exact', head: true })
-        .eq('proof_card_id', proofCardId),
-    ]);
-
-    res.json({
-      success: true,
-      data: {
-        hasLiked: !!data,
-        likeCount: count || 0,
-      },
-    });
-  } catch (err) {
-    logger.error({ err }, 'Like status error');
-    res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } });
-  }
-});
-
-const toggleLikeSchema = z.object({
-  proofCardId: z.string().uuid(),
-});
-
-socialRouter.post('/like/toggle', async (req, res) => {
-  try {
-    const userId = (req as any).user?.id;
-    if (!userId) {
-      res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } });
-      return;
-    }
-
-    const parsed = toggleLikeSchema.safeParse(req.body);
-    if (!parsed.success) {
-      res.status(400).json({ error: { code: 'INVALID_INPUT', message: parsed.error.errors[0].message } });
-      return;
-    }
-
-    const { data: currentDbUser } = await supabase
-      .from('users')
-      .select('id')
-      .eq('auth_user_id', userId)
-      .maybeSingle();
-
-    if (!currentDbUser) {
-      res.status(404).json({ error: { code: 'NOT_FOUND', message: 'User not found' } });
-      return;
-    }
-
-    const { data: existing } = await supabase
-      .from('likes')
-      .select('id')
-      .eq('user_id', currentDbUser.id)
-      .eq('proof_card_id', parsed.data.proofCardId)
-      .maybeSingle();
-
-    if (existing) {
-      await supabase.from('likes').delete().eq('id', existing.id);
-      res.json({ success: true, data: { hasLiked: false } });
-    } else {
-      const { error } = await supabase
-        .from('likes')
-        .insert({ user_id: currentDbUser.id, proof_card_id: parsed.data.proofCardId });
-
-      if (error) {
-        res.status(500).json({ error: { code: 'DB_ERROR', message: error.message } });
-        return;
-      }
-      res.json({ success: true, data: { hasLiked: true } });
-    }
-  } catch (err) {
-    logger.error({ err }, 'Like toggle error');
-    res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } });
-  }
-});
-
-// ───────────────────────────────────────────────────────────────
-// COMMENTS
-// ───────────────────────────────────────────────────────────────
-
-socialRouter.get('/comments/:proofCardId', async (req, res) => {
-  try {
-    const { proofCardId } = req.params;
+    // Extract hashtags from content
+    const extractedHashtags = content.match(/#(\w+)/g)?.map((h: string) => h.slice(1)) || [];
+    const allHashtags = [...new Set([...(hashtags || []), ...extractedHashtags])];
 
     const { data, error } = await supabase
-      .from('comments')
-      .select('*, users!inner(full_name, avatar_url, username)')
-      .eq('proof_card_id', proofCardId)
-      .is('parent_id', null)
-      .order('created_at', { ascending: true });
-
-    if (error) {
-      res.status(500).json({ error: { code: 'DB_ERROR', message: error.message } });
-      return;
-    }
-
-    res.json({ success: true, data: data || [] });
-  } catch (err) {
-    logger.error({ err }, 'Comments list error');
-    res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } });
-  }
-});
-
-const addCommentSchema = z.object({
-  proofCardId: z.string().uuid(),
-  content: z.string().min(1).max(2000),
-  parentId: z.string().uuid().optional(),
-});
-
-socialRouter.post('/comments', async (req, res) => {
-  try {
-    const userId = (req as any).user?.id;
-    if (!userId) {
-      res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } });
-      return;
-    }
-
-    const parsed = addCommentSchema.safeParse(req.body);
-    if (!parsed.success) {
-      res.status(400).json({ error: { code: 'INVALID_INPUT', message: parsed.error.errors[0].message } });
-      return;
-    }
-
-    const { data: currentDbUser } = await supabase
-      .from('users')
-      .select('id')
-      .eq('auth_user_id', userId)
-      .maybeSingle();
-
-    if (!currentDbUser) {
-      res.status(404).json({ error: { code: 'NOT_FOUND', message: 'User not found' } });
-      return;
-    }
-
-    const { data, error } = await supabase
-      .from('comments')
+      .from('posts')
       .insert({
-        user_id: currentDbUser.id,
-        proof_card_id: parsed.data.proofCardId,
-        content: parsed.data.content,
-        parent_id: parsed.data.parentId || null,
+        user_id: userId,
+        content,
+        media_urls: mediaUrls || [],
+        post_type: postType || 'text',
+        visibility: visibility || 'public',
+        hashtags: allHashtags,
+        mentions: mentions || [],
       })
-      .select('*, users!inner(full_name, avatar_url, username)')
+      .select('*, users(id, username, full_name, avatar_url, headline)')
       .single();
 
-    if (error) {
-      res.status(500).json({ error: { code: 'DB_ERROR', message: error.message } });
-      return;
-    }
+    if (error) throw error;
 
-    res.json({ success: true, data });
+    // Create activity
+    await supabase.from('user_activities').insert({
+      user_id: userId,
+      activity_type: 'post',
+      entity_type: 'post',
+      entity_id: data.id,
+    });
+
+    res.json({ data });
   } catch (err) {
-    logger.error({ err }, 'Comment create error');
-    res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } });
+    logger.error({ err }, 'Error creating post');
+    res.status(500).json({ error: { code: 'CREATE_POST_FAILED', message: 'Failed to create post' } });
   }
 });
 
-socialRouter.delete('/comments/:commentId', async (req, res) => {
+// Get feed posts (from followed users)
+socialRouter.get('/posts/feed', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = req.query.userId as string;
+    const page = parseInt(req.query.page as string) || 0;
+    const limit = parseInt(req.query.limit as string) || 20;
+
     if (!userId) {
-      res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } });
+      res.status(400).json({ error: { code: 'MISSING_USER_ID', message: 'userId is required' } });
       return;
     }
 
-    const { commentId } = req.params;
-
-    const { data: currentDbUser } = await supabase
-      .from('users')
-      .select('id')
-      .eq('auth_user_id', userId)
-      .maybeSingle();
-
-    if (!currentDbUser) {
-      res.status(404).json({ error: { code: 'NOT_FOUND', message: 'User not found' } });
-      return;
-    }
-
-    const { data: comment } = await supabase
-      .from('comments')
-      .select('user_id, proof_card_id')
-      .eq('id', commentId)
-      .single();
-
-    if (!comment) {
-      res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Comment not found' } });
-      return;
-    }
-
-    if (comment.user_id !== currentDbUser.id) {
-      res.status(403).json({ error: { code: 'FORBIDDEN', message: 'Not your comment' } });
-      return;
-    }
-
-    const { error } = await supabase.from('comments').delete().eq('id', commentId);
-
-    if (error) {
-      res.status(500).json({ error: { code: 'DB_ERROR', message: error.message } });
-      return;
-    }
-
-    res.json({ success: true });
-  } catch (err) {
-    logger.error({ err }, 'Comment delete error');
-    res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } });
-  }
-});
-
-// ───────────────────────────────────────────────────────────────
-// FEED — Proof cards from followed users
-// ───────────────────────────────────────────────────────────────
-
-socialRouter.get('/feed', async (req, res) => {
-  try {
-    const userId = (req as any).user?.id;
-    if (!userId) {
-      res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } });
-      return;
-    }
-
-    const page = Math.max(0, parseInt(req.query.page as string) || 0);
-    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 20));
-
-    const { data: currentDbUser } = await supabase
-      .from('users')
-      .select('id')
-      .eq('auth_user_id', userId)
-      .maybeSingle();
-
-    if (!currentDbUser) {
-      res.status(404).json({ error: { code: 'NOT_FOUND', message: 'User not found' } });
-      return;
-    }
-
+    // Get IDs of users the current user follows
     const { data: followData } = await supabase
       .from('follows')
       .select('following_id')
-      .eq('follower_id', currentDbUser.id);
+      .eq('follower_id', userId);
 
     const followingIds = (followData || []).map((f) => f.following_id);
-
     if (followingIds.length === 0) {
-      res.json({ success: true, data: [] });
+      res.json({ data: [] });
       return;
     }
 
-    const { data: proofs, error } = await supabase
-      .from('proof_cards')
-      .select('*, users!inner(id, username, full_name, avatar_url, headline)')
+    // Get posts from followed users
+    const { data: posts, error } = await supabase
+      .from('posts')
+      .select('*, users(id, username, full_name, avatar_url, headline)')
       .in('user_id', followingIds)
       .eq('visibility', 'public')
       .is('deleted_at', null)
       .order('created_at', { ascending: false })
       .range(page * limit, (page + 1) * limit - 1);
 
-    if (error) {
-      res.status(500).json({ error: { code: 'DB_ERROR', message: error.message } });
+    if (error) throw error;
+
+    res.json({ data: posts });
+  } catch (err) {
+    logger.error({ err }, 'Error fetching feed');
+    res.status(500).json({ error: { code: 'FETCH_FEED_FAILED', message: 'Failed to fetch feed' } });
+  }
+});
+
+// Get user posts
+socialRouter.get('/posts/user/:userId', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+    const page = parseInt(req.query.page as string) || 0;
+    const limit = parseInt(req.query.limit as string) || 20;
+
+    const { data: posts, error } = await supabase
+      .from('posts')
+      .select('*, users(id, username, full_name, avatar_url, headline)')
+      .eq('user_id', userId)
+      .is('deleted_at', null)
+      .is('reply_to_id', null)
+      .order('created_at', { ascending: false })
+      .range(page * limit, (page + 1) * limit - 1);
+
+    if (error) throw error;
+
+    res.json({ data: posts });
+  } catch (err) {
+    logger.error({ err }, 'Error fetching user posts');
+    res.status(500).json({ error: { code: 'FETCH_POSTS_FAILED', message: 'Failed to fetch user posts' } });
+  }
+});
+
+// Get single post
+socialRouter.get('/posts/:postId', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const { postId } = req.params;
+
+    const { data: post, error } = await supabase
+      .from('posts')
+      .select('*, users(id, username, full_name, avatar_url, headline)')
+      .eq('id', postId)
+      .is('deleted_at', null)
+      .single();
+
+    if (error) throw error;
+
+    res.json({ data: post });
+  } catch (err) {
+    logger.error({ err }, 'Error fetching post');
+    res.status(500).json({ error: { code: 'FETCH_POST_FAILED', message: 'Failed to fetch post' } });
+  }
+});
+
+// Update post
+socialRouter.put('/posts/:postId', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const { postId } = req.params;
+    const { content, visibility } = req.body;
+
+    const extractedHashtags = content?.match(/#(\w+)/g)?.map((h: string) => h.slice(1)) || [];
+
+    const { data, error } = await supabase
+      .from('posts')
+      .update({
+        content,
+        visibility,
+        hashtags: extractedHashtags,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', postId)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    res.json({ data });
+  } catch (err) {
+    logger.error({ err }, 'Error updating post');
+    res.status(500).json({ error: { code: 'UPDATE_POST_FAILED', message: 'Failed to update post' } });
+  }
+});
+
+// Delete post (soft delete)
+socialRouter.delete('/posts/:postId', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const { postId } = req.params;
+
+    const { error } = await supabase
+      .from('posts')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', postId);
+
+    if (error) throw error;
+
+    res.json({ success: true });
+  } catch (err) {
+    logger.error({ err }, 'Error deleting post');
+    res.status(500).json({ error: { code: 'DELETE_POST_FAILED', message: 'Failed to delete post' } });
+  }
+});
+
+// Repost
+socialRouter.post('/posts/:postId/repost', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const { postId } = req.params;
+    const { userId, content } = req.body;
+
+    const { data, error } = await supabase
+      .from('posts')
+      .insert({
+        user_id: userId,
+        content: content || '',
+        post_type: 'repost',
+        repost_of_id: postId,
+        visibility: 'public',
+      })
+      .select('*, users(id, username, full_name, avatar_url, headline)')
+      .single();
+
+    if (error) throw error;
+
+    // Update repost count
+    await supabase.rpc('increment_repost_count', { post_id: postId });
+
+    res.json({ data });
+  } catch (err) {
+    logger.error({ err }, 'Error reposting');
+    res.status(500).json({ error: { code: 'REPOST_FAILED', message: 'Failed to repost' } });
+  }
+});
+
+// ═══════════════════════════════════════════
+// REACTIONS
+// ═══════════════════════════════════════════
+
+// Toggle reaction on post
+socialRouter.post('/posts/:postId/reactions', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const { postId } = req.params;
+    const { userId, reactionType, hasReacted } = req.body;
+
+    if (hasReacted) {
+      const { error } = await supabase
+        .from('post_reactions')
+        .delete()
+        .eq('post_id', postId)
+        .eq('user_id', userId)
+        .eq('reaction_type', reactionType);
+      if (error) throw error;
+    } else {
+      const { error } = await supabase
+        .from('post_reactions')
+        .insert({
+          post_id: postId,
+          user_id: userId,
+          reaction_type: reactionType,
+        });
+      if (error) throw error;
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    logger.error({ err }, 'Error toggling reaction');
+    res.status(500).json({ error: { code: 'REACTION_FAILED', message: 'Failed to toggle reaction' } });
+  }
+});
+
+// Get reactions for post
+socialRouter.get('/posts/:postId/reactions', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const { postId } = req.params;
+    const userId = req.query.userId as string;
+
+    const { data: allReactions } = await supabase
+      .from('post_reactions')
+      .select('reaction_type')
+      .eq('post_id', postId);
+
+    // Group reactions manually
+    const reactionsMap = new Map<string, number>();
+    (allReactions || []).forEach((r) => {
+      const count = reactionsMap.get(r.reaction_type) || 0;
+      reactionsMap.set(r.reaction_type, count + 1);
+    });
+    const reactions = Array.from(reactionsMap.entries()).map(([reaction_type, count]) => ({
+      reaction_type,
+      count,
+    }));
+
+    let userReactions: string[] = [];
+    if (userId) {
+      const { data } = await supabase
+        .from('post_reactions')
+        .select('reaction_type')
+        .eq('post_id', postId)
+        .eq('user_id', userId);
+      userReactions = (data || []).map((r) => r.reaction_type);
+    }
+
+    res.json({ reactions, userReactions });
+  } catch (err) {
+    logger.error({ err }, 'Error fetching reactions');
+    res.status(500).json({ error: { code: 'FETCH_REACTIONS_FAILED', message: 'Failed to fetch reactions' } });
+  }
+});
+
+// ═══════════════════════════════════════════
+// BOOKMARKS
+// ═══════════════════════════════════════════
+
+// Toggle bookmark
+socialRouter.post('/posts/:postId/bookmarks', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const { postId } = req.params;
+    const { userId, isBookmarked } = req.body;
+
+    if (isBookmarked) {
+      const { error } = await supabase
+        .from('bookmarks')
+        .delete()
+        .eq('post_id', postId)
+        .eq('user_id', userId);
+      if (error) throw error;
+    } else {
+      const { error } = await supabase
+        .from('bookmarks')
+        .insert({
+          post_id: postId,
+          user_id: userId,
+        });
+      if (error) throw error;
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    logger.error({ err }, 'Error toggling bookmark');
+    res.status(500).json({ error: { code: 'BOOKMARK_FAILED', message: 'Failed to toggle bookmark' } });
+  }
+});
+
+// Get user bookmarks
+socialRouter.get('/bookmarks/:userId', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+
+    const { data, error } = await supabase
+      .from('bookmarks')
+      .select('post_id, created_at, posts(*, users(id, username, full_name, avatar_url, headline))')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    const bookmarks = (data || []).map((b: any) => ({
+      ...b.posts,
+      bookmarked_at: b.created_at,
+    }));
+
+    res.json({ data: bookmarks });
+  } catch (err) {
+    logger.error({ err }, 'Error fetching bookmarks');
+    res.status(500).json({ error: { code: 'FETCH_BOOKMARKS_FAILED', message: 'Failed to fetch bookmarks' } });
+  }
+});
+
+// ═══════════════════════════════════════════
+// COMMENTS
+// ═══════════════════════════════════════════
+
+// Add comment to post
+socialRouter.post('/posts/:postId/comments', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const { postId } = req.params;
+    const { userId, content, parentId, replyToUserId } = req.body;
+
+    if (!userId || !content) {
+      res.status(400).json({ error: { code: 'MISSING_FIELDS', message: 'userId and content are required' } });
       return;
     }
 
-    const posts = await Promise.all(
-      (proofs || []).map(async (proof) => {
-        const [{ count: likeCount }, { count: commentCount }] = await Promise.all([
-          supabase
-            .from('likes')
-            .select('id', { count: 'exact', head: true })
-            .eq('proof_card_id', proof.id),
-          supabase
-            .from('comments')
-            .select('id', { count: 'exact', head: true })
-            .eq('proof_card_id', proof.id),
-        ]);
+    const { data, error } = await supabase
+      .from('post_comments')
+      .insert({
+        post_id: postId,
+        user_id: userId,
+        content,
+        parent_id: parentId || null,
+        reply_to_user_id: replyToUserId || null,
+      })
+      .select('*, users(id, username, full_name, avatar_url)')
+      .single();
+
+    if (error) throw error;
+
+    // Create activity
+    await supabase.from('user_activities').insert({
+      user_id: userId,
+      activity_type: 'comment',
+      entity_type: 'comment',
+      entity_id: data.id,
+    });
+
+    res.json({ data });
+  } catch (err) {
+    logger.error({ err }, 'Error adding comment');
+    res.status(500).json({ error: { code: 'ADD_COMMENT_FAILED', message: 'Failed to add comment' } });
+  }
+});
+
+// Get comments for post
+socialRouter.get('/posts/:postId/comments', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const { postId } = req.params;
+    const userId = req.query.userId as string;
+
+    const { data: comments, error } = await supabase
+      .from('post_comments')
+      .select('*, users(id, username, full_name, avatar_url), reply_to_user:users!reply_to_user_id(username, full_name)')
+      .eq('post_id', postId)
+      .is('deleted_at', null)
+      .is('parent_id', null)
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+
+    // Get replies for each comment
+    const commentsWithReplies = await Promise.all(
+      (comments || []).map(async (comment) => {
+        const { data: replies } = await supabase
+          .from('post_comments')
+          .select('*, users(id, username, full_name, avatar_url), reply_to_user:users!reply_to_user_id(username, full_name)')
+          .eq('parent_id', comment.id)
+          .is('deleted_at', null)
+          .order('created_at', { ascending: true });
+
+        // Get user reactions
+        let hasLiked = false;
+        if (userId) {
+          const { data: commentReactions } = await supabase
+            .from('comment_reactions')
+            .select('reaction_type')
+            .eq('comment_id', comment.id)
+            .eq('user_id', userId);
+          hasLiked = (commentReactions || []).some((r) => r.reaction_type === 'like');
+        }
 
         return {
-          ...proof,
-          like_count: likeCount || 0,
-          comment_count: commentCount || 0,
+          ...comment,
+          has_liked: hasLiked,
+          replies: replies || [],
         };
       })
     );
 
-    res.json({ success: true, data: posts });
+    res.json({ data: commentsWithReplies });
   } catch (err) {
-    logger.error({ err }, 'Feed error');
-    res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } });
+    logger.error({ err }, 'Error fetching comments');
+    res.status(500).json({ error: { code: 'FETCH_COMMENTS_FAILED', message: 'Failed to fetch comments' } });
   }
 });
 
-// ───────────────────────────────────────────────────────────────
-// USER SEARCH
-// ───────────────────────────────────────────────────────────────
-
-socialRouter.get('/users/search', async (req, res) => {
+// Delete comment (soft delete)
+socialRouter.delete('/comments/:commentId', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const { q } = req.query;
-    if (!q || typeof q !== 'string' || q.length < 2) {
-      res.json({ success: true, data: [] });
+    const { commentId } = req.params;
+
+    const { error } = await supabase
+      .from('post_comments')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', commentId);
+
+    if (error) throw error;
+
+    res.json({ success: true });
+  } catch (err) {
+    logger.error({ err }, 'Error deleting comment');
+    res.status(500).json({ error: { code: 'DELETE_COMMENT_FAILED', message: 'Failed to delete comment' } });
+  }
+});
+
+// Toggle comment reaction
+socialRouter.post('/comments/:commentId/reactions', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const { commentId } = req.params;
+    const { userId, reactionType, hasReacted } = req.body;
+
+    if (hasReacted) {
+      const { error } = await supabase
+        .from('comment_reactions')
+        .delete()
+        .eq('comment_id', commentId)
+        .eq('user_id', userId)
+        .eq('reaction_type', reactionType);
+      if (error) throw error;
+    } else {
+      const { error } = await supabase
+        .from('comment_reactions')
+        .insert({
+          comment_id: commentId,
+          user_id: userId,
+          reaction_type: reactionType,
+        });
+      if (error) throw error;
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    logger.error({ err }, 'Error toggling comment reaction');
+    res.status(500).json({ error: { code: 'COMMENT_REACTION_FAILED', message: 'Failed to toggle comment reaction' } });
+  }
+});
+
+// ═══════════════════════════════════════════
+// NOTIFICATIONS
+// ═══════════════════════════════════════════
+
+// Get social notifications
+socialRouter.get('/notifications/:userId', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+
+    const { data, error } = await supabase
+      .from('social_notifications')
+      .select('*, actor:users!actor_id(username, full_name, avatar_url)')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(50);
+
+    if (error) throw error;
+
+    res.json({ data });
+  } catch (err) {
+    logger.error({ err }, 'Error fetching notifications');
+    res.status(500).json({ error: { code: 'FETCH_NOTIFICATIONS_FAILED', message: 'Failed to fetch notifications' } });
+  }
+});
+
+// Mark notifications as read
+socialRouter.put('/notifications/:userId/read', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+
+    const { error } = await supabase
+      .from('social_notifications')
+      .update({ read_at: new Date().toISOString() })
+      .eq('user_id', userId)
+      .is('read_at', null);
+
+    if (error) throw error;
+
+    res.json({ success: true });
+  } catch (err) {
+    logger.error({ err }, 'Error marking notifications read');
+    res.status(500).json({ error: { code: 'MARK_READ_FAILED', message: 'Failed to mark notifications as read' } });
+  }
+});
+
+// Get unread notification count
+socialRouter.get('/notifications/:userId/unread-count', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+
+    const { count, error } = await supabase
+      .from('social_notifications')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .is('read_at', null);
+
+    if (error) throw error;
+
+    res.json({ count: count || 0 });
+  } catch (err) {
+    logger.error({ err }, 'Error fetching unread count');
+    res.status(500).json({ error: { code: 'FETCH_COUNT_FAILED', message: 'Failed to fetch unread count' } });
+  }
+});
+
+// ═══════════════════════════════════════════
+// USER DISCOVERY
+// ═══════════════════════════════════════════
+
+// Get suggested users
+socialRouter.get('/users/suggested/:userId', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+    const limit = parseInt(req.query.limit as string) || 10;
+
+    // Get users the current user follows
+    const { data: followData } = await supabase
+      .from('follows')
+      .select('following_id')
+      .eq('follower_id', userId);
+
+    const followingIds = (followData || []).map((f) => f.following_id);
+    followingIds.push(userId); // Exclude self
+
+    // Get suggested users
+    const { data: users, error } = await supabase
+      .from('users')
+      .select('id, username, full_name, avatar_url, headline, location, bio')
+      .not('id', 'in', `(${followingIds.join(',')})`)
+      .eq('is_profile_public', true)
+      .eq('account_status', 'active')
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+
+    res.json({ data: users });
+  } catch (err) {
+    logger.error({ err }, 'Error fetching suggested users');
+    res.status(500).json({ error: { code: 'FETCH_SUGGESTED_FAILED', message: 'Failed to fetch suggested users' } });
+  }
+});
+
+// Search users
+socialRouter.get('/users/search', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const query = req.query.q as string;
+    const userId = req.query.userId as string;
+
+    if (!query || query.length < 2) {
+      res.json({ data: [] });
       return;
     }
 
     const { data, error } = await supabase
       .from('users')
       .select('id, username, full_name, avatar_url, headline, location, bio')
-      .or(`username.ilike.%${q}%,full_name.ilike.%${q}%,headline.ilike.%${q}%`)
+      .or(`username.ilike.%${query}%,full_name.ilike.%${query}%,headline.ilike.%${query}%`)
       .eq('is_profile_public', true)
       .eq('account_status', 'active')
       .is('deleted_at', null)
       .limit(20);
 
-    if (error) {
-      res.status(500).json({ error: { code: 'DB_ERROR', message: error.message } });
-      return;
+    if (error) throw error;
+
+    // Check follow status
+    let usersWithFollowStatus = data || [];
+    if (userId && data) {
+      const userIds = data.map((u) => u.id);
+      const { data: followData } = await supabase
+        .from('follows')
+        .select('following_id')
+        .eq('follower_id', userId)
+        .in('following_id', userIds);
+
+      const followingSet = new Set((followData || []).map((f) => f.following_id));
+      usersWithFollowStatus = data.map((user) => ({
+        ...user,
+        is_following: followingSet.has(user.id),
+      }));
     }
 
-    res.json({ success: true, data: data || [] });
+    res.json({ data: usersWithFollowStatus });
   } catch (err) {
-    logger.error({ err }, 'User search error');
-    res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } });
+    logger.error({ err }, 'Error searching users');
+    res.status(500).json({ error: { code: 'SEARCH_USERS_FAILED', message: 'Failed to search users' } });
   }
 });
 
-// ───────────────────────────────────────────────────────────────
-// MESSAGING
-// ───────────────────────────────────────────────────────────────
-
-socialRouter.get('/conversations', async (req, res) => {
-  try {
-    const userId = (req as any).user?.id;
-    if (!userId) {
-      res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } });
-      return;
-    }
-
-    const { data: currentDbUser } = await supabase
-      .from('users')
-      .select('id')
-      .eq('auth_user_id', userId)
-      .maybeSingle();
-
-    if (!currentDbUser) {
-      res.status(404).json({ error: { code: 'NOT_FOUND', message: 'User not found' } });
-      return;
-    }
-
-    const { data: participants } = await supabase
-      .from('conversation_participants')
-      .select('conversation_id')
-      .eq('user_id', currentDbUser.id);
-
-    if (!participants || participants.length === 0) {
-      res.json({ success: true, data: [] });
-      return;
-    }
-
-    const convIds = participants.map((p) => p.conversation_id);
-
-    const { data: convs } = await supabase
-      .from('conversations')
-      .select('*')
-      .in('id', convIds)
-      .order('updated_at', { ascending: false });
-
-    const conversations = await Promise.all(
-      (convs || []).map(async (conv) => {
-        const { data: otherParticipant } = await supabase
-          .from('conversation_participants')
-          .select('user_id')
-          .eq('conversation_id', conv.id)
-          .neq('user_id', currentDbUser.id)
-          .limit(1)
-          .single();
-
-        let otherUser = null;
-        if (otherParticipant) {
-          const { data: userData } = await supabase
-            .from('users')
-            .select('id, username, full_name, avatar_url, headline')
-            .eq('id', otherParticipant.user_id)
-            .single();
-          otherUser = userData;
-        }
-
-        const { data: lastMsg } = await supabase
-          .from('messages')
-          .select('content, created_at, sender_id')
-          .eq('conversation_id', conv.id)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .single();
-
-        const { count: unreadCount } = await supabase
-          .from('messages')
-          .select('id', { count: 'exact', head: true })
-          .eq('conversation_id', conv.id)
-          .neq('sender_id', currentDbUser.id)
-          .is('read_at', null);
-
-        return {
-          ...conv,
-          other_user: otherUser,
-          last_message: lastMsg,
-          unread_count: unreadCount || 0,
-        };
-      })
-    );
-
-    res.json({ success: true, data: conversations });
-  } catch (err) {
-    logger.error({ err }, 'Conversations list error');
-    res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } });
-  }
-});
-
-socialRouter.get('/conversations/:conversationId/messages', async (req, res) => {
-  try {
-    const userId = (req as any).user?.id;
-    if (!userId) {
-      res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } });
-      return;
-    }
-
-    const { conversationId } = req.params;
-
-    const { data: currentDbUser } = await supabase
-      .from('users')
-      .select('id')
-      .eq('auth_user_id', userId)
-      .maybeSingle();
-
-    if (!currentDbUser) {
-      res.status(404).json({ error: { code: 'NOT_FOUND', message: 'User not found' } });
-      return;
-    }
-
-    const { data: participant } = await supabase
-      .from('conversation_participants')
-      .select('id')
-      .eq('conversation_id', conversationId)
-      .eq('user_id', currentDbUser.id)
-      .maybeSingle();
-
-    if (!participant) {
-      res.status(403).json({ error: { code: 'FORBIDDEN', message: 'Not a participant' } });
-      return;
-    }
-
-    const { data, error } = await supabase
-      .from('messages')
-      .select('*')
-      .eq('conversation_id', conversationId)
-      .order('created_at', { ascending: true });
-
-    if (error) {
-      res.status(500).json({ error: { code: 'DB_ERROR', message: error.message } });
-      return;
-    }
-
-    res.json({ success: true, data: data || [] });
-  } catch (err) {
-    logger.error({ err }, 'Messages list error');
-    res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } });
-  }
-});
-
-const sendMessageSchema = z.object({
-  conversationId: z.string().uuid(),
-  content: z.string().min(1).max(5000),
-});
-
-socialRouter.post('/messages', async (req, res) => {
-  try {
-    const userId = (req as any).user?.id;
-    if (!userId) {
-      res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } });
-      return;
-    }
-
-    const parsed = sendMessageSchema.safeParse(req.body);
-    if (!parsed.success) {
-      res.status(400).json({ error: { code: 'INVALID_INPUT', message: parsed.error.errors[0].message } });
-      return;
-    }
-
-    const { data: currentDbUser } = await supabase
-      .from('users')
-      .select('id')
-      .eq('auth_user_id', userId)
-      .maybeSingle();
-
-    if (!currentDbUser) {
-      res.status(404).json({ error: { code: 'NOT_FOUND', message: 'User not found' } });
-      return;
-    }
-
-    const { data: participant } = await supabase
-      .from('conversation_participants')
-      .select('id')
-      .eq('conversation_id', parsed.data.conversationId)
-      .eq('user_id', currentDbUser.id)
-      .maybeSingle();
-
-    if (!participant) {
-      res.status(403).json({ error: { code: 'FORBIDDEN', message: 'Not a participant' } });
-      return;
-    }
-
-    const { data, error } = await supabase
-      .from('messages')
-      .insert({
-        conversation_id: parsed.data.conversationId,
-        sender_id: currentDbUser.id,
-        content: parsed.data.content,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      res.status(500).json({ error: { code: 'DB_ERROR', message: error.message } });
-      return;
-    }
-
-    res.json({ success: true, data });
-  } catch (err) {
-    logger.error({ err }, 'Message send error');
-    res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } });
-  }
-});
-
-const startConversationSchema = z.object({
-  receiverId: z.string().uuid(),
-});
-
-socialRouter.post('/conversations/start', async (req, res) => {
-  try {
-    const userId = (req as any).user?.id;
-    if (!userId) {
-      res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } });
-      return;
-    }
-
-    const parsed = startConversationSchema.safeParse(req.body);
-    if (!parsed.success) {
-      res.status(400).json({ error: { code: 'INVALID_INPUT', message: parsed.error.errors[0].message } });
-      return;
-    }
-
-    const { data: currentDbUser } = await supabase
-      .from('users')
-      .select('id')
-      .eq('auth_user_id', userId)
-      .maybeSingle();
-
-    if (!currentDbUser) {
-      res.status(404).json({ error: { code: 'NOT_FOUND', message: 'User not found' } });
-      return;
-    }
-
-    if (currentDbUser.id === parsed.data.receiverId) {
-      res.status(400).json({ error: { code: 'INVALID_INPUT', message: 'Cannot start conversation with yourself' } });
-      return;
-    }
-
-    const { data: senderParticipations } = await supabase
-      .from('conversation_participants')
-      .select('conversation_id')
-      .eq('user_id', currentDbUser.id);
-
-    if (senderParticipations) {
-      for (const sp of senderParticipations) {
-        const { data: existingConv } = await supabase
-          .from('conversation_participants')
-          .select('conversation_id')
-          .eq('conversation_id', sp.conversation_id)
-          .eq('user_id', parsed.data.receiverId)
-          .maybeSingle();
-
-        if (existingConv) {
-          res.json({ success: true, data: { conversationId: sp.conversation_id } });
-          return;
-        }
-      }
-    }
-
-    const { data: conv, error: convError } = await supabase
-      .from('conversations')
-      .insert({})
-      .select()
-      .single();
-
-    if (convError) {
-      res.status(500).json({ error: { code: 'DB_ERROR', message: convError.message } });
-      return;
-    }
-
-    await supabase
-      .from('conversation_participants')
-      .insert([
-        { conversation_id: conv.id, user_id: currentDbUser.id },
-        { conversation_id: conv.id, user_id: parsed.data.receiverId },
-      ]);
-
-    res.json({ success: true, data: { conversationId: conv.id } });
-  } catch (err) {
-    logger.error({ err }, 'Start conversation error');
-    res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } });
-  }
-});
-
-// Mark messages as read
-const markReadSchema = z.object({
-  conversationId: z.string().uuid(),
-});
-
-socialRouter.post('/messages/read', async (req, res) => {
-  try {
-    const userId = (req as any).user?.id;
-    if (!userId) {
-      res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } });
-      return;
-    }
-
-    const parsed = markReadSchema.safeParse(req.body);
-    if (!parsed.success) {
-      res.status(400).json({ error: { code: 'INVALID_INPUT', message: parsed.error.errors[0].message } });
-      return;
-    }
-
-    const { data: currentDbUser } = await supabase
-      .from('users')
-      .select('id')
-      .eq('auth_user_id', userId)
-      .maybeSingle();
-
-    if (!currentDbUser) {
-      res.status(404).json({ error: { code: 'NOT_FOUND', message: 'User not found' } });
-      return;
-    }
-
-    await supabase
-      .from('messages')
-      .update({ read_at: new Date().toISOString() })
-      .eq('conversation_id', parsed.data.conversationId)
-      .neq('sender_id', currentDbUser.id)
-      .is('read_at', null);
-
-    await supabase
-      .from('conversation_participants')
-      .update({ last_read_at: new Date().toISOString() })
-      .eq('conversation_id', parsed.data.conversationId)
-      .eq('user_id', currentDbUser.id);
-
-    res.json({ success: true });
-  } catch (err) {
-    logger.error({ err }, 'Mark read error');
-    res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } });
-  }
-});
+export { socialRouter };

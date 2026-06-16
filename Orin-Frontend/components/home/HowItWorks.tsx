@@ -14,7 +14,7 @@ const steps = [
   {
     num: '02',
     title: 'ORIN builds your proof',
-    desc: 'AI scans your work, identifies proof points, and generates verified Proof Cards.',
+    desc: 'AI scans your work, identifies proof points, and generates source-linked Proof Cards.',
     gradient: 'linear-gradient(135deg, var(--color-pulse) 0%, #d53f8c 100%)',
   },
   {
@@ -48,12 +48,12 @@ export default function HowItWorks() {
         <ScrollReveal direction="up" delay={0.1}>
           <h2 className="text-4xl md:text-6xl font-bold tracking-tight mb-5" style={{ color: 'var(--color-ink)' }}>
             Four steps to{' '}
-            <span className="gradient-text-ember">career proof</span>
+            <span className="gradient-text-ember">getting hired</span>
           </h2>
         </ScrollReveal>
         <ScrollReveal direction="up" delay={0.2}>
           <p className="text-lg md:text-xl max-w-2xl mx-auto" style={{ color: 'var(--color-text-secondary)', opacity: 0.7 }}>
-            From scattered tabs to verified proof in minutes, not months.
+            From scattered tabs to hired — in minutes, not months.
           </p>
         </ScrollReveal>
       </div>

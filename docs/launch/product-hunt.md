@@ -18,7 +18,7 @@ Most developers struggle to prove their skills to employers. Resumes lie. Portfo
 ### What makes Orin different:
 - **8 specialized AI agents** that understand your career (not just a chatbot)
 - **Persistent memory** — the AI remembers your goals, skills, and progress
-- **Real verification** — not self-reported claims, but cryptographically verified proof
+- **Real verification** — not self-reported claims, but source-linked proof from GitHub, Kaggle, and certificate platforms
 - **Opportunity matching** — AI matches your proof portfolio to jobs, internships, and scholarships
 - **Claude-inspired chat** — beautiful streaming interface with visual output
 

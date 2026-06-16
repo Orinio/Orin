@@ -21,7 +21,7 @@ So I built **Orin** — it creates **Proof Cards** from your actual work.
 - Each card is verified against the source (we hit the GitHub API)
 
 ### Why it's different:
-- **Verified, not self-reported** — each Proof Card is backed by cryptographic proof
+- **Verified, not self-reported** — each Proof Card links back to your real work on GitHub, Kaggle, and your certificates
 - **AI coaching** — 8 specialized agents that understand your career
 - **Opportunity matching** — matches your proof portfolio to real jobs
 - **Free to start** — no credit card required
@@ -60,7 +60,7 @@ I built **Orin** to solve this for experienced developers.
 
 ### Why senior devs might care:
 - **Quantify your impact** — AI extracts metrics from your code (performance improvements, test coverage, architecture decisions)
-- **Verify your claims** — each Proof Card is backed by cryptographic proof
+- **Verify your claims** — each Proof Card links back to the actual repo, notebook, or certificate
 - **Career coaching** — AI understands your experience level and suggests strategic moves
 - **Public profile** — shareable link for recruiters (SEO-optimized)
 

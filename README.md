@@ -57,7 +57,7 @@
 | **Proof-Aware Coach** | AI reads your proof wallet and gives concrete next steps |
 | **Role-Specific Plans** | Action plans based on your actual gaps, not generic advice |
 | **Skill Extraction** | Auto-detect skills from GitHub repos, certificates, and projects |
-| **Verification Engine** | Cryptographic verification against source APIs |
+| **Verification Engine** | Source-linked verification against source APIs |
 
 ### Distribution
 | Feature | Description |

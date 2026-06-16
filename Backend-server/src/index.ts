@@ -30,6 +30,7 @@ import { chatRouter } from './routes/chat.js';
 import { integrationsRouter } from './routes/integrations.js';
 import { billingRouter } from './routes/billing.js';
 import { socialRouter } from './routes/social.js';
+import { demoRouter } from './routes/demo.js';
 import { initTools } from './lib/ai/tools/index.js';
 import { configureVapid } from './lib/push.js';
 
@@ -134,6 +135,7 @@ app.use((_req, res, next) => {
 
 // Routes
 app.use('/health', healthRouter);
+app.use('/demo', demoRouter);
 app.use('/webhooks', webhooksRouter);
 app.use('/jobs', authMiddleware, requestContextMiddleware, jobsRouter);
 app.use('/ai', authMiddleware, requestContextMiddleware, globalAIRateLimitMiddleware, aiRouter);

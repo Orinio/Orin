@@ -31,7 +31,7 @@ Stack: Next.js 16, React 19, Supabase, Express, NVIDIA NIM, Vitest, Docker.
 
 ### What makes it different:
 - Not another resume builder or job board
-- Verification is cryptographic, not self-reported
+- Verification is source-linked (we hit the GitHub/Kaggle APIs and pull live data), not self-reported
 - The AI actually takes actions (saves goals, tracks applications, generates resume bullets)
 - Public profiles are SEO-optimized and embeddable
 

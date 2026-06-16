@@ -49,7 +49,7 @@ function CommentItem({
       userId: currentUserId,
       content: replyText.trim(),
       parentId: comment.id,
-      reply_to_user_id: comment.user_id,
+      replyToUserId: comment.user_id,
     });
     setReplyText('');
     setShowReply(false);

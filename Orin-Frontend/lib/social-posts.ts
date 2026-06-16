@@ -1,5 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+
+const db = supabase as any;
 
 // ═══════════════════════════════════════════
 // TYPES
@@ -89,10 +92,10 @@ export function useSocialFeed(userId: string | null, page: number = 0, limit: nu
   return useQuery({
     queryKey: ['social-feed', userId, page],
     queryFn: async () => {
-      if (!supabase || !userId) return [];
+      if (!db || !userId) return [];
 
       // Get IDs of users the current user follows
-      const { data: followData } = await supabase
+      const { data: followData } = await db
         .from('follows')
         .select('following_id')
         .eq('follower_id', userId);
@@ -101,7 +104,7 @@ export function useSocialFeed(userId: string | null, page: number = 0, limit: nu
       if (followingIds.length === 0) return [];
 
       // Get posts from followed users
-      const { data: posts, error } = await supabase
+      const { data: posts, error } = await db
         .from('posts')
         .select('*, users(id, username, full_name, avatar_url, headline)')
         .in('user_id', followingIds)
@@ -113,27 +116,27 @@ export function useSocialFeed(userId: string | null, page: number = 0, limit: nu
       if (error) throw error;
 
       // Get user reactions for these posts
-      const postIds = (posts || []).map((p) => p.id);
-      const { data: reactions } = await supabase
+      const postIds = (posts || []).map((p: any) => p.id);
+      const { data: reactions } = await db
         .from('post_reactions')
         .select('post_id, reaction_type')
         .in('post_id', postIds)
         .eq('user_id', userId);
 
-      const { data: bookmarks } = await supabase
+      const { data: bookmarks } = await db
         .from('bookmarks')
         .select('post_id')
         .in('post_id', postIds)
         .eq('user_id', userId);
 
       // Map reactions to posts
-      const reactionsByPost = (reactions || []).reduce((acc, r) => {
+      const reactionsByPost = ((reactions || []) as Array<{ post_id: string; reaction_type: string }>).reduce((acc, r) => {
         if (!acc[r.post_id]) acc[r.post_id] = [];
         acc[r.post_id].push(r.reaction_type);
         return acc;
       }, {} as Record<string, string[]>);
 
-      const bookmarkedPosts = new Set((bookmarks || []).map((b) => b.post_id));
+      const bookmarkedPosts = new Set(((bookmarks || []) as Array<{ post_id: string }>).map((b) => b.post_id));
 
       return (posts || []).map((post) => ({
         ...post,
@@ -151,9 +154,9 @@ export function useUserPosts(userId: string | null, page: number = 0, limit: num
   return useQuery({
     queryKey: ['user-posts', userId, page],
     queryFn: async () => {
-      if (!supabase || !userId) return [];
+      if (!db || !userId) return [];
 
-      const { data: posts, error } = await supabase
+      const { data: posts, error } = await db
         .from('posts')
         .select('*, users(id, username, full_name, avatar_url, headline)')
         .eq('user_id', userId)
@@ -173,9 +176,9 @@ export function usePost(postId: string | null) {
   return useQuery({
     queryKey: ['post', postId],
     queryFn: async () => {
-      if (!supabase || !postId) return null;
+      if (!db || !postId) return null;
 
-      const { data: post, error } = await supabase
+      const { data: post, error } = await db
         .from('posts')
         .select('*, users(id, username, full_name, avatar_url, headline)')
         .eq('id', postId)
@@ -210,13 +213,13 @@ export function useCreatePost() {
       hashtags?: string[];
       mentions?: string[];
     }) => {
-      if (!supabase) throw new Error('Supabase not configured');
+      if (!db) throw new Error('Supabase not configured');
 
       // Extract hashtags and mentions from content
       const extractedHashtags = content.match(/#(\w+)/g)?.map((h) => h.slice(1)) || [];
       const allHashtags = [...new Set([...(hashtags || []), ...extractedHashtags])];
 
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from('posts')
         .insert({
           user_id: userId,
@@ -233,7 +236,7 @@ export function useCreatePost() {
       if (error) throw error;
 
       // Create activity
-      await supabase.from('user_activities').insert({
+      await db.from('user_activities').insert({
         user_id: userId,
         activity_type: 'post',
         entity_type: 'post',
@@ -262,11 +265,11 @@ export function useUpdatePost() {
       content: string;
       visibility?: SocialPost['visibility'];
     }) => {
-      if (!supabase) throw new Error('Supabase not configured');
+      if (!db) throw new Error('Supabase not configured');
 
       const extractedHashtags = content.match(/#(\w+)/g)?.map((h) => h.slice(1)) || [];
 
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from('posts')
         .update({
           content,
@@ -294,9 +297,9 @@ export function useDeletePost() {
 
   return useMutation({
     mutationFn: async (postId: string) => {
-      if (!supabase) throw new Error('Supabase not configured');
+      if (!db) throw new Error('Supabase not configured');
 
-      const { error } = await supabase
+      const { error } = await db
         .from('posts')
         .update({ deleted_at: new Date().toISOString() })
         .eq('id', postId);
@@ -323,9 +326,9 @@ export function useRepost() {
       repostOfId: string;
       content?: string;
     }) => {
-      if (!supabase) throw new Error('Supabase not configured');
+      if (!db) throw new Error('Supabase not configured');
 
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from('posts')
         .insert({
           user_id: userId,
@@ -340,7 +343,7 @@ export function useRepost() {
       if (error) throw error;
 
       // Update repost count
-      await supabase.rpc('increment_repost_count', { post_id: repostOfId });
+      await db.rpc('increment_repost_count', { post_id: repostOfId });
 
       return data as SocialPost;
     },
@@ -358,15 +361,15 @@ export function usePostReactions(postId: string | null, userId: string | null) {
   return useQuery({
     queryKey: ['post-reactions', postId, userId],
     queryFn: async () => {
-      if (!supabase || !postId || !userId) return { reactions: [], userReactions: [] };
+      if (!db || !postId || !userId) return { reactions: [], userReactions: [] };
 
-      const { data: reactions } = await supabase
+      const { data: reactions } = await db
         .from('post_reactions')
         .select('reaction_type, count')
         .eq('post_id', postId)
         .group('reaction_type');
 
-      const { data: userReactions } = await supabase
+      const { data: userReactions } = await db
         .from('post_reactions')
         .select('reaction_type')
         .eq('post_id', postId)
@@ -396,10 +399,10 @@ export function useToggleReaction() {
       reactionType: string;
       hasReacted: boolean;
     }) => {
-      if (!supabase) throw new Error('Supabase not configured');
+      if (!db) throw new Error('Supabase not configured');
 
       if (hasReacted) {
-        const { error } = await supabase
+        const { error } = await db
           .from('post_reactions')
           .delete()
           .eq('post_id', postId)
@@ -407,7 +410,7 @@ export function useToggleReaction() {
           .eq('reaction_type', reactionType);
         if (error) throw error;
       } else {
-        const { error } = await supabase
+        const { error } = await db
           .from('post_reactions')
           .insert({
             post_id: postId,
@@ -442,17 +445,17 @@ export function useToggleBookmark() {
       userId: string;
       isBookmarked: boolean;
     }) => {
-      if (!supabase) throw new Error('Supabase not configured');
+      if (!db) throw new Error('Supabase not configured');
 
       if (isBookmarked) {
-        const { error } = await supabase
+        const { error } = await db
           .from('bookmarks')
           .delete()
           .eq('post_id', postId)
           .eq('user_id', userId);
         if (error) throw error;
       } else {
-        const { error } = await supabase
+        const { error } = await db
           .from('bookmarks')
           .insert({
             post_id: postId,
@@ -473,9 +476,9 @@ export function useBookmarks(userId: string | null) {
   return useQuery({
     queryKey: ['bookmarks', userId],
     queryFn: async () => {
-      if (!supabase || !userId) return [];
+      if (!db || !userId) return [];
 
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from('bookmarks')
         .select('post_id, created_at, posts(*, users(id, username, full_name, avatar_url, headline))')
         .eq('user_id', userId)
@@ -499,9 +502,9 @@ export function usePostComments(postId: string | null, userId: string | null) {
   return useQuery({
     queryKey: ['post-comments', postId, userId],
     queryFn: async () => {
-      if (!supabase || !postId) return [];
+      if (!db || !postId) return [];
 
-      const { data: comments, error } = await supabase
+      const { data: comments, error } = await db
         .from('post_comments')
         .select('*, users(id, username, full_name, avatar_url), reply_to_user:users!reply_to_user_id(username, full_name)')
         .eq('post_id', postId)
@@ -514,7 +517,7 @@ export function usePostComments(postId: string | null, userId: string | null) {
       // Get replies for each comment
       return await Promise.all(
         (comments || []).map(async (comment) => {
-          const { data: replies } = await supabase
+          const { data: replies } = await db
             .from('post_comments')
             .select('*, users(id, username, full_name, avatar_url), reply_to_user:users!reply_to_user_id(username, full_name)')
             .eq('parent_id', comment.id)
@@ -525,7 +528,7 @@ export function usePostComments(postId: string | null, userId: string | null) {
           let repliesWithReactions = replies || [];
           if (userId && replies && replies.length > 0) {
             const replyIds = replies.map((r) => r.id);
-            const { data: replyReactions } = await supabase
+            const { data: replyReactions } = await db
               .from('comment_reactions')
               .select('comment_id, reaction_type')
               .in('comment_id', replyIds)
@@ -546,7 +549,7 @@ export function usePostComments(postId: string | null, userId: string | null) {
           // Get user reactions for parent comment
           let hasLiked = false;
           if (userId) {
-            const { data: commentReactions } = await supabase
+            const { data: commentReactions } = await db
               .from('comment_reactions')
               .select('reaction_type')
               .eq('comment_id', comment.id)
@@ -583,9 +586,9 @@ export function useAddPostComment() {
       parentId?: string;
       replyToUserId?: string;
     }) => {
-      if (!supabase) throw new Error('Supabase not configured');
+      if (!db) throw new Error('Supabase not configured');
 
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from('post_comments')
         .insert({
           post_id: postId,
@@ -600,7 +603,7 @@ export function useAddPostComment() {
       if (error) throw error;
 
       // Create activity
-      await supabase.from('user_activities').insert({
+      await db.from('user_activities').insert({
         user_id: userId,
         activity_type: 'comment',
         entity_type: 'comment',
@@ -621,9 +624,9 @@ export function useDeletePostComment() {
 
   return useMutation({
     mutationFn: async ({ commentId }: { commentId: string; postId: string }) => {
-      if (!supabase) throw new Error('Supabase not configured');
+      if (!db) throw new Error('Supabase not configured');
 
-      const { error } = await supabase
+      const { error } = await db
         .from('post_comments')
         .update({ deleted_at: new Date().toISOString() })
         .eq('id', commentId);
@@ -652,10 +655,10 @@ export function useToggleCommentReaction() {
       reactionType: string;
       hasReacted: boolean;
     }) => {
-      if (!supabase) throw new Error('Supabase not configured');
+      if (!db) throw new Error('Supabase not configured');
 
       if (hasReacted) {
-        const { error } = await supabase
+        const { error } = await db
           .from('comment_reactions')
           .delete()
           .eq('comment_id', commentId)
@@ -663,7 +666,7 @@ export function useToggleCommentReaction() {
           .eq('reaction_type', reactionType);
         if (error) throw error;
       } else {
-        const { error } = await supabase
+        const { error } = await db
           .from('comment_reactions')
           .insert({
             comment_id: commentId,
@@ -687,9 +690,9 @@ export function useSocialNotifications(userId: string | null) {
   return useQuery({
     queryKey: ['social-notifications', userId],
     queryFn: async () => {
-      if (!supabase || !userId) return [];
+      if (!db || !userId) return [];
 
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from('social_notifications')
         .select('*, actor:users!actor_id(username, full_name, avatar_url)')
         .eq('user_id', userId)
@@ -709,9 +712,9 @@ export function useMarkNotificationsRead() {
 
   return useMutation({
     mutationFn: async (userId: string) => {
-      if (!supabase) throw new Error('Supabase not configured');
+      if (!db) throw new Error('Supabase not configured');
 
-      const { error } = await supabase
+      const { error } = await db
         .from('social_notifications')
         .update({ read_at: new Date().toISOString() })
         .eq('user_id', userId)
@@ -729,9 +732,9 @@ export function useUnreadNotificationCount(userId: string | null) {
   return useQuery({
     queryKey: ['unread-notifications-count', userId],
     queryFn: async () => {
-      if (!supabase || !userId) return 0;
+      if (!db || !userId) return 0;
 
-      const { count, error } = await supabase
+      const { count, error } = await db
         .from('social_notifications')
         .select('id', { count: 'exact', head: true })
         .eq('user_id', userId)
@@ -765,10 +768,10 @@ export function useSuggestedUsers(userId: string | null, limit: number = 10) {
   return useQuery({
     queryKey: ['suggested-users', userId, limit],
     queryFn: async () => {
-      if (!supabase || !userId) return [];
+      if (!db || !userId) return [];
 
       // Get users the current user follows
-      const { data: followData } = await supabase
+      const { data: followData } = await db
         .from('follows')
         .select('following_id')
         .eq('follower_id', userId);
@@ -777,7 +780,7 @@ export function useSuggestedUsers(userId: string | null, limit: number = 10) {
       followingIds.push(userId); // Exclude self
 
       // Get suggested users (not followed, with public profiles)
-      const { data: users, error } = await supabase
+      const { data: users, error } = await db
         .from('users')
         .select('id, username, full_name, avatar_url, headline, location, bio')
         .not('id', 'in', `(${followingIds.join(',')})`)
@@ -798,9 +801,9 @@ export function useSearchUsers(query: string, userId: string | null) {
   return useQuery({
     queryKey: ['search-users', query, userId],
     queryFn: async () => {
-      if (!supabase || !query || query.length < 2) return [];
+      if (!db || !query || query.length < 2) return [];
 
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from('users')
         .select('id, username, full_name, avatar_url, headline, location, bio')
         .or(`username.ilike.%${query}%,full_name.ilike.%${query}%,headline.ilike.%${query}%`)
@@ -814,7 +817,7 @@ export function useSearchUsers(query: string, userId: string | null) {
       // Check follow status for each user
       if (userId && data) {
         const userIds = data.map((u) => u.id);
-        const { data: followData } = await supabase
+        const { data: followData } = await db
           .from('follows')
           .select('following_id')
           .eq('follower_id', userId)

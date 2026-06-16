@@ -49,7 +49,7 @@ export default function ModeratorDashboard() {
         ]);
 
         const totalUsers = usersRes.count || 0;
-        const flaggedContent = proofsRes.data?.filter(p => p.verification_status === 'flagged').length || 0;
+        const flaggedContent = proofsRes.data?.filter(p => p.verification_status === ('flagged' as any)).length || 0;
 
         // Fetch recent flags (mock data - in production would come from a flags table)
         const recentFlags = [

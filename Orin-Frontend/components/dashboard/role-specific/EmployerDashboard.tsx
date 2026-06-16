@@ -94,12 +94,12 @@ export default function EmployerDashboard() {
           if (usersData) {
             const candidatesWithProofs = await Promise.all(
               usersData.map(async (u) => {
-                const { data: proofs } = await supabase
+                const { data: proofs } = await supabase!
                   .from('proof_cards')
                   .select('id')
                   .eq('user_id', u.id);
 
-                const { data: userSkills } = await supabase
+                const { data: userSkills } = await supabase!
                   .from('skills')
                   .select('name')
                   .eq('user_id', u.id);

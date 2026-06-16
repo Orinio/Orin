@@ -14,7 +14,7 @@ import {
   Users,
   Lock,
   Trash2,
-  Edit,
+  Pencil,
   Flag,
 } from 'lucide-react';
 import { useToggleReaction, useToggleBookmark, useDeletePost, type SocialPost } from '@/lib/social-posts';
@@ -195,7 +195,7 @@ export default function SocialPostCard({ post, index = 0, onRefresh }: SocialPos
                         onClick={() => setShowMenu(false)}
                         className="w-full flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
                       >
-                        <Edit className="w-4 h-4" />
+                        <Pencil className="w-4 h-4" />
                         Edit post
                       </button>
                       <button

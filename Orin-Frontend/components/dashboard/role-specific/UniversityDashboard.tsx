@@ -62,7 +62,7 @@ export default function UniversityDashboard() {
 
           // Calculate top skills
           const skillCounts: Record<string, number> = {};
-          skillsRes.data?.forEach(s => {
+          (skillsRes.data as Array<{ name: string }> | null)?.forEach(s => {
             skillCounts[s.name] = (skillCounts[s.name] || 0) + 1;
           });
           const topSkills = Object.entries(skillCounts)
@@ -73,7 +73,7 @@ export default function UniversityDashboard() {
           // Get recent activity with user names
           const recentActivity = [];
           if (activityRes.data) {
-            for (const activity of activityRes.data.slice(0, 5)) {
+            for (const activity of (activityRes.data as Array<{ user_id: string; activity_type: string; created_at: string }>).slice(0, 5)) {
               const { data: userData } = await supabase
                 .from('users')
                 .select('full_name')

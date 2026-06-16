@@ -75,7 +75,8 @@ export async function POST(request: NextRequest) {
   if (!customerId) {
     const customerRes = await stripeRequest('customers', 'POST', {
       email: customerEmail,
-      metadata: { user_id: String(userData.id), auth_user_id: session.user.id } as Record<string, string>,
+      'metadata[user_id]': String(userData.id),
+      'metadata[auth_user_id]': session.user.id,
     });
 
     if (!customerRes.id) {
@@ -95,10 +96,10 @@ export async function POST(request: NextRequest) {
     'line_items[0][quantity]': '1',
     success_url: `${APP_URL}/dashboard/billing?upgraded=true`,
     cancel_url: `${APP_URL}/dashboard/billing?canceled=true`,
-    metadata: { user_id: String(userData.id), plan } as Record<string, string>,
-    subscription_data: {
-      metadata: { user_id: String(userData.id), plan } as Record<string, string>,
-    },
+    'metadata[user_id]': String(userData.id),
+    'metadata[plan]': plan,
+    'subscription_data[metadata][user_id]': String(userData.id),
+    'subscription_data[metadata][plan]': plan,
   });
 
   if (!checkoutRes.url) {

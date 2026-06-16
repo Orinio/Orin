@@ -3,7 +3,26 @@
 import { useEffect, useRef, useState, type ReactNode, type ElementType } from 'react';
 import { motion, useInView } from 'framer-motion';
 
-interface ScrollRevealProps {
+/* ── Hook: usePrefersReducedMotion ──────────────────────── */
+function usePrefersReducedMotion(): boolean {
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setPrefersReducedMotion(mediaQuery.matches);
+
+    const handleChange = (event: MediaQueryListEvent) => {
+      setPrefersReducedMotion(event.matches);
+    };
+
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
+
+  return prefersReducedMotion;
+}
+
+/* ── ScrollReveal ───────────────────────────────────────── */\ninterface ScrollRevealProps {
   children: ReactNode;
   className?: string;
   delay?: number;
@@ -24,10 +43,17 @@ export default function ScrollReveal({
   threshold = 0.1,
   as: Tag = 'div',
 }: ScrollRevealProps) {
+  const prefersReducedMotion = usePrefersReducedMotion();
   const [isVisible, setIsVisible] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // If user prefers reduced motion, show content immediately
+    if (prefersReducedMotion) {
+      setIsVisible(true);
+      return;
+    }
+
     const el = ref.current;
     if (!el) return;
 
@@ -43,7 +69,7 @@ export default function ScrollReveal({
 
     observer.observe(el);
     return () => observer.disconnect();
-  }, [once, threshold]);
+  }, [once, threshold, prefersReducedMotion]);
 
   const getTransform = () => {
     switch (direction) {
@@ -65,7 +91,7 @@ export default function ScrollReveal({
       style={{
         opacity: isVisible ? 1 : 0,
         transform: isVisible ? 'none' : getTransform(),
-        transition: springTransition,
+        transition: prefersReducedMotion ? 'none' : springTransition,
         willChange: 'opacity, transform',
       }}
     >
@@ -92,6 +118,7 @@ export function MotionReveal({
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, amount: threshold });
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   const getInitial = () => {
     switch (direction) {
@@ -106,9 +133,9 @@ export function MotionReveal({
   return (
     <motion.div
       ref={ref}
-      initial={getInitial()}
+      initial={prefersReducedMotion ? { opacity: 1, x: 0, y: 0, filter: 'blur(0px)' } : getInitial()}
       animate={isInView ? { opacity: 1, x: 0, y: 0, filter: 'blur(0px)' } : getInitial()}
-      transition={{
+      transition={prefersReducedMotion ? { duration: 0 } : {
         duration,
         delay,
         ease: [0.16, 1, 0.3, 1],

@@ -103,7 +103,7 @@ export interface UserIntegration {
   updatedAt: string;
 }
 
-export type SubscriptionPlanId = 'free' | 'pro' | 'team';
+export type SubscriptionPlanId = 'free' | 'pro' | 'team' | 'university';
 
 export interface PlanFeature {
   text: string;
@@ -200,6 +200,29 @@ export const PLANS: PlanDefinition[] = [
       storageGB: 100,
     },
   },
+  {
+    id: 'university',
+    name: 'University',
+    tagline: 'For universities & institutions',
+    priceMonthly: 99,
+    priceYearly: 948,
+    currency: 'USD',
+    cta: 'Contact sales',
+    features: [
+      { text: 'Everything in Team', included: true },
+      { text: 'Unlimited student seats', included: true },
+      { text: 'University dashboard & analytics', included: true, highlight: true },
+      { text: 'Bulk verification for cohorts', included: true },
+      { text: 'Outcome analytics & reporting', included: true },
+      { text: 'Career services integration', included: true },
+    ],
+    storage: {
+      tier: 'cloud',
+      chatHistoryLimit: 'unlimited',
+      integrationsLimit: 'unlimited',
+      storageGB: 500,
+    },
+  },
 ];
 
 export type UsageMetric =
@@ -240,6 +263,14 @@ export const PLAN_LIMITS: Record<SubscriptionPlanId, UsageLimits> = {
     ai_messages: Infinity,
     proof_cards: Infinity,
     integrations: 5,
+    portfolio_scores: Infinity,
+    opportunity_matches: Infinity,
+    cover_letters: Infinity,
+  },
+  university: {
+    ai_messages: Infinity,
+    proof_cards: Infinity,
+    integrations: Infinity,
     portfolio_scores: Infinity,
     opportunity_matches: Infinity,
     cover_letters: Infinity,

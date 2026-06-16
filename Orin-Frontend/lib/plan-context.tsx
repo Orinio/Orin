@@ -14,6 +14,7 @@ interface PlanContextValue {
   planDef: PlanDefinition;
   isPro: boolean;
   isTeam: boolean;
+  isUniversity: boolean;
   isFree: boolean;
   loading: boolean;
   refresh: () => Promise<void>;
@@ -121,6 +122,7 @@ export function PlanProvider({ children }: { children: ReactNode }) {
         planDef,
         isPro: plan === 'pro',
         isTeam: plan === 'team',
+        isUniversity: plan === 'university',
         isFree: plan === 'free',
         loading,
         refresh,

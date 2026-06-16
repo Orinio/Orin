@@ -1,4 +1,4 @@
-export type UserRole = 'user' | 'admin' | 'moderator';
+export type UserRole = 'user' | 'admin' | 'moderator' | 'employer' | 'university';
 export type AccountStatus = 'active' | 'pending' | 'suspended' | 'deactivated';
 export type StudentYear = 'first' | 'second' | 'third' | 'fourth' | 'graduate';
 export type ProofSourceType = 'github' | 'kaggle' | 'certificate' | 'hackathon' | 'project' | 'blog' | 'demo' | 'other';
@@ -8,7 +8,7 @@ export type OpportunityType = 'internship' | 'job' | 'scholarship' | 'mentorship
 export type CoachNoteType = 'daily' | 'weekly' | 'milestone' | 'ad_hoc';
 export type IntegrationStatus = 'connected' | 'disconnected' | 'pending' | 'error';
 export type AuthProvider = 'email' | 'google' | 'github' | 'apple' | 'linkedin';
-export type SubscriptionPlan = 'free' | 'pro' | 'team';
+export type SubscriptionPlan = 'free' | 'pro' | 'team' | 'university';
 export type SubscriptionStatus = 'active' | 'canceled' | 'past_due' | 'trialing' | 'incomplete';
 export type OpportunityStatus = 'saved' | 'applied' | 'dismissed' | 'interviewing' | 'rejected' | 'offered';
 

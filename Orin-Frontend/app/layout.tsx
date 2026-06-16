@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Lora } from "next/font/google";
 import { AuthProvider } from "@/lib/auth-context";
 import { PlanProvider } from "@/lib/plan-context";
+import { RoleProvider } from "@/lib/role-context";
 import { ThemeProvider } from "@/lib/theme-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { Toaster } from "@/components/ui/toast";
@@ -66,7 +67,9 @@ export default function RootLayout({
         <QueryProvider>
           <ThemeProvider>
             <AuthProvider>
-              <PlanProvider>{children}</PlanProvider>
+              <PlanProvider>
+                <RoleProvider>{children}</RoleProvider>
+              </PlanProvider>
             </AuthProvider>
           </ThemeProvider>
         </QueryProvider>

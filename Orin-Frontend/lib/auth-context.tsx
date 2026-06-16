@@ -141,7 +141,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email,
       password,
       options: {
-        data: { full_name: fullName },
+        data: { full_name: fullName, role: 'user' },
       },
     });
     return { error, user: data?.user ?? null };

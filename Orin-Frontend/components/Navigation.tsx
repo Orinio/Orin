@@ -26,6 +26,11 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
+import { useRole } from '@/lib/role-context';
+import { usePlan } from '@/lib/plan-context';
+import { filterNavByRole } from '@/lib/permissions';
+import type { UserRole } from '@/lib/types';
+import type { SubscriptionPlanId } from '@/lib/chat-types';
 import type { Notification } from '@/lib/types';
 import { formatRelativeTime, getInitials } from '@/lib/utils';
 import { cn } from '@/lib/utils';
@@ -35,6 +40,8 @@ export default function Navigation() {
   const router = useRouter();
   const pathname = usePathname();
   const { user: authUser, signOut: authSignOut } = useAuth();
+  const { role: userRole } = useRole();
+  const { plan: userPlan } = usePlan();
   const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
   const [fullName, setFullName] = useState<string>('');
   const [avatarUrl, setAvatarUrl] = useState<string>('');
@@ -153,27 +160,30 @@ export default function Navigation() {
     router.push('/signin');
   };
 
-  const navLinks = [
-    { href: '/dashboard', label: 'Dashboard', icon: LayoutGrid },
-    { href: '/dashboard/feed', label: 'Feed', icon: Home },
-    { href: '/dashboard/ai-chat', label: 'AI Chat', icon: Sparkles },
-    { href: '/dashboard/skill-gap', label: 'Skill Gaps', icon: Target },
-    { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart3 },
-    { href: '/dashboard/network', label: 'Network', icon: User },
-    { href: '/opportunities', label: 'Opportunities', icon: Briefcase },
-    { href: '/dashboard/proof/new', label: 'Add Proofs', icon: ShieldCheck },
-    { href: '/dashboard/sources/new', label: 'Add Source', icon: PlusCircle },
+  const allNavLinks: { href: string; label: string; icon: typeof LayoutGrid; roles: UserRole[]; plans?: SubscriptionPlanId[] }[] = [
+    { href: '/dashboard', label: 'Dashboard', icon: LayoutGrid, roles: ['user', 'employer', 'university', 'admin', 'moderator'] },
+    { href: '/dashboard/feed', label: 'Feed', icon: Home, roles: ['user', 'employer', 'university', 'admin', 'moderator'] },
+    { href: '/dashboard/ai-chat', label: 'AI Chat', icon: Sparkles, roles: ['user', 'employer', 'university', 'admin', 'moderator'] },
+    { href: '/dashboard/skill-gap', label: 'Skill Gaps', icon: Target, roles: ['user', 'university', 'admin', 'moderator'] },
+    { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart3, roles: ['user', 'employer', 'university', 'admin'] },
+    { href: '/dashboard/network', label: 'Network', icon: User, roles: ['user', 'employer', 'university', 'admin', 'moderator'] },
+    { href: '/opportunities', label: 'Opportunities', icon: Briefcase, roles: ['user', 'university', 'admin', 'moderator'] },
+    { href: '/dashboard/proof/new', label: 'Add Proofs', icon: ShieldCheck, roles: ['user', 'university', 'admin', 'moderator'] },
+    { href: '/dashboard/sources/new', label: 'Add Source', icon: PlusCircle, roles: ['user', 'university', 'admin', 'moderator'] },
   ];
 
-  const bottomLinks = [
-    { href: '/dashboard/messages', label: 'Messages', icon: Bell, badge: 0 },
-    { href: '/dashboard/billing', label: 'Billing', icon: Crown },
-    { href: '/dashboard/team', label: 'Team', icon: Users },
-    { href: '/dashboard/university', label: 'University', icon: GraduationCap },
-    { href: '/employer/portal', label: 'Employer Portal', icon: Briefcase },
-    { href: '/notifications', label: 'Notifications', icon: Bell, badge: unreadCount },
-    { href: '/settings', label: 'Settings', icon: Settings },
+  const allBottomLinks: { href: string; label: string; icon: typeof Bell; badge?: number; roles: UserRole[]; plans?: SubscriptionPlanId[] }[] = [
+    { href: '/dashboard/messages', label: 'Messages', icon: Bell, roles: ['user', 'employer', 'university', 'admin', 'moderator'] },
+    { href: '/dashboard/billing', label: 'Billing', icon: Crown, roles: ['user', 'employer', 'university', 'admin', 'moderator'] },
+    { href: '/dashboard/team', label: 'Team', icon: Users, roles: ['user', 'university', 'admin'], plans: ['team', 'university'] },
+    { href: '/dashboard/university', label: 'University', icon: GraduationCap, roles: ['university', 'admin'] },
+    { href: '/employer/portal', label: 'Employer Portal', icon: Briefcase, roles: ['employer', 'admin'] },
+    { href: '/notifications', label: 'Notifications', icon: Bell, badge: unreadCount, roles: ['user', 'employer', 'university', 'admin', 'moderator'] },
+    { href: '/settings', label: 'Settings', icon: Settings, roles: ['user', 'employer', 'university', 'admin', 'moderator'] },
   ];
+
+  const navLinks = filterNavByRole(allNavLinks, userRole, userPlan);
+  const bottomLinks = filterNavByRole(allBottomLinks, userRole, userPlan);
 
   const isActive = (href: string) => {
     if (href === '/dashboard') return pathname === '/dashboard';

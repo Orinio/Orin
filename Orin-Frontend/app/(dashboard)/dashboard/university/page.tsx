@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
+import { useRole } from '@/lib/role-context';
 
 interface UniversityStats {
   totalStudents: number;
@@ -32,6 +33,7 @@ interface UniversityStats {
 
 export default function UniversityPage() {
   const { user: authUser } = useAuth();
+  const { role: userRole } = useRole();
   const [stats, setStats] = useState<UniversityStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [userPlan, setUserPlan] = useState<string>('free');
@@ -100,7 +102,7 @@ export default function UniversityPage() {
     );
   }
 
-  if (userPlan !== 'team' && userPlan !== 'university') {
+  if (userRole !== 'university' && userRole !== 'admin' && userPlan !== 'team' && userPlan !== 'university') {
     return (
       <div className="max-w-2xl mx-auto space-y-8">
         <header>

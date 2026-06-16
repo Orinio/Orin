@@ -21,7 +21,7 @@ export type Database = {
           github_url: string | null;
           linkedin_url: string | null;
           twitter_url: string | null;
-          role: 'user' | 'admin' | 'moderator';
+          role: 'user' | 'admin' | 'moderator' | 'employer' | 'university';
           account_status: 'active' | 'pending' | 'suspended' | 'deactivated';
           is_profile_public: boolean;
           hide_email: boolean;
@@ -51,7 +51,7 @@ export type Database = {
           github_url?: string | null;
           linkedin_url?: string | null;
           twitter_url?: string | null;
-          role?: 'user' | 'admin' | 'moderator';
+          role?: 'user' | 'admin' | 'moderator' | 'employer' | 'university';
           account_status?: 'active' | 'pending' | 'suspended' | 'deactivated';
           is_profile_public?: boolean;
           hide_email?: boolean;
@@ -81,7 +81,7 @@ export type Database = {
           github_url?: string | null;
           linkedin_url?: string | null;
           twitter_url?: string | null;
-          role?: 'user' | 'admin' | 'moderator';
+          role?: 'user' | 'admin' | 'moderator' | 'employer' | 'university';
           account_status?: 'active' | 'pending' | 'suspended' | 'deactivated';
           is_profile_public?: boolean;
           hide_email?: boolean;

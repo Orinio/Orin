@@ -76,7 +76,7 @@ export default function UniversityPage() {
 
           // Calculate top skills
           const skillCounts: Record<string, number> = {};
-          skillsRes.data?.forEach(s => {
+          (skillsRes.data as Array<{ name: string }> | null)?.forEach(s => {
             skillCounts[s.name] = (skillCounts[s.name] || 0) + 1;
           });
           const topSkills = Object.entries(skillCounts)

@@ -99,7 +99,7 @@ export function useSocialFeed(userId: string | null, page: number = 0, limit: nu
         .select('following_id')
         .eq('follower_id', userId);
 
-      const followingIds = (followData || []).map((f) => f.following_id);
+      const followingIds = (followData || []).map((f: { following_id: string }) => f.following_id);
       if (followingIds.length === 0) return [];
 
       // Get posts from followed users
@@ -376,7 +376,7 @@ export function usePostReactions(postId: string | null, userId: string | null) {
 
       return {
         reactions: reactions || [],
-        userReactions: (userReactions || []).map((r) => r.reaction_type),
+        userReactions: (userReactions || []).map((r: { reaction_type: string }) => r.reaction_type),
       };
     },
     enabled: !!postId && !!userId,
@@ -484,7 +484,7 @@ export function useBookmarks(userId: string | null) {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return (data || []).map((b) => ({
+      return (data || []).map((b: { posts: Record<string, unknown>; created_at: string }) => ({
         ...b.posts,
         bookmarked_at: b.created_at,
       })) as SocialPost[];
@@ -526,20 +526,20 @@ export function usePostComments(postId: string | null, userId: string | null) {
           // Get user reactions for replies
           let repliesWithReactions = replies || [];
           if (userId && replies && replies.length > 0) {
-            const replyIds = replies.map((r) => r.id);
+            const replyIds = replies.map((r: { id: string }) => r.id);
             const { data: replyReactions } = await db
               .from('comment_reactions')
               .select('comment_id, reaction_type')
               .in('comment_id', replyIds)
               .eq('user_id', userId);
 
-            const reactionsByComment = (replyReactions || []).reduce((acc, r) => {
+            const reactionsByComment = (replyReactions || []).reduce((acc: Record<string, string[]>, r: { comment_id: string; reaction_type: string }) => {
               if (!acc[r.comment_id]) acc[r.comment_id] = [];
               acc[r.comment_id].push(r.reaction_type);
               return acc;
             }, {} as Record<string, string[]>);
 
-            repliesWithReactions = replies.map((r) => ({
+            repliesWithReactions = replies.map((r: { id: string; [key: string]: unknown }) => ({
               ...r,
               has_liked: (reactionsByComment[r.id] || []).includes('like'),
             }));
@@ -775,7 +775,7 @@ export function useSuggestedUsers(userId: string | null, limit: number = 10) {
         .select('following_id')
         .eq('follower_id', userId);
 
-      const followingIds = (followData || []).map((f) => f.following_id);
+      const followingIds = (followData || []).map((f: { following_id: string }) => f.following_id);
       followingIds.push(userId); // Exclude self
 
       // Get suggested users (not followed, with public profiles)
@@ -815,14 +815,14 @@ export function useSearchUsers(query: string, userId: string | null) {
 
       // Check follow status for each user
       if (userId && data) {
-        const userIds = data.map((u) => u.id);
+        const userIds = data.map((u: { id: string }) => u.id);
         const { data: followData } = await db
           .from('follows')
           .select('following_id')
           .eq('follower_id', userId)
           .in('following_id', userIds);
 
-        const followingSet = new Set((followData || []).map((f) => f.following_id));
+        const followingSet = new Set((followData || []).map((f: { following_id: string }) => f.following_id));
 
         return data.map((user) => ({
           ...user,

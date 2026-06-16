@@ -281,7 +281,7 @@ export function useFeed(currentUserId: string | null, page: number = 0, limit: n
         .select('following_id')
         .eq('follower_id', currentUserId);
 
-      const followingIds = (followData || []).map((f) => f.following_id);
+      const followingIds = (followData || []).map((f: { following_id: string }) => f.following_id);
 
       if (followingIds.length === 0) return [];
 
@@ -368,7 +368,7 @@ export function useConversations(currentUserId: string | null) {
 
       if (!participants || participants.length === 0) return [];
 
-      const convIds = participants.map((p) => p.conversation_id);
+      const convIds = participants.map((p: { conversation_id: string }) => p.conversation_id);
 
       const { data: convs } = await supabase
         .from('conversations')

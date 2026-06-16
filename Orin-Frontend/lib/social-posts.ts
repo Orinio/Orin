@@ -515,7 +515,7 @@ export function usePostComments(postId: string | null, userId: string | null) {
 
       // Get replies for each comment
       return await Promise.all(
-        (comments || []).map(async (comment) => {
+        (comments || []).map(async (comment: { id: string; [key: string]: unknown }) => {
           const { data: replies } = await db
             .from('post_comments')
             .select('*, users(id, username, full_name, avatar_url), reply_to_user:users!reply_to_user_id(username, full_name)')

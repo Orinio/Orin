@@ -553,7 +553,7 @@ export function usePostComments(postId: string | null, userId: string | null) {
               .select('reaction_type')
               .eq('comment_id', comment.id)
               .eq('user_id', userId);
-            hasLiked = (commentReactions || []).some((r) => r.reaction_type === 'like');
+            hasLiked = (commentReactions || []).some((r: { reaction_type: string }) => r.reaction_type === 'like');
           }
 
           return {

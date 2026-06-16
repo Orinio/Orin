@@ -9,6 +9,7 @@ import {
   USAGE_LABELS,
   type UsageMetric,
   type UsageRecord,
+  type SubscriptionPlanId,
 } from './chat-types';
 
 const STORAGE_KEY_PREFIX = 'orin.usage.v1.';
@@ -96,7 +97,7 @@ export interface LimitInfo {
   name: string;
   noun: string;
   period: string;
-  plan: 'free' | 'pro' | 'team';
+  plan: SubscriptionPlanId;
 }
 
 export interface UseUsageResult {

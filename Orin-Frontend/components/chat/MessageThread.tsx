@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Lock,
@@ -129,7 +130,7 @@ export default function MessageThread({
             style={{ backgroundColor: 'var(--color-bloom)' }}
           >
             {otherUserAvatar ? (
-              <img src={otherUserAvatar} alt="" className="w-full h-full rounded-full object-cover" />
+              <Image src={otherUserAvatar} alt="" width={40} height={40} className="w-full h-full rounded-full object-cover" />
             ) : (
               getInitials(otherUserName)
             )}

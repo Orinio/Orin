@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import { mapDbProofToProof } from '@/lib/utils';
-import type { Proof } from '@/lib/types';
+import { mapDbProofToProof, mapDbProofSourceToProofSource } from '@/lib/utils';
+import type { Proof, ProofSource } from '@/lib/types';
 
 export function useProofs(userId: string | null) {
   return useQuery({
@@ -117,5 +117,25 @@ export function useDeleteProof() {
       queryClient.invalidateQueries({ queryKey: ['proofs'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
     },
+  });
+}
+
+export function useSources(userId: string | null) {
+  return useQuery({
+    queryKey: ['sources', userId],
+    enabled: !!userId,
+    queryFn: async (): Promise<ProofSource[]> => {
+      if (!supabase || !userId) return [];
+      const { data, error } = await supabase
+        .from('proof_sources')
+        .select('*')
+        .eq('user_id', userId)
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false });
+
+      if (error) throw new Error(error.message);
+      return data.map(mapDbProofSourceToProofSource) as ProofSource[];
+    },
+    staleTime: 2 * 60 * 1000,
   });
 }

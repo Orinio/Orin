@@ -6,9 +6,6 @@ function openDB(): Promise<IDBDatabase> {
     const req = indexedDB.open(DB_NAME, DB_VERSION);
     req.onupgradeneeded = () => {
       const db = req.result;
-      if (!db.objectStoreNames.contains('kv')) {
-        db.createObjectStore('kv');
-      }
       if (!db.objectStoreNames.contains('chat')) {
         db.createObjectStore('chat');
       }

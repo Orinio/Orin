@@ -1,12 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Plus, ExternalLink, RefreshCw } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-import { mapDbProofSourceToProofSource, formatRelativeTime } from '@/lib/utils';
-import type { ProofSource, ProofSourceType } from '@/lib/types';
-import { useAuth } from '@/lib/auth-context';
+import { formatRelativeTime } from '@/lib/utils';
+import type { ProofSourceType } from '@/lib/types';
+import { useCurrentDbUserId, useSources } from '@/lib/queries';
 
 const SOURCE_ICONS: Record<ProofSourceType, string> = {
   github: 'GH',
@@ -67,40 +65,8 @@ function EmptyState() {
 }
 
 export default function SourcesPage() {
-  const [sources, setSources] = useState<ProofSource[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
-
-  useEffect(() => {
-    async function fetchSources() {
-      try {
-        if (!supabase || !user) return;
-
-        const { data: userData } = await supabase
-          .from('users')
-          .select('id')
-          .eq('auth_user_id', user.id)
-          .maybeSingle();
-
-        if (!userData) return;
-
-        const { data, error } = await supabase
-          .from('proof_sources')
-          .select('*')
-          .eq('user_id', userData.id)
-          .is('deleted_at', null)
-          .order('created_at', { ascending: false });
-
-        if (error) throw new Error(error.message);
-        if (data) setSources(data.map(mapDbProofSourceToProofSource));
-      } catch (e) {
-        console.warn('Failed to fetch sources:', e);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchSources();
-  }, [user]);
+  const { data: dbUserId } = useCurrentDbUserId();
+  const { data: sources = [], isLoading: loading } = useSources(dbUserId ?? null);
 
   if (loading) return <SourceSkeleton />;
 

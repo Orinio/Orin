@@ -1,9 +1,12 @@
 import { supabase } from './supabase';
 import { api } from './api-client';
+import { idbGet, idbSet, idbDelete } from './idb';
 import type { ChatConversation, ChatMessage, StorageTier } from './chat-types';
 
-const STORAGE_KEY_PREFIX = 'orin.chat.v1.';
-const STORAGE_INDEX_KEY = 'orin.chat.index.v1';
+const CHAT_STORE = 'chat';
+const LEGACY_PREFIX = 'orin.chat.v1.';
+const LEGACY_INDEX_PREFIX = 'orin.chat.index.v1';
+const MIGRATION_KEY = 'orin.chat.idb.migrated';
 
 interface LocalIndex {
   userId: string;
@@ -11,40 +14,49 @@ interface LocalIndex {
   updatedAt: string;
 }
 
-function readLocal<T>(key: string): T | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    const raw = window.localStorage.getItem(key);
-    return raw ? (JSON.parse(raw) as T) : null;
-  } catch {
-    return null;
-  }
-}
-
-function writeLocal(key: string, value: unknown) {
-  if (typeof window === 'undefined') return;
-  try {
-    window.localStorage.setItem(key, JSON.stringify(value));
-  } catch (err) {
-    if (err instanceof Error && err.name === 'QuotaExceededError') {
-      window.localStorage.removeItem(STORAGE_KEY_PREFIX + '_oldest');
-    }
-  }
-}
-
-function removeLocal(key: string) {
-  if (typeof window === 'undefined') return;
-  try {
-    window.localStorage.removeItem(key);
-  } catch {}
-}
-
 function conversationKey(id: string) {
-  return STORAGE_KEY_PREFIX + id;
+  return `conv:${id}`;
 }
 
 function indexKey(userId: string) {
-  return `${STORAGE_INDEX_KEY}.${userId}`;
+  return `index:${userId}`;
+}
+
+let migrationDone = false;
+
+async function migrateFromLocalStorage() {
+  if (migrationDone || typeof window === 'undefined') return;
+  try {
+    const alreadyMigrated = localStorage.getItem(MIGRATION_KEY);
+    if (alreadyMigrated) {
+      migrationDone = true;
+      return;
+    }
+
+    const keys = Object.keys(localStorage).filter(
+      k => k.startsWith(LEGACY_PREFIX) || k.startsWith(LEGACY_INDEX_PREFIX),
+    );
+
+    for (const key of keys) {
+      const raw = localStorage.getItem(key);
+      if (!raw) continue;
+      const value = JSON.parse(raw);
+
+      if (key.startsWith(LEGACY_INDEX_PREFIX)) {
+        const userId = key.slice(LEGACY_INDEX_PREFIX.length + 1);
+        await idbSet(CHAT_STORE, indexKey(userId), value);
+      } else {
+        const id = key.slice(LEGACY_PREFIX.length);
+        await idbSet(CHAT_STORE, conversationKey(id), value);
+      }
+      localStorage.removeItem(key);
+    }
+
+    localStorage.setItem(MIGRATION_KEY, '1');
+    migrationDone = true;
+  } catch {
+    migrationDone = true;
+  }
 }
 
 export function getStorageTier(plan: string | null | undefined): StorageTier {
@@ -54,7 +66,12 @@ export function getStorageTier(plan: string | null | undefined): StorageTier {
 export const chatStore = {
   isAuthenticated(): boolean {
     if (typeof window === 'undefined') return false;
-    return !!readLocal<{ id: string }>('sb-orin-auth-user') || !!readLocal<{ id: string }>('sb-auth-user');
+    try {
+      const raw = localStorage.getItem('sb-orin-auth-user') || localStorage.getItem('sb-auth-user');
+      return !!raw;
+    } catch {
+      return false;
+    }
   },
 
   async list(userId: string, tier: StorageTier): Promise<ChatConversation[]> {
@@ -69,11 +86,14 @@ export const chatStore = {
     return this.listFromLocal(userId);
   },
 
-  listFromLocal(userId: string): ChatConversation[] {
-    const index = readLocal<LocalIndex>(indexKey(userId));
+  async listFromLocal(userId: string): Promise<ChatConversation[]> {
+    await migrateFromLocalStorage();
+    const index = await idbGet<LocalIndex>(CHAT_STORE, indexKey(userId));
     if (!index) return [];
-    return index.conversationIds
-      .map(id => readLocal<ChatConversation>(conversationKey(id)))
+    const conversations = await Promise.all(
+      index.conversationIds.map(id => idbGet<ChatConversation>(CHAT_STORE, conversationKey(id))),
+    );
+    return conversations
       .filter((c): c is ChatConversation => !!c)
       .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   },
@@ -83,25 +103,28 @@ export const chatStore = {
       try {
         const c = await api.chat.get(id);
         if (c) {
-          writeLocal(conversationKey(c.id), c);
+          await idbSet(CHAT_STORE, conversationKey(c.id), c);
           return c;
         }
       } catch {}
     }
-    return readLocal<ChatConversation>(conversationKey(id));
+    await migrateFromLocalStorage();
+    return idbGet<ChatConversation>(CHAT_STORE, conversationKey(id));
   },
 
   async save(
     conversation: ChatConversation,
     tier: StorageTier,
   ): Promise<ChatConversation> {
+    await migrateFromLocalStorage();
     conversation.updatedAt = new Date().toISOString();
     conversation.messageCount = conversation.messages.length;
-    writeLocal(conversationKey(conversation.id), conversation);
+    await idbSet(CHAT_STORE, conversationKey(conversation.id), conversation);
 
-    const idx = readLocal<LocalIndex>(indexKey(conversation.userId || 'anon')) || {
-      userId: conversation.userId || 'anon',
-      conversationIds: [],
+    const userId = conversation.userId || 'anon';
+    const idx = await idbGet<LocalIndex>(CHAT_STORE, indexKey(userId)) || {
+      userId,
+      conversationIds: [] as string[],
       updatedAt: new Date().toISOString(),
     };
     if (!idx.conversationIds.includes(conversation.id)) {
@@ -113,7 +136,7 @@ export const chatStore = {
       ];
     }
     idx.updatedAt = new Date().toISOString();
-    writeLocal(indexKey(conversation.userId || 'anon'), idx);
+    await idbSet(CHAT_STORE, indexKey(userId), idx);
 
     if (tier === 'cloud' && conversation.userId) {
       try {
@@ -125,11 +148,12 @@ export const chatStore = {
   },
 
   async remove(id: string, userId: string, tier: StorageTier): Promise<void> {
-    removeLocal(conversationKey(id));
-    const idx = readLocal<LocalIndex>(indexKey(userId));
+    await migrateFromLocalStorage();
+    await idbDelete(CHAT_STORE, conversationKey(id));
+    const idx = await idbGet<LocalIndex>(CHAT_STORE, indexKey(userId));
     if (idx) {
       idx.conversationIds = idx.conversationIds.filter(cid => cid !== id);
-      writeLocal(indexKey(userId), idx);
+      await idbSet(CHAT_STORE, indexKey(userId), idx);
     }
     if (tier === 'cloud' && userId) {
       try {
@@ -139,10 +163,11 @@ export const chatStore = {
   },
 
   async clearAll(userId: string): Promise<void> {
-    const idx = readLocal<LocalIndex>(indexKey(userId));
+    await migrateFromLocalStorage();
+    const idx = await idbGet<LocalIndex>(CHAT_STORE, indexKey(userId));
     if (idx) {
-      idx.conversationIds.forEach(id => removeLocal(conversationKey(id)));
-      removeLocal(indexKey(userId));
+      await Promise.all(idx.conversationIds.map(id => idbDelete(CHAT_STORE, conversationKey(id))));
+      await idbDelete(CHAT_STORE, indexKey(userId));
     }
   },
 

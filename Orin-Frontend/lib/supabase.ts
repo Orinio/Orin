@@ -31,6 +31,7 @@ export type Database = {
           registration_ip: string | null;
           registration_ua: string | null;
           onboarded: boolean;
+          public_key: string | null;
           created_at: string;
           updated_at: string;
           deleted_at: string | null;
@@ -61,6 +62,7 @@ export type Database = {
           registration_ip?: string | null;
           registration_ua?: string | null;
           onboarded?: boolean;
+          public_key?: string | null;
           created_at?: string;
           updated_at?: string;
           deleted_at?: string | null;
@@ -91,6 +93,7 @@ export type Database = {
           registration_ip?: string | null;
           registration_ua?: string | null;
           onboarded?: boolean;
+          public_key?: string | null;
           created_at?: string;
           updated_at?: string;
           deleted_at?: string | null;
@@ -1090,16 +1093,28 @@ export type Database = {
       conversations: {
         Row: {
           id: string;
+          conversation_type: string;
+          name: string | null;
+          last_message_preview: string | null;
+          last_message_at: string | null;
           created_at: string;
           updated_at: string;
         };
         Insert: {
           id?: string;
+          conversation_type?: string;
+          name?: string | null;
+          last_message_preview?: string | null;
+          last_message_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
         Update: {
           id?: string;
+          conversation_type?: string;
+          name?: string | null;
+          last_message_preview?: string | null;
+          last_message_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -1150,6 +1165,10 @@ export type Database = {
           conversation_id: string;
           sender_id: string;
           content: string;
+          encryption_iv: string | null;
+          encryption_salt: string | null;
+          message_type: string;
+          delivered_at: string | null;
           created_at: string;
           read_at: string | null;
         };
@@ -1158,6 +1177,10 @@ export type Database = {
           conversation_id: string;
           sender_id: string;
           content: string;
+          encryption_iv?: string | null;
+          encryption_salt?: string | null;
+          message_type?: string;
+          delivered_at?: string | null;
           created_at?: string;
           read_at?: string | null;
         };
@@ -1166,6 +1189,10 @@ export type Database = {
           conversation_id?: string;
           sender_id?: string;
           content?: string;
+          encryption_iv?: string | null;
+          encryption_salt?: string | null;
+          message_type?: string;
+          delivered_at?: string | null;
           created_at?: string;
           read_at?: string | null;
         };

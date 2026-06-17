@@ -21,6 +21,7 @@ import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
 import { usePlan } from '@/lib/plan-context';
 import { api } from '@/lib/api-client';
+import { idbGet, idbSet } from '@/lib/idb';
 import { CLOUD_PROVIDERS, type CloudProvider, type UserIntegration } from '@/lib/chat-types';
 
 
@@ -32,23 +33,39 @@ const CATEGORY_LABELS = {
   code: 'Code',
 };
 
-const STORAGE_KEY = 'orin.integrations.v1';
+const INTEGRATIONS_STORE = 'integrations';
+const LEGACY_STORAGE_KEY = 'orin.integrations.v1';
+const MIGRATION_KEY = 'orin.integrations.idb.migrated';
 
-function readLocalIntegrations(userId: string): UserIntegration[] {
-  if (typeof window === 'undefined') return [];
+let migrationDone = false;
+
+async function migrateFromLocalStorage(userId: string) {
+  if (migrationDone || typeof window === 'undefined') return;
   try {
-    const raw = window.localStorage.getItem(`${STORAGE_KEY}.${userId}`);
-    return raw ? (JSON.parse(raw) as UserIntegration[]) : [];
+    if (localStorage.getItem(MIGRATION_KEY)) {
+      migrationDone = true;
+      return;
+    }
+    const raw = localStorage.getItem(`${LEGACY_STORAGE_KEY}.${userId}`);
+    if (raw) {
+      const list = JSON.parse(raw) as UserIntegration[];
+      await idbSet(INTEGRATIONS_STORE, userId, list);
+      localStorage.removeItem(`${LEGACY_STORAGE_KEY}.${userId}`);
+    }
+    localStorage.setItem(MIGRATION_KEY, '1');
+    migrationDone = true;
   } catch {
-    return [];
+    migrationDone = true;
   }
 }
 
-function writeLocalIntegrations(userId: string, list: UserIntegration[]) {
-  if (typeof window === 'undefined') return;
-  try {
-    window.localStorage.setItem(`${STORAGE_KEY}.${userId}`, JSON.stringify(list));
-  } catch {}
+async function readLocalIntegrations(userId: string): Promise<UserIntegration[]> {
+  await migrateFromLocalStorage(userId);
+  return (await idbGet<UserIntegration[]>(INTEGRATIONS_STORE, userId)) || [];
+}
+
+async function writeLocalIntegrations(userId: string, list: UserIntegration[]) {
+  await idbSet(INTEGRATIONS_STORE, userId, list);
 }
 
 export default function IntegrationsPage() {
@@ -71,7 +88,7 @@ export default function IntegrationsPage() {
         return;
       }
     } catch {}
-    setIntegrations(readLocalIntegrations(userId));
+    setIntegrations(await readLocalIntegrations(userId));
   }, [user, userId]);
 
   useEffect(() => {

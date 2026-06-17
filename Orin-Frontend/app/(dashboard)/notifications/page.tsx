@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import {
   Bell,
   CheckCheck,
 } from 'lucide-react';
+import { useAuth } from '@/lib/auth-context';
+import { useNotifications, useMarkAllNotificationsRead, useMarkNotificationRead } from '@/lib/queries';
 import { formatRelativeTime } from '@/lib/utils';
 import type { Notification } from '@/lib/types';
 
@@ -81,61 +82,22 @@ function EmptyState() {
 }
 
 export default function NotificationsPage() {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [markingAll, setMarkingAll] = useState(false);
-
-  useEffect(() => {
-    async function fetchNotifications() {
-      try {
-        const res = await fetch('/api/notifications');
-        if (!res.ok) throw new Error('Failed to fetch');
-        const data = await res.json();
-        const items: Notification[] = (data.notifications || []).map(
-          (n: Record<string, unknown>) => ({
-            id: n.id as string,
-            userId: n.user_id as string,
-            type: n.type as Notification['type'],
-            title: n.title as string,
-            body: (n.body as string) ?? undefined,
-            link: (n.link as string) ?? undefined,
-            payload: (n.payload as Record<string, unknown>) || {},
-            createdAt: new Date(n.created_at as string),
-            readAt: n.read_at ? new Date(n.read_at as string) : undefined,
-          } as Notification)
-        );
-        setNotifications(items);
-      } catch {
-        // silently fail
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchNotifications();
-  }, []);
+  const { user } = useAuth();
+  const userId = user?.id || null;
+  const { data: notifications = [], isLoading: loading } = useNotifications(userId);
+  const markAllRead = useMarkAllNotificationsRead();
+  const markRead = useMarkNotificationRead();
 
   const unreadCount = notifications.filter((n) => !n.readAt).length;
 
   const handleMarkAllRead = async () => {
-    setMarkingAll(true);
-    try {
-      await fetch('/api/notifications/read-all', { method: 'POST' });
-      setNotifications((prev) =>
-        prev.map((n) => (n.readAt ? n : { ...n, readAt: new Date() }))
-      );
-    } catch {
-      // ignore
-    } finally {
-      setMarkingAll(false);
-    }
+    if (!userId) return;
+    await markAllRead.mutateAsync(userId);
   };
 
   const handleClick = async (notification: Notification) => {
     if (!notification.readAt) {
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === notification.id ? { ...n, readAt: new Date() } : n))
-      );
-      fetch(`/api/notifications/${notification.id}/read`, { method: 'POST' }).catch(() => {});
+      await markRead.mutateAsync(notification.id);
     }
   };
 
@@ -155,11 +117,11 @@ export default function NotificationsPage() {
         {unreadCount > 0 && (
           <button
             onClick={handleMarkAllRead}
-            disabled={markingAll}
+            disabled={markAllRead.isPending}
             className="btn-outline inline-flex items-center gap-2 px-4 py-2 text-sm disabled:opacity-60"
           >
             <CheckCheck size={16} />
-            {markingAll ? 'Marking...' : 'Mark all as read'}
+            {markAllRead.isPending ? 'Marking...' : 'Mark all as read'}
           </button>
         )}
       </header>

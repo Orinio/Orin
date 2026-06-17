@@ -1,11 +1,10 @@
 'use client';
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useParams } from "next/navigation";
-import { supabase } from "@/lib/supabase";
-import { mapDbProofToProof, getStatusConfig, formatNumber, formatRelativeTime, getProofTypeColor } from "@/lib/utils";
-import type { Proof } from "@/lib/types";
+import { useProof } from "@/lib/queries";
+import { getStatusConfig, formatNumber, formatRelativeTime, getProofTypeColor } from "@/lib/utils";
 import { Sparkles, RefreshCw, AlertCircle } from "lucide-react";
 
 interface StatusConfig {
@@ -22,33 +21,10 @@ interface AIAnalysis {
 export default function ProofDetailPage() {
   const params = useParams();
   const id = params.id as string;
-  const [proof, setProof] = useState<Proof | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: proof, isLoading: loading } = useProof(id);
   const [aiAnalysis, setAiAnalysis] = useState<AIAnalysis | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function fetchProof() {
-      try {
-        if (!supabase) return;
-        const { data, error } = await supabase
-          .from('proof_cards')
-          .select('*')
-          .eq('id', id)
-          .is('deleted_at', null)
-          .maybeSingle();
-
-        if (error) throw new Error(error.message);
-        if (data) setProof(mapDbProofToProof(data));
-      } catch (e) {
-        console.warn('Failed to fetch proof:', e);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchProof();
-  }, [id]);
 
   if (loading) {
     return (

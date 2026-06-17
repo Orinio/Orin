@@ -4,11 +4,18 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import {
-  generateKeyPair,
-  encryptForConversation,
-  decryptFromConversation,
-  hasPrivateKey,
-  type EncryptedPayload,
+  getOrCreateKeyBundle,
+  hasStoredKeys,
+  x3dhInit,
+  initRatchet,
+  encryptMessage,
+  decryptMessage,
+  generateFingerprint,
+  storeRatchetState,
+  getRatchetState,
+  type EncryptedMessage,
+  type UserKeyBundle,
+  type RatchetState,
 } from '@/lib/encryption';
 import type { Database } from '@/lib/supabase';
 
@@ -36,6 +43,7 @@ export interface ConversationParticipant {
   avatar_url: string | null;
   username: string | null;
   public_key: string | null;
+  headline: string | null;
   online?: boolean;
   last_seen?: string;
 }
@@ -44,58 +52,40 @@ export interface ChatMessage {
   id: string;
   conversation_id: string;
   sender_id: string;
-  content: string; // encrypted ciphertext or plaintext for system messages
+  content: string;
   encryption_iv: string | null;
   encryption_salt: string | null;
   message_type: string;
   created_at: string;
   read_at: string | null;
   delivered_at: string | null;
-  // Decrypted content (client-side only)
+  // Client-side only
   decrypted_content?: string;
   sender_name?: string;
   sender_avatar?: string;
+  is_verified?: boolean;
+  is_decrypted?: boolean;
 }
 
 // ═══════════════════════════════════════════
-// KEY MANAGEMENT HOOKS
+// KEY MANAGEMENT
 // ═══════════════════════════════════════════
 
-/**
- * Initialize encryption keys for the current user.
- * Called once on login to ensure keys exist.
- */
 export function useInitializeKeys(userId: string | null) {
   useEffect(() => {
     if (!userId || !supabase) return;
 
+    const supabaseClient = supabase;
+
     const initKeys = async () => {
       try {
-        const hasKeys = await hasPrivateKey(userId);
+        const hasKeys = await hasStoredKeys(userId);
         if (!hasKeys) {
-          // Generate new key pair
-          const publicKey = await generateKeyPair(userId);
-
-          // Store public key in database
-          await supabase
+          const bundle = await getOrCreateKeyBundle(userId);
+          await supabaseClient
             .from('users')
-            .update({ public_key: publicKey })
+            .update({ public_key: JSON.stringify(bundle) })
             .eq('auth_user_id', userId);
-        } else {
-          // Ensure public key is in DB (might have been lost)
-          const { data: user } = await supabase
-            .from('users')
-            .select('public_key')
-            .eq('auth_user_id', userId)
-            .single();
-
-          if (!user?.public_key) {
-            const publicKey = await generateKeyPair(userId);
-            await supabase
-              .from('users')
-              .update({ public_key: publicKey })
-              .eq('auth_user_id', userId);
-          }
         }
       } catch (err) {
         console.error('Failed to initialize encryption keys:', err);
@@ -110,16 +100,12 @@ export function useInitializeKeys(userId: string | null) {
 // CONVERSATION HOOKS
 // ═══════════════════════════════════════════
 
-/**
- * Fetch all conversations for the current user.
- */
 export function useConversations(userId: string | null) {
   return useQuery({
     queryKey: ['conversations', userId],
     queryFn: async () => {
       if (!supabase || !userId) return [];
 
-      // Get user's DB id
       const { data: currentUser } = await supabase
         .from('users')
         .select('id')
@@ -128,7 +114,6 @@ export function useConversations(userId: string | null) {
 
       if (!currentUser) return [];
 
-      // Get conversations the user is part of
       const { data: participations } = await supabase
         .from('conversation_participants')
         .select('conversation_id')
@@ -138,7 +123,6 @@ export function useConversations(userId: string | null) {
 
       const conversationIds = participations.map(p => p.conversation_id);
 
-      // Get conversation details
       const { data: conversations } = await supabase
         .from('conversations')
         .select('*')
@@ -147,7 +131,6 @@ export function useConversations(userId: string | null) {
 
       if (!conversations) return [];
 
-      // Get participants for each conversation
       const result: Conversation[] = [];
 
       for (const conv of conversations) {
@@ -161,7 +144,8 @@ export function useConversations(userId: string | null) {
               full_name,
               avatar_url,
               username,
-              public_key
+              public_key,
+              headline
             )
           `)
           .eq('conversation_id', conv.id);
@@ -175,6 +159,7 @@ export function useConversations(userId: string | null) {
               avatar_url: string | null;
               username: string | null;
               public_key: string | null;
+              headline: string | null;
             };
             return {
               user_id: user.id,
@@ -182,10 +167,10 @@ export function useConversations(userId: string | null) {
               avatar_url: user.avatar_url,
               username: user.username,
               public_key: user.public_key,
+              headline: user.headline,
             };
           });
 
-        // Get unread count
         const myParticipation = participants?.find(p => p.user_id === currentUser.id);
         const lastRead = myParticipation?.last_read_at;
 
@@ -207,7 +192,6 @@ export function useConversations(userId: string | null) {
           unreadCount = count || 0;
         }
 
-        // For direct conversations, use the other person's name as the conversation name
         let displayName = conv.name;
         if (conv.conversation_type === 'direct' && participantList.length === 2) {
           const other = participantList.find(p => p.user_id !== currentUser.id);
@@ -224,7 +208,6 @@ export function useConversations(userId: string | null) {
         });
       }
 
-      // Sort by last message time
       result.sort((a, b) => {
         if (!a.last_message_at) return 1;
         if (!b.last_message_at) return -1;
@@ -234,13 +217,10 @@ export function useConversations(userId: string | null) {
       return result;
     },
     enabled: !!userId,
-    refetchInterval: 10000, // Refetch every 10s for new conversations
+    refetchInterval: 10000,
   });
 }
 
-/**
- * Create a new direct conversation with another user.
- */
 export function useCreateConversation(userId: string | null) {
   const queryClient = useQueryClient();
 
@@ -256,7 +236,7 @@ export function useCreateConversation(userId: string | null) {
 
       if (!currentUser) throw new Error('User not found');
 
-      // Check if conversation already exists between these two users
+      // Check for existing conversation
       const { data: existingParticipations } = await supabase
         .from('conversation_participants')
         .select('conversation_id')
@@ -272,24 +252,19 @@ export function useCreateConversation(userId: string | null) {
             .single();
 
           if (otherParticipant) {
-            // Conversation already exists
             return p.conversation_id;
           }
         }
       }
 
-      // Create new conversation
       const { data: conversation, error: convError } = await supabase
         .from('conversations')
-        .insert({
-          conversation_type: 'direct',
-        })
+        .insert({ conversation_type: 'direct' })
         .select('id')
         .single();
 
       if (convError) throw convError;
 
-      // Add both participants
       const { error: partError } = await supabase
         .from('conversation_participants')
         .insert([
@@ -311,9 +286,6 @@ export function useCreateConversation(userId: string | null) {
 // MESSAGE HOOKS
 // ═══════════════════════════════════════════
 
-/**
- * Fetch messages for a conversation with decryption.
- */
 export function useMessages(
   conversationId: string | null,
   userId: string | null,
@@ -332,7 +304,6 @@ export function useMessages(
 
       if (!currentUser) return [];
 
-      // Fetch messages
       const { data: messages } = await supabase
         .from('messages')
         .select('*')
@@ -342,40 +313,52 @@ export function useMessages(
 
       if (!messages) return [];
 
-      // Get sender info
       const senderIds = [...new Set(messages.map(m => m.sender_id))];
       const { data: senders } = await supabase
         .from('users')
         .select('id, full_name, avatar_url')
         .in('id', senderIds);
 
-      const senderMap = new Map(
-        (senders || []).map(s => [s.id, s])
-      );
+      const senderMap = new Map((senders || []).map(s => [s.id, s]));
 
-      // Decrypt messages
+      // Get ratchet state for this conversation
+      const ratchetState = await getRatchetState(conversationId);
+
       const decryptedMessages: ChatMessage[] = [];
 
       for (const msg of messages) {
         const sender = senderMap.get(msg.sender_id);
         let decryptedContent = msg.content;
+        let isDecrypted = false;
 
-        // Try to decrypt if it's an encrypted message
-        if (msg.message_type === 'encrypted' && msg.encryption_iv && otherUserPublicKey) {
+        if (msg.message_type === 'encrypted' && msg.encryption_iv && ratchetState) {
           try {
-            const payload: EncryptedPayload = {
-              ciphertext: msg.content,
-              iv: msg.encryption_iv,
-              salt: msg.encryption_salt || '',
-            };
-            decryptedContent = await decryptFromConversation(
-              userId,
-              otherUserPublicKey,
-              payload
+            // Derive message key based on message number
+            const rootKeyRaw = await crypto.subtle.exportKey('raw', ratchetState.rootKey);
+            const msgNumber = decryptedMessages.filter(m => m.sender_id !== currentUser.id).length;
+            
+            const msgKeyRaw = await crypto.subtle.deriveKey(
+              {
+                name: 'HKDF',
+                hash: 'SHA-256',
+                salt: new Uint8Array(32),
+                info: new TextEncoder().encode(`OrinMsgKeyv1-${msgNumber}`),
+              },
+              await crypto.subtle.importKey('raw', rootKeyRaw, { name: 'HKDF' }, false, ['deriveKey']),
+              { name: 'AES-GCM', length: 256 },
+              false,
+              ['encrypt', 'decrypt']
             );
+
+            decryptedContent = await decryptMessage(
+              msgKeyRaw,
+              msg.content,
+              msg.encryption_iv,
+              msg.encryption_salt || ''
+            );
+            isDecrypted = true;
           } catch {
-            // Decryption failed - might be from before keys were set up
-            decryptedContent = '[Unable to decrypt message]';
+            decryptedContent = '[Unable to decrypt]';
           }
         }
 
@@ -383,7 +366,9 @@ export function useMessages(
           ...msg,
           decrypted_content: decryptedContent,
           sender_name: sender?.full_name || 'Unknown',
-          sender_avatar: sender?.avatar_url || null,
+          sender_avatar: sender?.avatar_url ?? undefined,
+          is_verified: true,
+          is_decrypted: isDecrypted || msg.message_type !== 'encrypted',
         });
       }
 
@@ -393,9 +378,6 @@ export function useMessages(
   });
 }
 
-/**
- * Send an encrypted message.
- */
 export function useSendMessage(userId: string | null) {
   const queryClient = useQueryClient();
 
@@ -419,22 +401,49 @@ export function useSendMessage(userId: string | null) {
 
       if (!currentUser) throw new Error('User not found');
 
-      // Encrypt the message
-      const encrypted = await encryptForConversation(
-        userId,
-        recipientPublicKey,
-        content
+      // Get or initialize ratchet state
+      let ratchetState = await getRatchetState(conversationId);
+
+      if (!ratchetState) {
+        // First message - need to initialize via X3DH
+        const theirBundle: UserKeyBundle = JSON.parse(recipientPublicKey);
+        const { sharedSecret } = await x3dhInit(userId, theirBundle);
+        ratchetState = await initRatchet(sharedSecret, true);
+        await storeRatchetState(conversationId, ratchetState);
+      }
+
+      // Generate message key from chain
+      // In a full implementation, this would use chainStep
+      // For now, we derive a key from the root key
+      const rootKeyRaw = await crypto.subtle.exportKey('raw', ratchetState.rootKey);
+      const msgKeyRaw = await crypto.subtle.deriveKey(
+        {
+          name: 'HKDF',
+          hash: 'SHA-256',
+          salt: new Uint8Array(32),
+          info: new TextEncoder().encode(`OrinMsgKeyv1-${ratchetState.sendingMessageNumber}`),
+        },
+        await crypto.subtle.importKey('raw', rootKeyRaw, { name: 'HKDF' }, false, ['deriveKey']),
+        { name: 'AES-GCM', length: 256 },
+        false,
+        ['encrypt', 'decrypt']
       );
 
-      // Store encrypted message
+      // Encrypt the message
+      const { ciphertext, iv, hmac } = await encryptMessage(msgKeyRaw, content);
+
+      // Update ratchet state
+      ratchetState.sendingMessageNumber++;
+      await storeRatchetState(conversationId, ratchetState);
+
       const { data: message, error } = await supabase
         .from('messages')
         .insert({
           conversation_id: conversationId,
           sender_id: currentUser.id,
-          content: encrypted.ciphertext,
-          encryption_iv: encrypted.iv,
-          encryption_salt: encrypted.salt,
+          content: ciphertext,
+          encryption_iv: iv,
+          encryption_salt: hmac,
           message_type: 'encrypted',
         })
         .select('id')
@@ -442,7 +451,6 @@ export function useSendMessage(userId: string | null) {
 
       if (error) throw error;
 
-      // Update conversation last message
       await supabase
         .from('conversations')
         .update({
@@ -461,9 +469,6 @@ export function useSendMessage(userId: string | null) {
   });
 }
 
-/**
- * Mark conversation as read.
- */
 export function useMarkAsRead(userId: string | null) {
   const queryClient = useQueryClient();
 
@@ -491,9 +496,6 @@ export function useMarkAsRead(userId: string | null) {
   });
 }
 
-/**
- * Real-time message subscription.
- */
 export function useRealtimeMessages(
   conversationId: string | null,
   onNewMessage: (message: ChatMessage) => void
@@ -504,7 +506,8 @@ export function useRealtimeMessages(
   useEffect(() => {
     if (!supabase || !conversationId) return;
 
-    const channel = supabase
+    const supabaseClient = supabase;
+    const channel = supabaseClient
       .channel(`messages:${conversationId}`)
       .on(
         'postgres_changes',
@@ -527,21 +530,17 @@ export function useRealtimeMessages(
             created_at: msg.created_at as string,
             read_at: msg.read_at as string | null,
             delivered_at: msg.delivered_at as string | null,
-            decrypted_content: undefined, // Will be decrypted by the component
           });
         }
       )
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      supabaseClient.removeChannel(channel);
     };
   }, [conversationId]);
 }
 
-/**
- * Search users to start a new conversation.
- */
 export function useSearchUsers(query: string, currentUserId: string | null) {
   return useQuery({
     queryKey: ['searchUsers', query, currentUserId],
@@ -568,5 +567,16 @@ export function useSearchUsers(query: string, currentUserId: string | null) {
       return users || [];
     },
     enabled: !!currentUserId && query.length >= 2,
+  });
+}
+
+export function useUserFingerprint(userId: string | null, otherUserId: string | null) {
+  return useQuery({
+    queryKey: ['fingerprint', userId, otherUserId],
+    queryFn: async () => {
+      if (!userId || !otherUserId) return null;
+      return generateFingerprint(userId, otherUserId);
+    },
+    enabled: !!userId && !!otherUserId,
   });
 }

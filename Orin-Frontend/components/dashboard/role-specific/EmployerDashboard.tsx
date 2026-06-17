@@ -15,6 +15,7 @@ import {
   Building2,
   Target,
 } from 'lucide-react';
+import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
 
@@ -231,7 +232,7 @@ export default function EmployerDashboard() {
                     style={{ backgroundColor: 'var(--color-bloom)' }}
                   >
                     {candidate.avatarUrl ? (
-                      <img src={candidate.avatarUrl} alt={candidate.fullName} className="w-full h-full rounded-full object-cover" />
+                      <Image src={candidate.avatarUrl} alt={candidate.fullName} width={40} height={40} className="w-full h-full rounded-full object-cover" />
                     ) : (
                       candidate.fullName.charAt(0)
                     )}

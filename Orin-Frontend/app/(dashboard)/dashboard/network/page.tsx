@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useUserSearch, useFollowStatus, useToggleFollow, useStartConversation } from '@/lib/social';
@@ -42,7 +43,7 @@ function UserCard({ user, currentUserId, index }: { user: any; currentUserId: st
         {/* Avatar */}
         <Link href={`/p/${user.username}`} className="shrink-0 relative">
           {user.avatar_url ? (
-            <img src={user.avatar_url} alt={user.full_name || user.username} className="h-14 w-14 rounded-2xl object-cover ring-2 ring-white shadow-sm" />
+            <Image src={user.avatar_url} alt={user.full_name || user.username} width={56} height={56} className="h-14 w-14 rounded-2xl object-cover ring-2 ring-white shadow-sm" />
           ) : (
             <div className="h-14 w-14 rounded-2xl flex items-center justify-center text-lg font-bold ring-2 ring-white shadow-sm" style={{ backgroundColor: 'var(--color-bloom)15', color: 'var(--color-bloom)' }}>
               {(user.full_name || user.username)?.[0]?.toUpperCase() || '?'}

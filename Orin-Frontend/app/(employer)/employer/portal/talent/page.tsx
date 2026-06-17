@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
@@ -50,7 +51,7 @@ function CandidateCard({ candidate, currentUserId }: { candidate: Candidate; cur
         {/* Avatar */}
         <Link href={`/p/${candidate.username}`} className="shrink-0">
           {candidate.avatar_url ? (
-            <img src={candidate.avatar_url} alt={candidate.full_name || candidate.username} className="h-14 w-14 rounded-2xl object-cover" />
+            <Image src={candidate.avatar_url} alt={candidate.full_name || candidate.username} width={56} height={56} className="h-14 w-14 rounded-2xl object-cover" />
           ) : (
             <div className="h-14 w-14 rounded-2xl flex items-center justify-center text-xl font-bold" style={{ backgroundColor: 'var(--color-surface-dim)', color: 'var(--color-text-secondary)' }}>
               {(candidate.full_name || candidate.username)?.[0]?.toUpperCase() || '?'}

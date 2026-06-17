@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { supabase, Database } from '@/lib/supabase';
 import {
   User,
@@ -418,7 +419,7 @@ export default function SettingsPage() {
         <div className="mt-4 flex items-center gap-6">
           <div className="relative">
             {avatarPreview ? (
-              <img src={avatarPreview} alt="Avatar" className="h-20 w-20 rounded-full object-cover" />
+              <Image src={avatarPreview} alt="Avatar" width={80} height={80} unoptimized className="h-20 w-20 rounded-full object-cover" />
             ) : (
               <div className="flex h-20 w-20 items-center justify-center rounded-full text-2xl font-bold text-white" style={{ background: 'linear-gradient(135deg, var(--color-bloom), var(--color-ember))' }}>
                 {initials}

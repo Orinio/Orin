@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { getOpportunityTypeLabel } from '@/lib/utils';
 import { Sparkles, TrendingUp, MapPin, Globe, DollarSign, Clock, Bookmark, X, ChevronDown, ChevronUp, Zap, AlertCircle, RefreshCw } from 'lucide-react';
 import type { Opportunity, OpportunityType, OpportunityStatus } from '@/lib/types';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { useOpportunities } from '@/lib/queries';
 
 interface SkillMatch {
   opportunityId: string;
@@ -48,12 +49,10 @@ export default function OpportunitiesPage() {
 }
 
 function OpportunitiesContent() {
-  const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [skillMatches, setSkillMatches] = useState<SkillMatch[]>([]);
   const [skillAnalysis, setSkillAnalysis] = useState<SkillAnalysis | null>(null);
   const [aiInsights, setAiInsights] = useState<AIInsights | null>(null);
   const [userOpps, setUserOpps] = useState<Record<string, OpportunityStatus>>({});
-  const [loading, setLoading] = useState(true);
   const [aiLoading, setAiLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<OpportunityType | null>(null);
@@ -61,21 +60,11 @@ function OpportunitiesContent() {
   const [showInsights, setShowInsights] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch('/api/opportunities');
-        if (!response.ok) throw new Error('API failed');
-        const data = await response.json();
-        setOpportunities(data.opportunities || []);
-      } catch (e) {
-        console.warn('Failed to fetch opportunities:', e);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
+  const { data: opportunities = [], isLoading: loading } = useOpportunities({
+    type: typeFilter || undefined,
+    search: search || undefined,
+    sortBy,
+  });
 
 
 
@@ -108,18 +97,13 @@ function OpportunitiesContent() {
 
   const filtered = useMemo(() => {
     let result = [...opportunities];
-    if (search) {
-      const q = search.toLowerCase();
-      result = result.filter((o) => o.title.toLowerCase().includes(q) || o.company.toLowerCase().includes(q) || o.requiredSkills.some((s) => s.toLowerCase().includes(q)));
-    }
-    if (typeFilter) result = result.filter((o) => o.type === typeFilter);
     switch (sortBy) {
       case 'match': result.sort((a, b) => { const aMatch = getMatchForOpp(a.id)?.matchScore || a.matchPercentage || 0; const bMatch = getMatchForOpp(b.id)?.matchScore || b.matchPercentage || 0; return bMatch - aMatch; }); break;
       case 'recent': result.sort((a, b) => (b.postedAt?.getTime() || 0) - (a.postedAt?.getTime() || 0)); break;
       case 'salary': result.sort((a, b) => (b.salaryMax || 0) - (a.salaryMax || 0)); break;
     }
     return result;
-  }, [opportunities, search, typeFilter, sortBy, skillMatches]);
+  }, [opportunities, sortBy, skillMatches]);
 
   const handleSave = async (oppId: string) => {
     setUserOpps((prev) => ({ ...prev, [oppId]: 'saved' }));

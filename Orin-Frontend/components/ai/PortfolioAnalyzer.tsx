@@ -1,16 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { api } from '@/lib/api-client';
+import { useState } from 'react';
+import { usePortfolioScore } from '@/lib/queries/ai-analysis';
 import {
   Trophy,
-  Star,
-  TrendingUp,
-  Target,
-  Loader2,
   RefreshCw,
-  Sparkles,
-  ArrowUpRight,
   CheckCircle2,
   AlertCircle,
   Lightbulb,
@@ -69,61 +63,65 @@ function ScoreRing({ score, size = 80 }: { score: number; size?: number }) {
   );
 }
 
-export function PortfolioAnalyzer() {
-  const [score, setScore] = useState<PortfolioScore | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [showThinking, setShowThinking] = useState(false);
+function parseScoreResponse(raw: { score: string; thinking: string }): PortfolioScore {
+  const scoreNum = parseInt(raw.score, 10) || 0;
+  const thinking = raw.thinking || '';
+  const breakdown: ScoreBreakdown[] = [];
+  const lines = thinking.split('\n');
 
-  const fetchScore = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await api.ai.score();
-      // Parse the score response
-      const scoreNum = parseInt(data.score, 10) || 0;
-      const thinking = data.thinking || '';
-      
-      // Extract breakdown from thinking text
-      const breakdown: ScoreBreakdown[] = [];
-      const lines = thinking.split('\n');
-      let currentCriteria = '';
-      
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (trimmed.match(/^[\d\.]+\s*\/\s*20/i) || trimmed.match(/^score[:\s]/i)) {
-          // Try to extract criteria and score
-          const match = trimmed.match(/(.+?)[\s:]+(\d+)\s*\/?\s*(\d+)?/i);
-          if (match) {
-            breakdown.push({
-              criteria: match[1].replace(/[*#-]/g, '').trim(),
-              score: parseInt(match[2], 10),
-              maxScore: parseInt(match[3] || '20', 10),
-              feedback: '',
-            });
-          }
-        }
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed.match(/^[\d\.]+\s*\/\s*20/i) || trimmed.match(/^score[:\s]/i)) {
+      const match = trimmed.match(/(.+?)[\s:]+(\d+)\s*\/?\s*(\d+)?/i);
+      if (match) {
+        breakdown.push({
+          criteria: match[1].replace(/[*#-]/g, '').trim(),
+          score: parseInt(match[2], 10),
+          maxScore: parseInt(match[3] || '20', 10),
+          feedback: '',
+        });
       }
-
-
-
-      setScore({
-        overall: scoreNum,
-        breakdown,
-        strengths: extractList(thinking, 'strength'),
-        improvements: extractList(thinking, 'improvement'),
-        thinking,
-      });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to score portfolio');
-    } finally {
-      setLoading(false);
     }
-  }, []);
+  }
 
-  useEffect(() => { fetchScore(); }, [fetchScore]);
+  return {
+    overall: scoreNum,
+    breakdown,
+    strengths: extractList(thinking, 'strength'),
+    improvements: extractList(thinking, 'improvement'),
+    thinking,
+  };
+}
 
-  if (loading) {
+function extractList(text: string, keyword: string): string[] {
+  const results: string[] = [];
+  const lines = text.split('\n');
+  let inSection = false;
+
+  for (const line of lines) {
+    const trimmed = line.trim().toLowerCase();
+    if (trimmed.includes(keyword)) {
+      inSection = true;
+      continue;
+    }
+    if (inSection && (trimmed.startsWith('-') || trimmed.startsWith('*') || trimmed.startsWith('•'))) {
+      const item = line.replace(/^[\s-*•]+/, '').trim();
+      if (item.length > 5) results.push(item);
+    }
+    if (inSection && trimmed === '') {
+      if (results.length > 0) break;
+    }
+  }
+
+  return results.slice(0, 3);
+}
+
+export function PortfolioAnalyzer() {
+  const [showThinking, setShowThinking] = useState(false);
+  const { data: rawScore, isLoading, error, refetch } = usePortfolioScore();
+  const score = rawScore ? parseScoreResponse(rawScore) : null;
+
+  if (isLoading) {
     return (
       <div className="card-premium p-6">
         <div className="flex items-center gap-3 mb-4">
@@ -136,7 +134,7 @@ export function PortfolioAnalyzer() {
           </div>
         </div>
         <div className="flex justify-center py-6">
-          <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--color-bloom)' }} />
+          <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: 'var(--color-bloom)', borderTopColor: 'transparent' }} />
         </div>
       </div>
     );
@@ -149,8 +147,8 @@ export function PortfolioAnalyzer() {
           <AlertCircle className="w-5 h-5" style={{ color: 'var(--color-ember)' }} />
           <h3 className="text-sm font-bold" style={{ color: 'var(--color-ink)' }}>Scoring Unavailable</h3>
         </div>
-        <p className="text-xs mb-3" style={{ color: 'var(--color-text-tertiary)' }}>{error}</p>
-        <button onClick={fetchScore} className="text-xs font-semibold flex items-center gap-1" style={{ color: 'var(--color-bloom)' }}>
+        <p className="text-xs mb-3" style={{ color: 'var(--color-text-tertiary)' }}>{error.message}</p>
+        <button onClick={() => refetch()} className="text-xs font-semibold flex items-center gap-1" style={{ color: 'var(--color-bloom)' }}>
           <RefreshCw className="w-3 h-3" /> Retry
         </button>
       </div>
@@ -259,7 +257,7 @@ export function PortfolioAnalyzer() {
 
       {/* Action */}
       <button
-        onClick={fetchScore}
+        onClick={() => refetch()}
         className="w-full py-2.5 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-2"
         style={{ backgroundColor: 'var(--color-surface-dim)', color: 'var(--color-text-secondary)' }}
       >
@@ -268,27 +266,4 @@ export function PortfolioAnalyzer() {
       </button>
     </div>
   );
-}
-
-function extractList(text: string, keyword: string): string[] {
-  const results: string[] = [];
-  const lines = text.split('\n');
-  let inSection = false;
-
-  for (const line of lines) {
-    const trimmed = line.trim().toLowerCase();
-    if (trimmed.includes(keyword)) {
-      inSection = true;
-      continue;
-    }
-    if (inSection && (trimmed.startsWith('-') || trimmed.startsWith('*') || trimmed.startsWith('•'))) {
-      const item = line.replace(/^[\s-*•]+/, '').trim();
-      if (item.length > 5) results.push(item);
-    }
-    if (inSection && trimmed === '') {
-      if (results.length > 0) break;
-    }
-  }
-
-  return results.slice(0, 3);
 }

@@ -1,13 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { api, type SkillAnalysis } from '@/lib/api-client';
+import { useState } from 'react';
+import { useSkillAnalysis } from '@/lib/queries/ai-analysis';
 import {
   BarChart3,
   TrendingUp,
   Target,
   Lightbulb,
-  Loader2,
   RefreshCw,
   ArrowUpRight,
   Sparkles,
@@ -29,32 +28,17 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 export function SkillInsights({ targetRole }: SkillInsightsProps) {
-  const [analysis, setAnalysis] = useState<SkillAnalysis | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [roleInput, setRoleInput] = useState(targetRole || '');
   const [showGapAnalysis, setShowGapAnalysis] = useState(false);
+  const [activeRole, setActiveRole] = useState(targetRole);
 
-  const fetchAnalysis = useCallback(async (role?: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await api.ai.skills(role);
-      setAnalysis(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load skill insights');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => { fetchAnalysis(targetRole); }, [fetchAnalysis, targetRole]);
+  const { data: analysis, isLoading, error, refetch } = useSkillAnalysis(activeRole);
 
   const handleAnalyze = () => {
-    fetchAnalysis(roleInput || undefined);
+    setActiveRole(roleInput || undefined);
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="card-premium p-6">
         <div className="flex items-center gap-3 mb-4">
@@ -82,8 +66,8 @@ export function SkillInsights({ targetRole }: SkillInsightsProps) {
           <AlertTriangle className="w-5 h-5" style={{ color: 'var(--color-ember)' }} />
           <h3 className="text-sm font-bold" style={{ color: 'var(--color-ink)' }}>Skill Analysis Unavailable</h3>
         </div>
-        <p className="text-xs mb-3" style={{ color: 'var(--color-text-tertiary)' }}>{error}</p>
-        <button onClick={() => fetchAnalysis(roleInput || undefined)} className="text-xs font-semibold flex items-center gap-1" style={{ color: 'var(--color-bloom)' }}>
+        <p className="text-xs mb-3" style={{ color: 'var(--color-text-tertiary)' }}>{error.message}</p>
+        <button onClick={() => refetch()} className="text-xs font-semibold flex items-center gap-1" style={{ color: 'var(--color-bloom)' }}>
           <RefreshCw className="w-3 h-3" /> Retry
         </button>
       </div>

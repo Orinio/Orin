@@ -4,11 +4,17 @@ import { useEffect, useState } from 'react';
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/footer";
 import CommandPalette from "@/components/CommandPalette";
+import { useAuth } from "@/lib/auth-context";
+import { useInitializeKeys } from "@/lib/chat";
 
 export default function DashboardLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   const [cmdOpen, setCmdOpen] = useState(false);
+  const { user } = useAuth();
+
+  // Initialize E2E encryption keys for the current user
+  useInitializeKeys(user?.id ?? null);
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {

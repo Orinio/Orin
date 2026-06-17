@@ -1,4 +1,4 @@
-import type { Proof, ProofSourceType } from './types';
+import type { Proof, ProofSourceType } from './types.js';
 
 export interface SkillInfo {
   name: string;

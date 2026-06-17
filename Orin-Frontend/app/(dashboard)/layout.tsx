@@ -37,7 +37,7 @@ export default function DashboardLayout({
         <Footer />
       </div>
       {/* Mobile bottom bar spacer */}
-      <div className="lg:hidden h-[76px]}" />
+      <div className="lg:hidden h-[76px]" />
       <CommandPalette open={cmdOpen} onClose={() => setCmdOpen(false)} />
     </div>
   );

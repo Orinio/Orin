@@ -1,5 +1,6 @@
 [
     {
+        "_note": "SCHEMA OUT OF SYNC — Live DB has 38 tables (as of 2026-06-17). This file has 49 entries including stale views/partitions. Regenerate with: supabase db dump --schema public",
         "table": "ai_conversations",
         "columns": [
             {

@@ -1186,11 +1186,99 @@ export type Database = {
           },
         ];
       };
+      skills: {
+        Row: {
+          id: string;
+          user_id: string;
+          name: string;
+          category: string | null;
+          level: string | null;
+          confidence: number | null;
+          source: string | null;
+          verified: boolean | null;
+          last_used_at: string | null;
+          created_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          name: string;
+          category?: string | null;
+          level?: string | null;
+          confidence?: number | null;
+          source?: string | null;
+          verified?: boolean | null;
+          last_used_at?: string | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          name?: string;
+          category?: string | null;
+          level?: string | null;
+          confidence?: number | null;
+          source?: string | null;
+          verified?: boolean | null;
+          last_used_at?: string | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'skills_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      user_activities: {
+        Row: {
+          id: string;
+          user_id: string;
+          activity_type: string;
+          entity_type: string | null;
+          entity_id: string | null;
+          metadata: Record<string, unknown> | null;
+          created_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          activity_type: string;
+          entity_type?: string | null;
+          entity_id?: string | null;
+          metadata?: Record<string, unknown> | null;
+          created_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          activity_type?: string;
+          entity_type?: string | null;
+          entity_id?: string | null;
+          metadata?: Record<string, unknown> | null;
+          created_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'user_activities_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
     Enums: {
-      user_role: 'user' | 'admin' | 'moderator';
+      user_role: 'user' | 'admin' | 'moderator' | 'employer' | 'university';
       account_status: 'active' | 'pending' | 'suspended' | 'deactivated';
       student_year: 'first' | 'second' | 'third' | 'fourth' | 'graduate';
       proof_source_type: 'github' | 'kaggle' | 'certificate' | 'hackathon' | 'project' | 'blog' | 'demo' | 'other';
@@ -1203,7 +1291,7 @@ export type Database = {
       contact_status: 'new' | 'in_progress' | 'resolved' | 'spam';
       notification_type: 'recruiter_view' | 'verification_update' | 'opportunity_match' | 'coach_tip' | 'weekly_summary' | 'system';
       share_token_kind: 'link' | 'email' | 'recruiter_invite';
-      subscription_plan: 'free' | 'pro' | 'team';
+      subscription_plan: 'free' | 'pro' | 'team' | 'university';
       subscription_status: 'active' | 'canceled' | 'past_due' | 'trialing' | 'incomplete';
       opportunity_status: 'saved' | 'applied' | 'dismissed' | 'interviewing' | 'rejected' | 'offered';
     };

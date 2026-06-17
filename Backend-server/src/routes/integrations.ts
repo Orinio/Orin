@@ -166,12 +166,129 @@ integrationsRouter.post('/:provider/import', async (req, res) => {
 
     await supabase
       .from('user_integrations')
-      .update({ last_sync: new Date().toISOString(), status: 'syncing' })
+      .update({ last_synced_at: new Date().toISOString(), status: 'syncing' })
       .eq('id', connection.id);
 
     res.json({ success: true, data: { imported: [] } });
   } catch (err) {
     logger.error({ err }, 'Integration import error');
     res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } });
+  }
+});
+
+integrationsRouter.get('/callback', async (req, res) => {
+  try {
+    const { code, state } = req.query;
+
+    if (!code || !state) {
+      res.status(400).json({ error: { code: 'MISSING_PARAMS', message: 'Missing code or state parameter' } });
+      return;
+    }
+
+    let parsedState: { userId: string; provider: string };
+    try {
+      parsedState = JSON.parse(Buffer.from(state as string, 'base64').toString());
+    } catch {
+      res.status(400).json({ error: { code: 'INVALID_STATE', message: 'Invalid state parameter' } });
+      return;
+    }
+
+    const { userId, provider } = parsedState;
+
+    const tokenEnvKey = `${provider.toUpperCase()}_CLIENT_SECRET`;
+    const clientIdEnvKey = `${provider.toUpperCase()}_CLIENT_ID`;
+    const clientSecret = process.env[tokenEnvKey];
+    const clientId = process.env[clientIdEnvKey];
+
+    if (!clientSecret || !clientId) {
+      logger.error({ provider }, 'Missing OAuth credentials');
+      res.status(500).json({ error: { code: 'CONFIG_ERROR', message: 'OAuth not configured for this provider' } });
+      return;
+    }
+
+    let accessToken: string;
+    let providerUserId: string | null = null;
+    let providerUserName: string | null = null;
+
+    if (provider === 'linkedin') {
+      const tokenRes = await fetch('https://www.linkedin.com/oauth/v2/accessToken', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          grant_type: 'authorization_code',
+          code: code as string,
+          redirect_uri: process.env.OAUTH_REDIRECT_URI || 'http://localhost:3001/api/integrations/callback',
+          client_id: clientId,
+          client_secret: clientSecret,
+        }),
+      });
+
+      const tokenData = await tokenRes.json() as { access_token?: string; error?: string };
+      if (!tokenData.access_token) {
+        logger.error({ provider, error: tokenData }, 'Token exchange failed');
+        res.status(500).json({ error: { code: 'TOKEN_ERROR', message: 'Failed to exchange code for token' } });
+        return;
+      }
+      accessToken = tokenData.access_token;
+
+      const userRes = await fetch('https://api.linkedin.com/v2/userinfo', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      const userData = await userRes.json() as { sub?: string; name?: string };
+      providerUserId = userData.sub || null;
+      providerUserName = userData.name || null;
+    } else {
+      // Generic OAuth: exchange code for token (GitHub-style)
+      const tokenRes = await fetch('https://github.com/login/oauth/access_token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({
+          client_id: clientId,
+          client_secret: clientSecret,
+          code: code as string,
+        }),
+      });
+
+      const tokenData = await tokenRes.json() as { access_token?: string; error?: string };
+      if (!tokenData.access_token) {
+        logger.error({ provider, error: tokenData }, 'Token exchange failed');
+        res.status(500).json({ error: { code: 'TOKEN_ERROR', message: 'Failed to exchange code for token' } });
+        return;
+      }
+      accessToken = tokenData.access_token;
+
+      const userRes = await fetch('https://api.github.com/user', {
+        headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/vnd.github+json' },
+      });
+      const userData = await userRes.json() as { id?: number; login?: string };
+      providerUserId = userData.id?.toString() || null;
+      providerUserName = userData.login || null;
+    }
+
+    const { error } = await supabase
+      .from('user_integrations')
+      .upsert({
+        user_id: userId,
+        provider,
+        access_token: accessToken,
+        external_user_id: providerUserId,
+        external_username: providerUserName,
+        status: 'connected',
+        last_synced_at: new Date().toISOString(),
+      }, { onConflict: 'user_id,provider' });
+
+    if (error) {
+      logger.error({ provider, error }, 'Failed to save integration');
+      res.status(500).json({ error: { code: 'DB_ERROR', message: error.message } });
+      return;
+    }
+
+    // Redirect to frontend dashboard
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    res.redirect(`${frontendUrl}/dashboard/sources?connected=${provider}`);
+  } catch (err) {
+    logger.error({ err }, 'Integration callback error');
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    res.redirect(`${frontendUrl}/dashboard/sources?error=callback_failed`);
   }
 });

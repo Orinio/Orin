@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { getOpportunityTypeLabel } from '@/lib/utils';
-import { Sparkles, TrendingUp, MapPin, Globe, DollarSign, Clock, Bookmark, X, ChevronDown, ChevronUp, Zap, AlertCircle, RefreshCw } from 'lucide-react';
+import { Sparkles, TrendingUp, MapPin, Globe, DollarSign, Clock, Bookmark, X, ChevronDown, ChevronUp, Zap, AlertCircle, RefreshCw, ExternalLink } from 'lucide-react';
 import type { Opportunity, OpportunityType, OpportunityStatus } from '@/lib/types';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { useOpportunities } from '@/lib/queries';
@@ -347,8 +347,14 @@ function OpportunitiesContent() {
                   )}
 
                   <div className="mt-4 flex gap-2">
-                    <a href={opp.link} target="_blank" rel="noopener noreferrer" className="btn-success px-4 py-2 text-sm font-semibold">
-                      Apply
+                    <Link
+                      href={`/opportunities/${opp.id}`}
+                      className="btn-success px-4 py-2 text-sm font-semibold"
+                    >
+                      View Details
+                    </Link>
+                    <a href={opp.link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 rounded-xl border px-4 py-2 text-sm font-semibold transition" style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}>
+                      Apply <ExternalLink className="h-3 w-3" />
                     </a>
                     {oppStatus === 'saved' ? (
                       <span className="inline-flex items-center gap-1 rounded-xl border px-4 py-2 text-sm font-semibold" style={{ borderColor: 'var(--color-bloom)', color: 'var(--color-bloom)', backgroundColor: 'var(--color-bloom)08' }}>

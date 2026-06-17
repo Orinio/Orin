@@ -25,6 +25,31 @@ export default function ProofDetailPage() {
   const [aiAnalysis, setAiAnalysis] = useState<AIAnalysis | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
+  const [shareStatus, setShareStatus] = useState<'idle' | 'sharing' | 'done' | 'error'>('idle');
+
+  const handleShare = async () => {
+    if (!proof) return;
+    setShareStatus('sharing');
+    try {
+      const res = await fetch('/api/proof/share', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ proofId: proof.id, kind: 'link' }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Share failed');
+      }
+      const data = await res.json();
+      const shareUrl = `${window.location.origin}/share/${data.share?.id || proof.id}`;
+      await navigator.clipboard.writeText(shareUrl);
+      setShareStatus('done');
+      setTimeout(() => setShareStatus('idle'), 2000);
+    } catch {
+      setShareStatus('error');
+      setTimeout(() => setShareStatus('idle'), 2000);
+    }
+  };
 
   if (loading) {
     return (
@@ -166,12 +191,13 @@ export default function ProofDetailPage() {
           <span>Proof detail</span>
         </div>
         <div className="flex gap-2">
-          <form action="/api/proof/share" method="POST" className="inline">
-            <input type="hidden" name="proofId" value={proof.id} />
-            <button type="submit" className="rounded-md border border-[var(--color-neutral-border)] bg-[var(--color-neutral-surface)] px-4 py-2 text-sm font-semibold text-[var(--color-neutral-text)] transition hover:border-[var(--color-primary-emerald)] hover:text-[var(--color-primary-emerald)]">
-              Share
-            </button>
-          </form>
+          <button
+            onClick={handleShare}
+            disabled={shareStatus === 'sharing'}
+            className="rounded-md border border-[var(--color-neutral-border)] bg-[var(--color-neutral-surface)] px-4 py-2 text-sm font-semibold text-[var(--color-neutral-text)] transition hover:border-[var(--color-primary-emerald)] hover:text-[var(--color-primary-emerald)] disabled:opacity-60"
+          >
+            {shareStatus === 'sharing' ? 'Sharing...' : shareStatus === 'done' ? 'Link copied!' : shareStatus === 'error' ? 'Failed' : 'Share'}
+          </button>
           <Link
             href={`/dashboard/proof/${proof.id}/edit`}
             className="rounded-md border border-[var(--color-neutral-border)] bg-[var(--color-neutral-surface)] px-4 py-2 text-sm font-semibold text-[var(--color-neutral-text)] transition hover:border-[var(--color-primary-emerald)] hover:text-[var(--color-primary-emerald)]"

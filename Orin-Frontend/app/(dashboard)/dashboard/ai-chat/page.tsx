@@ -345,6 +345,12 @@ export default function SuperAgentChat() {
         try {
           const data = JSON.parse(dataStr);
           switch (eventType) {
+            case 'error': {
+              const errorMsg = data.message || data.error || 'An error occurred during generation.';
+              updateAssistant(assistantId, { content: errorMsg, isStreaming: false, error: errorMsg });
+              setAgentState('error');
+              break;
+            }
             case 'start':
               if (data.agentId) agentId = data.agentId;
               setAgentState('planning');
@@ -529,7 +535,9 @@ export default function SuperAgentChat() {
         // Refresh usage bar
         usageRefreshRef.current?.();
       } else {
-        updateAssistant(assistantId, { content: assistantMsg.content || undefined, error: 'Something went wrong. Please try again.', isStreaming: false });
+        const detail = err?.cause || err?.message || 'Unknown error';
+        const errorMsg = `Something went wrong. Please try again.${detail && detail !== 'Unknown error' ? ` (${detail})` : ''}`;
+        updateAssistant(assistantId, { content: assistantMsg.content || undefined, error: errorMsg, isStreaming: false });
         setAgentState('error');
       }
     } finally {

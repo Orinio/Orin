@@ -9,12 +9,20 @@ export const AUTH_ERROR_MESSAGES: Record<string, string> = {
   'Rate limit exceeded': 'Too many attempts. Please wait a moment and try again.',
   'Invalid email': 'Please enter a valid email address.',
   'Email address is not confirmed': 'Please confirm your email address before signing in.',
+  'Email address "test@email.com" is invalid': 'Please enter a valid email address.',
+  'For security purposes, you can only request this once every 60 seconds': 'Please wait a moment before trying again.',
 };
 
 export function getFriendlyErrorMessage(error: { message?: string; status?: number } | null): string {
   if (!error?.message) return 'An unexpected error occurred. Please try again.';
   if (error.status === 429) return 'Too many requests. Please wait a moment and try again.';
-  return AUTH_ERROR_MESSAGES[error.message] || error.message;
+  if (AUTH_ERROR_MESSAGES[error.message]) return AUTH_ERROR_MESSAGES[error.message];
+  // Partial match for Supabase error patterns
+  const msg = error.message.toLowerCase();
+  if (msg.includes('email address') && msg.includes('invalid')) return 'Please enter a valid email address.';
+  if (msg.includes('rate limit') || msg.includes('too many')) return 'Too many attempts. Please wait a moment and try again.';
+  if (msg.includes('email') && msg.includes('confirm')) return 'Please confirm your email address before signing in.';
+  return error.message;
 }
 
 export interface PasswordStrength {

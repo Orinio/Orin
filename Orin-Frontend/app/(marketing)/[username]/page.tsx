@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import type { Metadata } from 'next';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getSupabaseAdmin } from '@/lib/supabase-admin';
 import ProofCard from '@/components/ProofCard';
 import ProfileActions from '@/components/ProfileActions';
 import { mapDbUserToUser, mapDbProofToProof, getProofTypeColor } from '@/lib/utils';
@@ -14,7 +14,7 @@ interface PublicProfilePageProps {
 
 export async function generateMetadata({ params }: PublicProfilePageProps): Promise<Metadata> {
   const { username } = await params;
-  const supabase = await getServerSupabase();
+  const supabase = getSupabaseAdmin();
 
   const { data: userData } = await supabase
     .from('users')
@@ -86,7 +86,7 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
   let proofs: Proof[] = [];
   let allSkills: string[] = [];
 
-  const supabase = await getServerSupabase();
+  const supabase = getSupabaseAdmin();
 
   try {
     const { data: userData, error: userError } = await supabase

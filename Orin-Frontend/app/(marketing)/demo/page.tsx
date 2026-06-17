@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface ProofCard {
@@ -159,9 +160,11 @@ export default function DemoPage() {
               <div className="grid md:grid-cols-3 gap-6 mb-10">
                 {/* User card */}
                 <div className="card-base p-6 flex items-center gap-4 glow-border md:col-span-2">
-                  <img
+                  <Image
                     src={result.user.avatar}
                     alt={result.user.name}
+                    width={64}
+                    height={64}
                     className="w-16 h-16 rounded-full ring-2 ring-white shadow-lg"
                   />
                   <div className="flex-1 min-w-0">

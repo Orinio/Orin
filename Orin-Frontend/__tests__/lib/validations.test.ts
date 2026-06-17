@@ -102,9 +102,9 @@ describe('Create Proof Schema', () => {
   it('accepts valid proof data', () => {
     const result = createProofSchema.safeParse({
       title: 'My GitHub Project',
-      sourceType: 'github',
-      sourceUrl: 'https://github.com/user/repo',
-      skillsExtracted: ['JavaScript', 'React'],
+      source_type: 'github',
+      source_url: 'https://github.com/user/repo',
+      skills_extracted: ['JavaScript', 'React'],
     });
     expect(result.success).toBe(true);
   });

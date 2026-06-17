@@ -72,7 +72,19 @@ export default function UniversityPage() {
 
           const totalStudents = studentsRes.count || 0;
           const totalProofs = proofsRes.count || 0;
-          const verifiedProofs = proofsRes.data?.filter(p => p.verification_status === 'verified').length || 0;
+          const verifiedProofs = proofsRes.data?.filter((p: { verification_status: string }) => p.verification_status === 'verified').length || 0;
+
+          // Compute active students (those with activity in last 30 days)
+          const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+          const { count: activeStudents } = await supabase
+            .from('user_activities')
+            .select('user_id', { count: 'exact', head: true })
+            .gte('created_at', thirtyDaysAgo);
+
+          // Verification rate as quality metric
+          const avgConfidenceScore = totalProofs > 0
+            ? Math.round((verifiedProofs / totalProofs) * 100)
+            : 0;
 
           // Calculate top skills
           const skillCounts: Record<string, number> = {};
@@ -103,10 +115,10 @@ export default function UniversityPage() {
 
           setStats({
             totalStudents,
-            activeStudents: Math.floor(totalStudents * 0.75),
+            activeStudents: activeStudents || 0,
             totalProofs,
             verifiedProofs,
-            avgConfidenceScore: 73,
+            avgConfidenceScore,
             topSkills,
             recentActivity,
           });
@@ -323,9 +335,9 @@ export default function UniversityPage() {
         </h2>
         <div className="mt-4 grid gap-3 md:grid-cols-3">
           {[
-            { label: 'View All Students', href: '#', icon: Users },
-            { label: 'Bulk Verification', href: '#', icon: Shield },
-            { label: 'Generate Report', href: '#', icon: BarChart3 },
+            { label: 'View All Students', href: '/dashboard/university/students', icon: Users },
+            { label: 'Bulk Verification', href: '/dashboard/university/verify', icon: Shield },
+            { label: 'Generate Report', href: '/dashboard/university/reports', icon: BarChart3 },
           ].map((action) => {
             const Icon = action.icon;
             return (

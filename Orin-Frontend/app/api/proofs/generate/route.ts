@@ -19,10 +19,18 @@ async function fetchGitHubRepo(url: string) {
 
   const [repoRes, readmeRes] = await Promise.all([
     fetch(apiUrl, {
-      headers: { Accept: 'application/vnd.github.v3+json' },
+      headers: {
+        Accept: 'application/vnd.github.v3+json',
+        'User-Agent': 'orin-app',
+        ...(process.env.GITHUB_TOKEN ? { Authorization: `Bearer ${process.env.GITHUB_TOKEN}` } : {}),
+      },
     }),
     fetch(readmeUrl, {
-      headers: { Accept: 'application/vnd.github.v3+json' },
+      headers: {
+        Accept: 'application/vnd.github.v3+json',
+        'User-Agent': 'orin-app',
+        ...(process.env.GITHUB_TOKEN ? { Authorization: `Bearer ${process.env.GITHUB_TOKEN}` } : {}),
+      },
     }).catch(() => null),
   ]);
 

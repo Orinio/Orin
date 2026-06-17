@@ -21,7 +21,7 @@ export interface AuthState {
   initialized: boolean;
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: AuthError | null; user: User | null }>;
-  signInWithOAuth: (provider: 'google' | 'github') => Promise<void>;
+  signInWithOAuth: (provider: 'google' | 'github' | 'linkedin') => Promise<void>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: AuthError | null }>;
 }
@@ -147,7 +147,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error, user: data?.user ?? null };
   }, []);
 
-  const signInWithOAuth = useCallback(async (provider: 'google' | 'github') => {
+  const signInWithOAuth = useCallback(async (provider: 'google' | 'github' | 'linkedin') => {
     if (!supabase) {
       console.error('Supabase not configured');
       return;

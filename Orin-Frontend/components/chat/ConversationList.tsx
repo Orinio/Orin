@@ -112,7 +112,7 @@ export default function ConversationList({ selectedId, onSelect }: ConversationL
                         style={{ backgroundColor: 'var(--color-bloom)' }}
                       >
                         {user.avatar_url ? (
-                          <img src={user.avatar_url} alt="" className="w-full h-full rounded-full object-cover" />
+                          <Image src={user.avatar_url} alt="" width={32} height={32} className="w-full h-full rounded-full object-cover" />
                         ) : (
                           getInitials(user.full_name || 'U')
                         )}

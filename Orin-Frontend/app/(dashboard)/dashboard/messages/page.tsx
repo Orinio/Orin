@@ -22,7 +22,6 @@ import {
   Send,
   Smile,
   Paperclip,
-  Image,
   Mic,
   Settings,
   Users,
@@ -313,9 +312,11 @@ function ConversationItem({
           style={{ backgroundColor: 'var(--color-bloom)' }}
         >
           {otherParticipant?.avatar_url ? (
-            <img
+            <Image
               src={otherParticipant.avatar_url}
               alt=""
+              width={56}
+              height={56}
               className="w-full h-full object-cover"
             />
           ) : (

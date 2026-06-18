@@ -660,6 +660,7 @@ export type Database = {
           opportunity_matches: boolean;
           coach_tips: boolean;
           product_updates: boolean;
+          push_enabled: boolean;
           digest_frequency: string;
           updated_at: string;
           created_at: string;
@@ -672,6 +673,7 @@ export type Database = {
           opportunity_matches?: boolean;
           coach_tips?: boolean;
           product_updates?: boolean;
+          push_enabled?: boolean;
           digest_frequency?: string;
           updated_at?: string;
           created_at?: string;
@@ -684,6 +686,7 @@ export type Database = {
           opportunity_matches?: boolean;
           coach_tips?: boolean;
           product_updates?: boolean;
+          push_enabled?: boolean;
           digest_frequency?: string;
           updated_at?: string;
           created_at?: string;

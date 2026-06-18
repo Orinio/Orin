@@ -1,10 +1,38 @@
 import { Router } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import { getAIStats } from '../lib/ai/metrics.js';
 import { getGlobalAIRateInfo } from '../lib/rate-limit.js';
 import { getTokenUsage, isNvidiaConfigured } from '../lib/ai/core/nvidia.js';
 import { supabase } from '../lib/supabase.js';
 
 export const metricsRouter = Router();
+
+// Internal API key auth for metrics endpoints
+const METRICS_API_KEY = process.env.METRICS_API_KEY;
+
+function metricsAuth(req: Request, res: Response, next: NextFunction): void {
+  // In development, allow unauthenticated access
+  if (process.env.NODE_ENV !== 'production') {
+    next();
+    return;
+  }
+
+  if (!METRICS_API_KEY) {
+    // No key configured = metrics disabled in production
+    res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Not found' } });
+    return;
+  }
+
+  const provided = req.headers['x-api-key'] || req.query.key;
+  if (provided !== METRICS_API_KEY) {
+    res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'Invalid API key' } });
+    return;
+  }
+
+  next();
+}
+
+metricsRouter.use(metricsAuth);
 
 /**
  * GET /metrics — Prometheus-compatible metrics endpoint

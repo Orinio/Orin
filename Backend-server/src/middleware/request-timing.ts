@@ -23,7 +23,7 @@ export function requestTiming(req: Request, res: Response, next: NextFunction): 
       status: res.statusCode,
       durationMs: parseFloat(durationMs),
       requestId: req.id,
-      userId: (req as any).user?.id,
+      userId: req.user?.id,
     };
 
     if (res.statusCode >= 500) {

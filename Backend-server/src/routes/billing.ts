@@ -11,7 +11,7 @@ const checkoutSchema = z.object({
 
 billingRouter.get('/me', async (req, res) => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = req.user?.id;
 
     const { data: profile } = await supabase
       .from('users')
@@ -49,7 +49,7 @@ billingRouter.get('/me', async (req, res) => {
 
 billingRouter.post('/checkout', async (req, res) => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = req.user?.id;
     const parsed = checkoutSchema.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({ error: { code: 'INVALID_INPUT', message: parsed.error.errors[0].message } });
@@ -78,7 +78,7 @@ billingRouter.post('/checkout', async (req, res) => {
       res.json({
         success: true,
         data: {
-          url: `${process.env.FRAPP_URL || 'http://localhost:3000'}/dashboard/billing?checkout=success&plan=${plan}`,
+          url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/dashboard/billing?checkout=success&plan=${plan}`,
         },
       });
     }
@@ -90,7 +90,7 @@ billingRouter.post('/checkout', async (req, res) => {
 
 billingRouter.get('/portal', async (req, res) => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = req.user?.id;
 
     const { data: profile } = await supabase
       .from('users')
@@ -105,7 +105,7 @@ billingRouter.get('/portal', async (req, res) => {
 
     logger.info({ userId: profile.id }, 'Billing portal accessed');
 
-    const portalUrl = process.env.STRIPE_PORTAL_URL || `${process.env.FRAPP_URL || 'http://localhost:3000'}/dashboard/billing`;
+    const portalUrl = process.env.STRIPE_PORTAL_URL || `${process.env.FRONTEND_URL || 'http://localhost:3000'}/dashboard/billing`;
     res.json({ success: true, data: { url: portalUrl } });
   } catch (err) {
     logger.error({ err }, 'Billing portal error');

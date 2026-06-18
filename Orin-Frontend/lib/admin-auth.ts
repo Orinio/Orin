@@ -1,4 +1,4 @@
-import { createHmac, randomBytes, createHash } from 'crypto';
+import { createHmac, randomBytes } from 'crypto';
 
 /**
  * ORIN Admin Authentication System
@@ -11,15 +11,17 @@ import { createHmac, randomBytes, createHash } from 'crypto';
  * - Session expiry (8 hours)
  */
 
-const SESSION_SECRET = process.env.ADMIN_SESSION_SECRET || generateFallbackSecret();
+const SESSION_SECRET = process.env.ADMIN_SESSION_SECRET;
 const SESSION_EXPIRY_MS = 8 * 60 * 60 * 1000; // 8 hours
 const HASH_ITERATIONS = 100_000;
 
-function generateFallbackSecret(): string {
-  // In production, always set ADMIN_SESSION_SECRET env var
-  return createHash('sha256')
-    .update('orin-admin-dev-secret-' + (process.env.NODE_ENV || 'development'))
-    .digest('hex');
+function getSessionSecret(): string {
+  if (SESSION_SECRET) return SESSION_SECRET;
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('ADMIN_SESSION_SECRET env var is required in production');
+  }
+  // Dev-only fallback — never use in production
+  return 'orin-admin-dev-secret-do-not-use-in-production';
 }
 
 /* ═══════════════════════════════════════════
@@ -77,7 +79,7 @@ export function createSession(username: string): string {
   };
 
   const payload = Buffer.from(JSON.stringify(session)).toString('base64url');
-  const signature = createHmac('sha256', SESSION_SECRET)
+  const signature = createHmac('sha256', getSessionSecret())
     .update(payload)
     .digest('base64url');
 
@@ -89,7 +91,7 @@ export function validateSession(token: string): AdminSession | null {
     const [payload, signature] = token.split('.');
     if (!payload || !signature) return null;
 
-    const expectedSig = createHmac('sha256', SESSION_SECRET)
+    const expectedSig = createHmac('sha256', getSessionSecret())
       .update(payload)
       .digest('base64url');
 

@@ -104,8 +104,8 @@ visionRouter.post('/certificate/verify', userRateLimitMiddleware('ai-vision-veri
 
     // Update proof status if proofId provided
     if (proofId) {
-      const authUserId = (req as any).user?.id;
-      const userId = (req as any).internalUserId || (authUserId ? await resolveUserId(authUserId) : null);
+      const authUserId = req.user?.id;
+      const userId = req.internalUserId || (authUserId ? await resolveUserId(authUserId) : null);
       if (userId) {
         const { data: existingProof } = await supabase
           .from('proof_cards')

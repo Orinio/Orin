@@ -2,8 +2,12 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { supabase } from '../lib/supabase.js';
 import { logger } from '../lib/logger.js';
+import { resolveOrgContext, getQueryScope } from '../middleware/org-scoping.js';
 
 export const jobsRouter = Router();
+
+// Apply org context resolution to all jobs routes
+jobsRouter.use(resolveOrgContext);
 
 const createJobSchema = z.object({
   type: z.enum(['batch_verify', 'generate_report', 'sync_skills']),
@@ -17,6 +21,7 @@ function sanitizeJob(job: any, _userId: string) {
     status: job.status,
     result: job.result,
     error: job.error,
+    orgId: job.org_id,
     createdAt: job.created_at,
     completedAt: job.completed_at,
   };
@@ -24,7 +29,12 @@ function sanitizeJob(job: any, _userId: string) {
 
 jobsRouter.get('/', async (req, res) => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } });
+      return;
+    }
 
     const { data: userProfile } = await supabase
       .from('users')
@@ -37,12 +47,22 @@ jobsRouter.get('/', async (req, res) => {
       return;
     }
 
-    const { data: jobs, error } = await supabase
+    const scope = getQueryScope(req);
+
+    let query = supabase
       .from('jobs')
       .select('*')
-      .eq('user_id', userProfile.id)
       .order('created_at', { ascending: false })
       .limit(50);
+
+    // Scope by org or user
+    if (scope.orgId) {
+      query = query.eq('org_id', scope.orgId);
+    } else {
+      query = query.eq('user_id', userProfile.id);
+    }
+
+    const { data: jobs, error } = await query;
 
     if (error) {
       res.status(500).json({ error: { code: 'DB_ERROR', message: error.message } });
@@ -64,8 +84,13 @@ jobsRouter.post('/', async (req, res) => {
       return;
     }
 
-    const userId = (req as any).user?.id;
+    const userId = req.user?.id;
     const { type, data } = validation.data;
+
+    if (!userId) {
+      res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } });
+      return;
+    }
 
     const { data: userProfile } = await supabase
       .from('users')
@@ -78,13 +103,16 @@ jobsRouter.post('/', async (req, res) => {
       return;
     }
 
+    const scope = getQueryScope(req);
+
     const { data: job, error: insertError } = await supabase
       .from('jobs')
       .insert({
         user_id: userProfile.id,
+        org_id: scope.orgId,
         type,
         status: 'pending',
-        data: { ...data, userId: userProfile.id },
+        data: { ...data, userId: userProfile.id, orgId: scope.orgId },
       })
       .select()
       .single();
@@ -107,7 +135,12 @@ jobsRouter.post('/', async (req, res) => {
 
 jobsRouter.get('/:id', async (req, res) => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } });
+      return;
+    }
 
     const { data: userProfile } = await supabase
       .from('users')
@@ -120,12 +153,20 @@ jobsRouter.get('/:id', async (req, res) => {
       return;
     }
 
-    const { data: job, error } = await supabase
+    const scope = getQueryScope(req);
+
+    let query = supabase
       .from('jobs')
       .select('*')
-      .eq('id', req.params.id)
-      .eq('user_id', userProfile.id)
-      .single();
+      .eq('id', req.params.id);
+
+    if (scope.orgId) {
+      query = query.eq('org_id', scope.orgId);
+    } else {
+      query = query.eq('user_id', userProfile.id);
+    }
+
+    const { data: job, error } = await query.single();
 
     if (error || !job) {
       res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Job not found' } });
@@ -183,10 +224,70 @@ async function processJob(job: any) {
   }
 }
 
-async function processBatchVerify(data: any) {
-  const { proofIds } = data;
-  logger.info({ count: proofIds?.length }, 'Batch verifying proofs');
-  return { verified: proofIds?.length || 0 };
+async function processBatchVerify(data: Record<string, unknown>) {
+  const proofIds = data.proofIds as string[] | undefined;
+  if (!proofIds?.length) return { verified: 0, failed: 0, errors: [] };
+
+  logger.info({ count: proofIds.length }, 'Batch verifying proofs');
+
+  const { data: proofs } = await supabase
+    .from('proof_cards')
+    .select('id, source_url, source_type, user_id')
+    .in('id', proofIds);
+
+  if (!proofs?.length) return { verified: 0, failed: 0, errors: ['No proofs found'] };
+
+  let verified = 0;
+  let failed = 0;
+  const errors: string[] = [];
+
+  for (const proof of proofs) {
+    try {
+      if (!proof.source_url) {
+        failed++;
+        errors.push(`Proof ${proof.id}: no source_url`);
+        continue;
+      }
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000);
+
+      const resp = await fetch(proof.source_url, {
+        method: 'HEAD',
+        signal: controller.signal,
+        redirect: 'follow',
+      });
+      clearTimeout(timeout);
+
+      const isValid = resp.ok || resp.status === 403 || resp.status === 429;
+
+      await supabase
+        .from('proof_cards')
+        .update({
+          verification_status: isValid ? 'verified' : 'rejected',
+          verified_at: isValid ? new Date().toISOString() : null,
+          metadata: {
+            batch_verify: {
+              timestamp: new Date().toISOString(),
+              httpStatus: resp.status,
+              method: 'batch_verify',
+            },
+          },
+        })
+        .eq('id', proof.id);
+
+      if (isValid) verified++;
+      else {
+        failed++;
+        errors.push(`Proof ${proof.id}: HTTP ${resp.status}`);
+      }
+    } catch (err) {
+      failed++;
+      errors.push(`Proof ${proof.id}: ${err instanceof Error ? err.message : 'unknown'}`);
+    }
+  }
+
+  return { verified, failed, errors };
 }
 
 async function processGenerateReport(data: any) {

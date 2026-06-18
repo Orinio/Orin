@@ -24,7 +24,7 @@ export async function authMiddleware(
       return;
     }
 
-    (req as any).user = user;
+    req.user = user;
     next();
   } catch (err) {
     logger.error({ err }, 'Auth middleware error');

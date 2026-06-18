@@ -39,7 +39,7 @@ async function getCachedOpportunities(): Promise<any[]> {
 // GET /ai/usage — Return live usage/limits for the current user
 aiRouter.get('/usage', async (req, res) => {
   try {
-    const authUserId = (req as any).user?.id;
+    const authUserId = req.user?.id;
     if (!authUserId) {
       res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'Authentication required' } });
       return;
@@ -161,13 +161,13 @@ function getFallbackResponse(operation: string, context: any): { answer: string;
 // POST /ai/verify — Verify a proof
 aiRouter.post('/verify', userRateLimitMiddleware('ai-verify'), validate(verifyRequestSchema), async (req, res) => {
   try {
-    const authUserId = (req as any).user?.id;
+    const authUserId = req.user?.id;
     if (!authUserId) {
       res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } });
       return;
     }
 
-    const userId = (req as any).internalUserId || authUserId;
+    const userId = req.internalUserId || authUserId;
 
     const { action, proofId, proofUrl, sourceType, proofData, text, username, url, query } = req.body;
     const context = await buildAgentContext(authUserId);
@@ -255,10 +255,10 @@ aiRouter.post('/verify', userRateLimitMiddleware('ai-verify'), validate(verifyRe
 // POST /ai/chat — Non-streaming chat
 aiRouter.post('/chat', userRateLimitMiddleware('ai-chat'), validate(chatMessageSchema), async (req, res) => {
   try {
-    const authUserId = (req as any).user?.id;
+    const authUserId = req.user?.id;
     if (!authUserId) { res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } }); return; }
 
-    const userId = (req as any).internalUserId || authUserId;
+    const userId = req.internalUserId || authUserId;
     const { message, history } = req.body;
     const context = await buildAgentContext(authUserId);
     context.conversationHistory = (history || []).slice(-6).map((m: any) => ({ role: m.role, content: m.content }));
@@ -286,10 +286,10 @@ aiRouter.post('/chat-stream', userRateLimitMiddleware('ai-chat-stream'), async (
   let headersSent = false;
   let heartbeat: ReturnType<typeof setInterval> | null = null;
   try {
-    const authUserId = (req as any).user?.id;
+    const authUserId = req.user?.id;
     if (!authUserId) { res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } }); return; }
 
-    const userId = (req as any).internalUserId || authUserId;
+    const userId = req.internalUserId || authUserId;
 
     // Support both formats: { message, history } (workspace) and { messages } (legacy)
     const bodyMessage = req.body.message;
@@ -380,7 +380,7 @@ aiRouter.post('/chat-stream', userRateLimitMiddleware('ai-chat-stream'), async (
 // GET /ai/skills — Skill analysis
 aiRouter.get('/skills', userRateLimitMiddleware('ai-skills'), async (req, res) => {
   try {
-    const authUserId = (req as any).user?.id;
+    const authUserId = req.user?.id;
     if (!authUserId) { res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } }); return; }
 
     const context = await buildAgentContext(authUserId);
@@ -414,7 +414,7 @@ aiRouter.get('/skills', userRateLimitMiddleware('ai-skills'), async (req, res) =
 // POST /ai/match — Match opportunities
 aiRouter.post('/match', userRateLimitMiddleware('ai-match'), async (req, res) => {
   try {
-    const authUserId = (req as any).user?.id;
+    const authUserId = req.user?.id;
     if (!authUserId) { res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } }); return; }
 
     // Check response cache (deterministic: same skills + same opportunities = same result)
@@ -456,7 +456,7 @@ aiRouter.post('/match', userRateLimitMiddleware('ai-match'), async (req, res) =>
     const response = { success: true, matches, skillAnalysis: { topSkills: context.skillAnalysis?.topSkills.slice(0, 10), uniqueSkills: context.skillAnalysis?.uniqueSkills } };
     setCache(cacheKey, response, 120_000); // Cache for 2 minutes
 
-    await logAIUsage(supabase, (req as any).internalUserId || authUserId, 'ai-match-opportunities', 0);
+    await logAIUsage(supabase, req.internalUserId || authUserId, 'ai-match-opportunities', 0);
     res.json(response);
   } catch (err) {
     logger.error({ err }, 'Match opportunities error');
@@ -467,10 +467,10 @@ aiRouter.post('/match', userRateLimitMiddleware('ai-match'), async (req, res) =>
 // POST /ai/learning-path — Generate learning path
 aiRouter.post('/learning-path', userRateLimitMiddleware('ai-learning-path'), async (req, res) => {
   try {
-    const authUserId = (req as any).user?.id;
+    const authUserId = req.user?.id;
     if (!authUserId) { res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } }); return; }
 
-    const userId = (req as any).internalUserId || authUserId;
+    const userId = req.internalUserId || authUserId;
     const context = await buildAgentContext(authUserId);
     const { targetRole, timeframe = '3months' } = req.body;
 
@@ -503,10 +503,10 @@ aiRouter.post('/learning-path', userRateLimitMiddleware('ai-learning-path'), asy
 // POST /ai/score — Score portfolio
 aiRouter.post('/score', userRateLimitMiddleware('ai-score'), async (req, res) => {
   try {
-    const authUserId = (req as any).user?.id;
+    const authUserId = req.user?.id;
     if (!authUserId) { res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } }); return; }
 
-    const userId = (req as any).internalUserId || authUserId;
+    const userId = req.internalUserId || authUserId;
     const context = await buildAgentContext(authUserId);
     const agent = getAgent('portfolio-scorer')!;
     const result = await runAgent(agent, `Score this portfolio: ${context.proofs.length} proofs, ${context.proofs.filter((p: any) => p.verification_status === 'verified').length} verified, skills: ${extractSkillsFromProofs(context.proofs).slice(0, 10).join(', ')}`, context);
@@ -522,7 +522,7 @@ aiRouter.post('/score', userRateLimitMiddleware('ai-score'), async (req, res) =>
 // POST /ai/safety — Check safety
 aiRouter.post('/safety', userRateLimitMiddleware('ai-safety'), async (req, res) => {
   try {
-    const authUserId = (req as any).user?.id;
+    const authUserId = req.user?.id;
     if (!authUserId) {
       res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } });
       return;

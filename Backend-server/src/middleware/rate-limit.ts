@@ -113,7 +113,7 @@ const PLAN_NAMES: Record<string, string> = {
 
 export function userRateLimitMiddleware(endpoint: string) {
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const authUserId = (req as any).user?.id;
+    const authUserId = req.user?.id;
     if (!authUserId) {
       next();
       return;
@@ -127,7 +127,7 @@ export function userRateLimitMiddleware(endpoint: string) {
       ]);
 
       const userId = userResult.data?.id || authUserId;
-      (req as any).internalUserId = userId;
+      req.internalUserId = userId;
 
       let plan: SubscriptionPlan = 'free';
       if (subResult.data?.plan) {
@@ -207,8 +207,8 @@ export function userRateLimitMiddleware(endpoint: string) {
       }
 
       // Store for token consumption later
-      (req as any).tokenBudget = budget;
-      (req as any).userPlan = plan;
+      req.tokenBudget = budget;
+      req.userPlan = plan;
 
       // Capture response to log usage ONLY on success (2xx)
       const originalJson = res.json.bind(res);

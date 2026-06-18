@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { supabase } from '../lib/supabase.js';
 import { logger } from '../lib/logger.js';
+import { encryptToken, decryptToken } from '../lib/token-crypto.js';
 
 export const integrationsRouter = Router();
 
@@ -11,6 +12,19 @@ async function resolveUserId(authUserId: string): Promise<string | null> {
     .eq('auth_user_id', authUserId)
     .maybeSingle();
   return data?.id || null;
+}
+
+async function getDecryptedToken(userId: string, provider: string): Promise<string | null> {
+  const { data } = await supabase
+    .from('user_integrations')
+    .select('access_token')
+    .eq('user_id', userId)
+    .eq('provider', provider)
+    .eq('status', 'connected')
+    .maybeSingle();
+  
+  if (!data?.access_token) return null;
+  return decryptToken(data.access_token);
 }
 
 const PROVIDERS: Record<string, { name: string; description: string; authUrl: string }> = {
@@ -58,8 +72,12 @@ const PROVIDERS: Record<string, { name: string; description: string; authUrl: st
 
 integrationsRouter.get('/', async (req, res) => {
   try {
-    const authUserId = (req as any).user?.id;
-    const userId = (req as any).internalUserId || await resolveUserId(authUserId);
+    const authUserId = req.user?.id;
+    if (!authUserId) {
+      res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } });
+      return;
+    }
+    const userId = req.internalUserId || await resolveUserId(authUserId);
     if (!userId) {
       res.status(404).json({ error: { code: 'NOT_FOUND', message: 'User profile not found' } });
       return;
@@ -96,7 +114,7 @@ integrationsRouter.get('/', async (req, res) => {
 integrationsRouter.get('/:provider/connect', async (req, res) => {
   try {
     const { provider } = req.params;
-    const userId = (req as any).user?.id;
+    const userId = req.user?.id;
 
     const providerInfo = PROVIDERS[provider];
     if (!providerInfo) {
@@ -114,10 +132,95 @@ integrationsRouter.get('/:provider/connect', async (req, res) => {
   }
 });
 
+async function importGitHubRepos(
+  userId: string,
+  token: string
+): Promise<Array<{ name: string; url: string; proofId?: string }>> {
+  const imported: Array<{ name: string; url: string; proofId?: string }> = [];
+
+  const resp = await fetch('https://api.github.com/user/repos?per_page=100&sort=updated', {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/vnd.github+json',
+    },
+  });
+
+  if (!resp.ok) {
+    logger.error({ status: resp.status }, 'GitHub repos fetch failed');
+    return imported;
+  }
+
+  const repos = (await resp.json()) as Array<{
+    full_name: string;
+    html_url: string;
+    description: string | null;
+    language: string | null;
+    topics: string[];
+    created_at: string;
+    updated_at: string;
+    stargazers_count: number;
+    forks_count: number;
+    default_branch: string;
+  }>;
+
+  const { data: existingProofs } = await supabase
+    .from('proof_cards')
+    .select('source_url')
+    .eq('user_id', userId)
+    .eq('source_type', 'github');
+
+  const existingUrls = new Set(existingProofs?.map((p) => p.source_url) || []);
+
+  for (const repo of repos) {
+    if (existingUrls.has(repo.html_url)) continue;
+
+    const skills: string[] = [];
+    if (repo.language) skills.push(repo.language);
+    if (repo.topics?.length) skills.push(...repo.topics);
+
+    const { data: proof, error } = await supabase
+      .from('proof_cards')
+      .insert({
+        user_id: userId,
+        title: repo.full_name,
+        description: repo.description || `GitHub repository: ${repo.full_name}`,
+        source_type: 'github',
+        source_url: repo.html_url,
+        verification_status: 'verified',
+        verified_at: new Date().toISOString(),
+        skills_user_added: skills,
+        metadata: {
+          imported_from: 'github',
+          stars: repo.stargazers_count,
+          forks: repo.forks_count,
+          language: repo.language,
+          topics: repo.topics,
+          created_at: repo.created_at,
+          updated_at: repo.updated_at,
+          default_branch: repo.default_branch,
+          imported_at: new Date().toISOString(),
+        },
+      })
+      .select('id')
+      .single();
+
+    if (!error && proof) {
+      imported.push({ name: repo.full_name, url: repo.html_url, proofId: proof.id });
+    }
+  }
+
+  logger.info({ count: imported.length }, 'GitHub repos imported');
+  return imported;
+}
+
 integrationsRouter.delete('/:provider', async (req, res) => {
   try {
-    const authUserId = (req as any).user?.id;
-    const userId = (req as any).internalUserId || await resolveUserId(authUserId);
+    const authUserId = req.user?.id;
+    if (!authUserId) {
+      res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } });
+      return;
+    }
+    const userId = req.internalUserId || await resolveUserId(authUserId);
     if (!userId) {
       res.status(404).json({ error: { code: 'NOT_FOUND', message: 'User profile not found' } });
       return;
@@ -144,8 +247,12 @@ integrationsRouter.delete('/:provider', async (req, res) => {
 
 integrationsRouter.post('/:provider/import', async (req, res) => {
   try {
-    const authUserId = (req as any).user?.id;
-    const userId = (req as any).internalUserId || await resolveUserId(authUserId);
+    const authUserId = req.user?.id;
+    if (!authUserId) {
+      res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } });
+      return;
+    }
+    const userId = req.internalUserId || await resolveUserId(authUserId);
     if (!userId) {
       res.status(404).json({ error: { code: 'NOT_FOUND', message: 'User profile not found' } });
       return;
@@ -169,7 +276,28 @@ integrationsRouter.post('/:provider/import', async (req, res) => {
       .update({ last_synced_at: new Date().toISOString(), status: 'syncing' })
       .eq('id', connection.id);
 
-    res.json({ success: true, data: { imported: [] } });
+    const token = await getDecryptedToken(userId, provider);
+    if (!token) {
+      await supabase
+        .from('user_integrations')
+        .update({ status: 'error' })
+        .eq('id', connection.id);
+      res.status(400).json({ error: { code: 'NO_TOKEN', message: 'Could not retrieve access token' } });
+      return;
+    }
+
+    let imported: Array<{ name: string; url: string; proofId?: string }> = [];
+
+    if (provider === 'github') {
+      imported = await importGitHubRepos(userId, token);
+    }
+
+    await supabase
+      .from('user_integrations')
+      .update({ status: 'connected', last_synced_at: new Date().toISOString() })
+      .eq('id', connection.id);
+
+    res.json({ success: true, data: { imported, count: imported.length } });
   } catch (err) {
     logger.error({ err }, 'Integration import error');
     res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } });
@@ -270,7 +398,7 @@ integrationsRouter.get('/callback', async (req, res) => {
       .upsert({
         user_id: userId,
         provider,
-        access_token: accessToken,
+        access_token: encryptToken(accessToken),
         external_user_id: providerUserId,
         external_username: providerUserName,
         status: 'connected',

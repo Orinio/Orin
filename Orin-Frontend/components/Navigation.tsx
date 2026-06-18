@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
+import { OrgSwitcher } from '@/components/OrgSwitcher';
 import {
   LayoutGrid,
   Briefcase,
@@ -18,6 +19,7 @@ import {
   Sparkles,
   ShieldCheck,
   BarChart3,
+  Building2,
   Home,
   Crown,
   Users,
@@ -420,6 +422,13 @@ export default function Navigation() {
                 ))
               )}
             </div>
+          </div>
+        )}
+
+        {/* Org Switcher */}
+        {!collapsed && (
+          <div className="px-3 pb-3">
+            <OrgSwitcher />
           </div>
         )}
 

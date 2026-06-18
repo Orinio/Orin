@@ -22,6 +22,13 @@ import {
 } from 'lucide-react';
 import { formatRelativeTime } from '@/lib/utils';
 import ThemeToggle from '@/components/ThemeToggle';
+import {
+  isPushSupported,
+  requestNotificationPermission,
+  subscribeToPush,
+  unsubscribeFromPush,
+  getPushPermissionState,
+} from '@/lib/push-notifications';
 
 function GithubIcon({ size = 20, className = '' }: { size?: number; className?: string }) {
   return (
@@ -127,6 +134,7 @@ export default function SettingsPage() {
     opportunityMatch: true,
     coachTips: false,
     productUpdates: true,
+    pushEnabled: false,
   });
   const [notifSaving, setNotifSaving] = useState(false);
 
@@ -180,6 +188,7 @@ export default function SettingsPage() {
             opportunityMatch: notifData.opportunity_matches,
             coachTips: notifData.coach_tips,
             productUpdates: notifData.product_updates,
+            pushEnabled: notifData.push_enabled ?? false,
           });
         }
 
@@ -279,7 +288,7 @@ export default function SettingsPage() {
     setNotifSaving(true);
     try {
       if (supabase && dbUserId) {
-        const dbKey = key === 'weeklySummary' ? 'weekly_summary' : key === 'recruiterViews' ? 'recruiter_views' : key === 'verificationStatus' ? 'verification_changes' : key === 'opportunityMatch' ? 'opportunity_matches' : key === 'coachTips' ? 'coach_tips' : 'product_updates';
+        const dbKey = key === 'weeklySummary' ? 'weekly_summary' : key === 'recruiterViews' ? 'recruiter_views' : key === 'verificationStatus' ? 'verification_changes' : key === 'opportunityMatch' ? 'opportunity_matches' : key === 'coachTips' ? 'coach_tips' : key === 'pushEnabled' ? 'push_enabled' : 'product_updates';
         await supabase.from('notification_preferences').upsert({ user_id: dbUserId, [dbKey]: notifs[key] } as Database['public']['Tables']['notification_preferences']['Insert'], { onConflict: 'user_id' });
       }
     } catch {} finally { setNotifSaving(false); }
@@ -388,10 +397,35 @@ export default function SettingsPage() {
 
   const toggleNotif = async (key: keyof typeof notifs) => {
     const newValue = !notifs[key];
+
+    // Handle push notification toggle specially
+    if (key === 'pushEnabled') {
+      const supported = await isPushSupported();
+      if (!supported) {
+        alert('Push notifications are not supported in this browser.');
+        return;
+      }
+
+      if (newValue) {
+        // Enabling: request permission and subscribe
+        const permission = await requestNotificationPermission();
+        if (permission !== 'granted') {
+          return; // User denied permission
+        }
+        const subscription = await subscribeToPush();
+        if (!subscription) {
+          return; // Subscription failed
+        }
+      } else {
+        // Disabling: unsubscribe from push
+        await unsubscribeFromPush();
+      }
+    }
+
     setNotifs((prev) => ({ ...prev, [key]: newValue }));
 
     if (supabase && dbUserId) {
-      const dbKey = key === 'weeklySummary' ? 'weekly_summary' : key === 'recruiterViews' ? 'recruiter_views' : key === 'verificationStatus' ? 'verification_changes' : key === 'opportunityMatch' ? 'opportunity_matches' : key === 'coachTips' ? 'coach_tips' : 'product_updates';
+      const dbKey = key === 'weeklySummary' ? 'weekly_summary' : key === 'recruiterViews' ? 'recruiter_views' : key === 'verificationStatus' ? 'verification_changes' : key === 'opportunityMatch' ? 'opportunity_matches' : key === 'coachTips' ? 'coach_tips' : key === 'pushEnabled' ? 'push_enabled' : 'product_updates';
       const { error } = await supabase
         .from('notification_preferences')
         .upsert({ user_id: dbUserId, [dbKey]: newValue } as Database['public']['Tables']['notification_preferences']['Insert'], { onConflict: 'user_id' });
@@ -521,6 +555,7 @@ export default function SettingsPage() {
 
   const renderNotifications = () => {
     const items: { key: keyof typeof notifs; label: string; desc: string }[] = [
+      { key: 'pushEnabled', label: 'Push notifications', desc: 'Receive lock screen notifications for career tips and opportunities' },
       { key: 'weeklySummary', label: 'Weekly proof summary', desc: 'Receive a digest of your proof activity every Monday' },
       { key: 'recruiterViews', label: 'New recruiter view alerts', desc: 'Get notified when a recruiter views your profile' },
       { key: 'verificationStatus', label: 'Verification status updates', desc: 'Updates when your proof cards are verified or need attention' },
@@ -531,8 +566,8 @@ export default function SettingsPage() {
 
     return (
       <div className="card-premium p-6">
-        <h2 className="text-lg font-semibold" style={{ color: 'var(--color-ink)' }}>Email notifications</h2>
-        <p className="mt-1 text-sm" style={{ color: 'var(--color-text-tertiary)' }}>Choose when ORIN should reach you. Changes are saved automatically.</p>
+        <h2 className="text-lg font-semibold" style={{ color: 'var(--color-ink)' }}>Notifications</h2>
+        <p className="mt-1 text-sm" style={{ color: 'var(--color-text-tertiary)' }}>Choose when and how ORIN should reach you. Changes are saved automatically.</p>
         <div className="mt-6" style={{ borderTop: '1px solid var(--color-border)' }}>
           {items.map((item, i) => (
             <div key={item.key} className="flex items-center justify-between py-4" style={{ borderBottom: i < items.length - 1 ? '1px solid var(--color-border)' : 'none' }}>
@@ -747,7 +782,7 @@ export default function SettingsPage() {
   const sectionTitles: Record<Section, { title: string; subtitle: string }> = {
     account: { title: 'Account settings', subtitle: 'Control how your profile appears and how ORIN communicates with you.' },
     appearance: { title: 'Appearance', subtitle: 'Customize how ORIN looks on your device.' },
-    notifications: { title: 'Notification preferences', subtitle: 'Choose when and how ORIN should reach you.' },
+    notifications: { title: 'Notification preferences', subtitle: 'Choose when and how ORIN should reach you — push notifications and email digests.' },
     privacy: { title: 'Privacy & data', subtitle: 'Control your profile visibility and manage your data.' },
     integrations: { title: 'Integrations', subtitle: 'Connect external services to import your work automatically.' },
     billing: { title: 'Plan & billing', subtitle: 'Manage your subscription and payment details.' },

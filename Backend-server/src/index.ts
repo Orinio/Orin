@@ -30,6 +30,7 @@ import { chatRouter } from './routes/chat.js';
 import { integrationsRouter } from './routes/integrations.js';
 import { billingRouter } from './routes/billing.js';
 import { socialRouter } from './routes/social.js';
+import { organizationsRouter } from './routes/organizations.js';
 import { demoRouter } from './routes/demo.js';
 import { initTools } from './lib/ai/tools/index.js';
 import { configureVapid } from './lib/push.js';
@@ -147,7 +148,8 @@ app.use('/ai', authMiddleware, requestContextMiddleware, globalAIRateLimitMiddle
 app.use('/chat', authMiddleware, requestContextMiddleware, chatRouter);
 app.use('/integrations', authMiddleware, requestContextMiddleware, integrationsRouter);
 app.use('/billing', authMiddleware, requestContextMiddleware, billingRouter);
-app.use('/social', authMiddleware, requestContextMiddleware, socialRouter);
+  app.use('/social', authMiddleware, requestContextMiddleware, socialRouter);
+  app.use('/organizations', authMiddleware, requestContextMiddleware, organizationsRouter);
 
 // Metrics (no auth — internal use, protected by network)
 app.use('/metrics', metricsRouter);

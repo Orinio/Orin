@@ -8,7 +8,7 @@ import { requestContext } from '../lib/request-context.js';
 export function requestContextMiddleware(req: Request, _res: Response, next: NextFunction): void {
   const ctx = {
     requestId: req.id,
-    userId: (req as any).user?.id,
+    userId: req.user?.id,
   };
 
   requestContext.run(ctx, () => {

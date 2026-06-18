@@ -1201,6 +1201,12 @@
                 "nullable": "NO"
             },
             {
+                "type": "boolean",
+                "column": "push_enabled",
+                "default": "true",
+                "nullable": "NO"
+            },
+            {
                 "type": "text",
                 "column": "digest_frequency",
                 "default": "'daily'::text",

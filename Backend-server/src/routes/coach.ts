@@ -29,13 +29,13 @@ const generateNoteSchema = z.object({
 // POST /coach/generate — Generate a coach note
 coachRouter.post('/generate', userRateLimitMiddleware('coach-generate'), async (req, res) => {
   try {
-    const authUserId = (req as any).user?.id;
+    const authUserId = req.user?.id;
     if (!authUserId) {
       res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } });
       return;
     }
 
-    const userId = (req as any).internalUserId || await resolveUserId(authUserId);
+    const userId = req.internalUserId || await resolveUserId(authUserId);
     if (!userId) {
       res.status(404).json({ error: { code: 'NOT_FOUND', message: 'User profile not found' } });
       return;
@@ -133,7 +133,7 @@ coachRouter.post('/generate', userRateLimitMiddleware('coach-generate'), async (
 // GET /coach/notes — List coach notes
 coachRouter.get('/notes', async (req, res) => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = req.user?.id;
     if (!userId) {
       res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } });
       return;

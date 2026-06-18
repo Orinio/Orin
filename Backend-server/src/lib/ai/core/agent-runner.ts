@@ -5,6 +5,7 @@ import { getToolsByNames, toolsToOpenAITools } from './tool-registry.js';
 import { logAIOperation } from '../metrics.js';
 import { getRequestId, getUserId } from '../../request-context.js';
 import { sanitizeAnswer } from './utils.js';
+import { logger } from '../../logger.js';
 
 const MAX_INPUT_LENGTH = 2000;
 const MAX_TOOL_RESULT_LENGTH = 1500;
@@ -119,6 +120,7 @@ export async function runAgent(
           args = JSON.parse(toolCall.function.arguments);
         } catch {
           args = {};
+          logger.warn({ toolName, rawArgs: toolCall.function.arguments }, 'Failed to parse tool arguments');
         }
 
         const toolTimeout = (tool as any).timeoutMs || DEFAULT_TOOL_TIMEOUT_MS;

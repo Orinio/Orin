@@ -20,7 +20,7 @@ const saveConversationSchema = z.object({
 
 chatRouter.get('/', async (req, res) => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = req.user?.id;
     if (!userId) {
       res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } });
       return;
@@ -58,7 +58,7 @@ chatRouter.get('/', async (req, res) => {
 
 chatRouter.get('/:id', async (req, res) => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = req.user?.id;
     if (!userId) {
       res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } });
       return;
@@ -99,7 +99,7 @@ chatRouter.get('/:id', async (req, res) => {
 
 chatRouter.post('/', async (req, res) => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = req.user?.id;
     if (!userId) {
       res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } });
       return;
@@ -141,7 +141,7 @@ chatRouter.post('/', async (req, res) => {
 
 chatRouter.delete('/:id', async (req, res) => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = req.user?.id;
     if (!userId) {
       res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } });
       return;

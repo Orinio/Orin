@@ -98,7 +98,7 @@ webhooksRouter.post('/github', async (req, res) => {
   try {
     const secret = process.env.GITHUB_WEBHOOK_SECRET;
     if (secret) {
-      const rawBody = (req as any).rawBody || JSON.stringify(req.body);
+      const rawBody = req.rawBody || JSON.stringify(req.body);
       const signature = req.headers['x-hub-signature-256'] as string;
       if (!verifyGitHubSignature(rawBody, signature, secret)) {
         logger.warn({ requestId: req.id }, 'GitHub webhook signature verification failed');
@@ -164,7 +164,7 @@ webhooksRouter.post('/stripe', async (req, res) => {
   try {
     const secret = process.env.STRIPE_WEBHOOK_SECRET;
     if (secret) {
-      const rawBody = (req as any).rawBody || JSON.stringify(req.body);
+      const rawBody = req.rawBody || JSON.stringify(req.body);
       const sigHeader = req.headers['stripe-signature'] as string;
       if (!verifyStripeSignature(rawBody, sigHeader, secret)) {
         logger.warn({ requestId: req.id }, 'Stripe webhook signature verification failed');

@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+.next/
+out/
+build/
+coverage/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Debug logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE/Editor
+.vscode/settings.json
+.idea/
+*.swp
+*~
+
+# TypeScript
+*.tsbuildinfo
+
+# Playwright
+.playwright/
+.playwright-mcp/
+
+# Supabase local state
+supabase/.temp/
+
+# AI tool configs
+.claude/
+.opencode/
+.mcp.json
+
+# Test artifacts / scratch files
+*.pdf
+screenshots/
+playwright-results.json

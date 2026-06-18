@@ -74,7 +74,7 @@ export function errorHandler(
     method: req.method,
     url: req.url,
     body: sanitizedBody,
-    userId: (req as any).user?.id,
+    userId: req.user?.id,
   }, 'Unhandled error');
 
   res.status(500).json({

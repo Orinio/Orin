@@ -63,7 +63,7 @@ const userId = await resolvePublicUserId(supabase);
 
   const allowedFields = [
     'weekly_summary', 'recruiter_views', 'verification_changes',
-    'opportunity_matches', 'coach_tips', 'product_updates',
+    'opportunity_matches', 'coach_tips', 'product_updates', 'push_enabled',
   ] as const;
 
   const updateData: Partial<NotificationPrefsUpdate> = {};

@@ -1,4 +1,4 @@
-export type UserRole = 'user' | 'admin' | 'moderator';
+export type UserRole = 'user' | 'admin' | 'moderator' | 'employer' | 'university';
 export type AccountStatus = 'active' | 'pending' | 'suspended' | 'deactivated';
 export type StudentYear = 'first' | 'second' | 'third' | 'fourth' | 'graduate';
 export type ProofSourceType = 'github' | 'kaggle' | 'certificate' | 'hackathon' | 'project' | 'blog' | 'demo' | 'other';
@@ -8,9 +8,12 @@ export type OpportunityType = 'internship' | 'job' | 'scholarship' | 'mentorship
 export type CoachNoteType = 'daily' | 'weekly' | 'milestone' | 'ad_hoc';
 export type IntegrationStatus = 'connected' | 'disconnected' | 'pending' | 'error';
 export type AuthProvider = 'email' | 'google' | 'github' | 'apple' | 'linkedin';
-export type SubscriptionPlan = 'free' | 'pro' | 'team';
+export type SubscriptionPlan = 'free' | 'pro' | 'team' | 'university';
 export type SubscriptionStatus = 'active' | 'canceled' | 'past_due' | 'trialing' | 'incomplete';
 export type OpportunityStatus = 'saved' | 'applied' | 'dismissed' | 'interviewing' | 'rejected' | 'offered';
+export type OrgRole = 'owner' | 'admin' | 'member' | 'viewer';
+export type OrgMemberStatus = 'active' | 'pending' | 'suspended';
+export type InvitationStatus = 'pending' | 'accepted' | 'expired' | 'revoked';
 
 export interface User {
   id: string;
@@ -35,8 +38,48 @@ export interface User {
   emailVerified: boolean;
   authProvider: AuthProvider;
   lastLoginAt?: Date;
+  currentOrgId?: string;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface Organization {
+  id: string;
+  name: string;
+  slug: string;
+  logoUrl?: string;
+  ownerId: string;
+  plan: SubscriptionPlan;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface OrgMember {
+  id: string;
+  orgId: string;
+  userId: string;
+  role: OrgRole;
+  status: OrgMemberStatus;
+  joinedAt: Date;
+  invitedBy?: string;
+}
+
+export interface OrgInvitation {
+  id: string;
+  orgId: string;
+  email: string;
+  role: OrgRole;
+  invitedBy: string;
+  userId?: string;
+  status: InvitationStatus;
+  expiresAt: Date;
+  createdAt: Date;
+}
+
+export interface OrgWithMembers extends Organization {
+  members: (OrgMember & { user?: { id: string; email: string; username: string; fullName?: string; avatarUrl?: string } })[];
+  memberCount: number;
+  myRole: OrgRole;
 }
 
 export interface Proof {

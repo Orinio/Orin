@@ -13,6 +13,6 @@ export function rawBodyVerifier(
   _encoding: BufferEncoding
 ): void {
   if (req.path.startsWith('/webhooks')) {
-    (req as any).rawBody = buf.toString('utf8');
+    req.rawBody = buf.toString('utf8');
   }
 }

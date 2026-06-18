@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { PanelLeftClose, Sparkles, ArrowDown, Loader2, Brain, Zap, Shield, BarChart3, Target, BookOpen, Code, Globe, ChevronRight } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
+import { trackEvent } from '@/lib/analytics';
 import { chatStore } from '@/lib/chat-store';
 import type { ChatConversation } from '@/lib/chat-types';
 import ChatInput, { CHAT_MODELS } from '@/components/ai/ChatInput';
@@ -234,6 +235,7 @@ export default function SuperAgentChat() {
 
   // ─── SSE Streaming with tool activity tracking ────────
   const handleSend = useCallback(async (content: string, files?: File[], modelId?: string) => {
+    trackEvent('ai_chat_message_sent', { messageLength: content.length, hasFiles: !!files?.length });
     let conv = conversation;
     if (!conv) conv = createConversation();
     isUserScrolledRef.current = false;

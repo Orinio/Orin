@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { trackEvent } from '@/lib/analytics';
 import {
   Share2,
   X,
@@ -132,17 +133,16 @@ export default function ShareableProofCard({ proof, username, userFullName }: Sh
   const handleCopyLink = useCallback(async () => {
     await navigator.clipboard.writeText(shareUrl);
     setCopied(true);
+    trackEvent('proof_shared', { method: 'copy_link', proofId: proof.id });
     setTimeout(() => setCopied(false), 2000);
-  }, [shareUrl]);
+  }, [shareUrl, proof.id]);
 
   const handleDownload = useCallback(async () => {
     setDownloading(true);
     try {
-      // Use html2canvas-like approach — capture the card element
       const cardEl = document.getElementById('shareable-proof-card');
       if (!cardEl) return;
 
-      // Dynamic import of html-to-image
       const htmlToImage = await import('html-to-image');
       const dataUrl = await htmlToImage.toPng(cardEl, {
         width: 600,
@@ -155,22 +155,25 @@ export default function ShareableProofCard({ proof, username, userFullName }: Sh
       link.download = `orin-proof-${proof.title.toLowerCase().replace(/\s+/g, '-')}.png`;
       link.href = dataUrl;
       link.click();
+      trackEvent('proof_downloaded', { proofId: proof.id });
     } catch (err) {
       console.error('Failed to download card:', err);
     } finally {
       setDownloading(false);
     }
-  }, [proof.title]);
+  }, [proof]);
 
   const handleShareTwitter = useCallback(() => {
     const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
     window.open(url, '_blank', 'width=600,height=400');
-  }, [shareText, shareUrl]);
+    trackEvent('proof_shared', { method: 'twitter', proofId: proof.id });
+  }, [shareText, shareUrl, proof.id]);
 
   const handleShareLinkedIn = useCallback(() => {
     const url = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`;
     window.open(url, '_blank', 'width=600,height=400');
-  }, [shareUrl]);
+    trackEvent('proof_shared', { method: 'linkedin', proofId: proof.id });
+  }, [shareUrl, proof.id]);
 
   return (
     <>

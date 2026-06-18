@@ -11,6 +11,7 @@ import {
 } from 'react';
 import type { Session, User, AuthError } from '@supabase/supabase-js';
 import { supabase as supabaseClient } from '@/lib/supabase';
+import { identifyUser, resetAnalytics, trackEvent } from '@/lib/analytics';
 
 const supabase = supabaseClient;
 
@@ -114,7 +115,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setLoading(false);
         setInitialized(true);
         syncToken(session);
-        if (session) {
+        if (session?.user) {
+          identifyUser(session.user.id, {
+            email: session.user.email,
+            created_at: session.user.created_at,
+          });
           startSessionRefresh(session);
         } else {
           clearRefreshTimer();
@@ -132,6 +137,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = useCallback(async (email: string, password: string) => {
     if (!supabase) return noopError();
     const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (!error) {
+      trackEvent('user_signed_in', { method: 'email' });
+    }
     return { error };
   }, []);
 
@@ -144,6 +152,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         data: { full_name: fullName, role: 'user' },
       },
     });
+    if (!error && data?.user) {
+      trackEvent('user_signed_up', { method: 'email' });
+    }
     return { error, user: data?.user ?? null };
   }, []);
 
@@ -166,6 +177,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     clearRefreshTimer();
+    trackEvent('user_signed_out');
+    resetAnalytics();
     if (supabase) {
       await supabase.auth.signOut();
     }

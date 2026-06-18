@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { getOpportunityTypeLabel } from '@/lib/utils';
+import { trackEvent } from '@/lib/analytics';
 import { Sparkles, TrendingUp, MapPin, Globe, DollarSign, Clock, Bookmark, X, ChevronDown, ChevronUp, Zap, AlertCircle, RefreshCw, ExternalLink } from 'lucide-react';
 import type { Opportunity, OpportunityType, OpportunityStatus } from '@/lib/types';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
@@ -107,11 +108,13 @@ function OpportunitiesContent() {
 
   const handleSave = async (oppId: string) => {
     setUserOpps((prev) => ({ ...prev, [oppId]: 'saved' }));
+    trackEvent('opportunity_saved', { opportunityId: oppId });
     try { await fetch('/api/opportunities/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ opportunityId: oppId, status: 'saved' }) }); } catch {}
   };
 
   const handleDismiss = async (oppId: string) => {
     setUserOpps((prev) => ({ ...prev, [oppId]: 'dismissed' }));
+    trackEvent('opportunity_dismissed', { opportunityId: oppId });
     try { await fetch('/api/opportunities/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ opportunityId: oppId, status: 'dismissed' }) }); } catch {}
   };
 

@@ -6,6 +6,7 @@ import { RoleProvider } from "@/lib/role-context";
 import { FeatureFlagProvider } from "@/lib/feature-flag-context";
 import { ThemeProvider } from "@/lib/theme-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
+import { PostHogProvider } from "@/lib/analytics";
 import { Toaster } from "@/components/ui/toast";
 import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
 import "./globals.css";
@@ -70,7 +71,9 @@ export default function RootLayout({
             <AuthProvider>
               <PlanProvider>
                 <RoleProvider>
-                  <FeatureFlagProvider>{children}</FeatureFlagProvider>
+                  <FeatureFlagProvider>
+                    <PostHogProvider>{children}</PostHogProvider>
+                  </FeatureFlagProvider>
                 </RoleProvider>
               </PlanProvider>
             </AuthProvider>

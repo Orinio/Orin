@@ -1,5 +1,16 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
+
+export const metadata: Metadata = {
+  title: 'Features - ORIN Career Proof Platform',
+  description: 'Explore ORIN features: verifiable proof cards, AI career coaching, skill gap analysis, opportunity matching, and professional networking.',
+  openGraph: {
+    title: 'Features - ORIN Career Proof Platform',
+    description: 'Explore ORIN features: verifiable proof cards, AI career coaching, skill gap analysis, opportunity matching.',
+    url: 'https://orin-three.vercel.app/features',
+  },
+};
 
 const features = [
   {

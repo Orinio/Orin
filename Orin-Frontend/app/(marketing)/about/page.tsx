@@ -1,5 +1,16 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
+
+export const metadata: Metadata = {
+  title: 'About ORIN - Turn Work Into Career Proof',
+  description: 'Learn about ORIN\'s mission to help students and professionals build verifiable career portfolios backed by real work, not just claims.',
+  openGraph: {
+    title: 'About ORIN - Turn Work Into Career Proof',
+    description: 'Learn about ORIN\'s mission to help students and professionals build verifiable career portfolios.',
+    url: 'https://orin-three.vercel.app/about',
+  },
+};
 
 const values = [
   {

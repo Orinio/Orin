@@ -1,5 +1,16 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
+
+export const metadata: Metadata = {
+  title: 'FAQ - ORIN Career Proof Platform',
+  description: 'Frequently asked questions about ORIN. Learn about proof cards, verification, pricing, privacy, and how ORIN helps build your career.',
+  openGraph: {
+    title: 'FAQ - ORIN Career Proof Platform',
+    description: 'Frequently asked questions about ORIN. Learn about proof cards, verification, pricing, and privacy.',
+    url: 'https://orin-three.vercel.app/faq',
+  },
+};
 
 const faqs = [
   {

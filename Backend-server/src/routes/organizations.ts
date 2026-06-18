@@ -462,6 +462,141 @@ organizationsRouter.post('/:id/leave', async (req, res) => {
   }
 });
 
+// ─── Invitations ──────────────────────────────────────────
+
+// GET /organizations/:id/invitations — List pending invitations
+organizationsRouter.get('/:id/invitations', requireOrgRole('owner', 'admin'), async (req, res) => {
+  try {
+    const { id: orgId } = req.params;
+
+    const { data: invitations, error } = await supabase
+      .from('org_invitations')
+      .select('*, invited_by_user:users!org_invitations_invited_by_fkey(id, username, full_name, avatar_url)')
+      .eq('org_id', orgId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    res.json({ success: true, data: invitations || [] });
+  } catch (err) {
+    logger.error({ err }, 'List invitations error');
+    res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Failed to list invitations' } });
+  }
+});
+
+// DELETE /organizations/:id/invitations/:inviteId — Revoke invitation
+organizationsRouter.delete('/:id/invitations/:inviteId', requireOrgRole('owner', 'admin'), async (req, res) => {
+  try {
+    const { id: orgId, inviteId } = req.params;
+
+    const { error } = await supabase
+      .from('org_invitations')
+      .delete()
+      .eq('id', inviteId)
+      .eq('org_id', orgId);
+
+    if (error) throw error;
+
+    res.json({ success: true, message: 'Invitation revoked' });
+  } catch (err) {
+    logger.error({ err }, 'Revoke invitation error');
+    res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Failed to revoke invitation' } });
+  }
+});
+
+// POST /organizations/invitations/:inviteId/accept — Accept invitation
+organizationsRouter.post('/invitations/:inviteId/accept', async (req, res) => {
+  try {
+    const authUserId = req.user?.id;
+    if (!authUserId) {
+      res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } });
+      return;
+    }
+
+    const userId = await resolveInternalUserId(authUserId);
+    if (!userId) {
+      res.status(404).json({ error: { code: 'NOT_FOUND', message: 'User profile not found' } });
+      return;
+    }
+
+    const { inviteId } = req.params;
+
+    const { data: invite, error: inviteError } = await supabase
+      .from('org_invitations')
+      .select('*')
+      .eq('id', inviteId)
+      .eq('status', 'pending')
+      .single();
+
+    if (inviteError || !invite) {
+      res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Invitation not found or already used' } });
+      return;
+    }
+
+    // Verify the invitation is for this user
+    if (invite.email !== (await supabase.from('users').select('email').eq('id', userId).single()).data?.email) {
+      res.status(403).json({ error: { code: 'FORBIDDEN', message: 'Invitation is for a different email' } });
+      return;
+    }
+
+    // Add as member
+    const { error: memberError } = await supabase
+      .from('org_members')
+      .insert({
+        org_id: invite.org_id,
+        user_id: userId,
+        role: invite.role,
+        status: 'active',
+        invited_by: invite.invited_by,
+      });
+
+    if (memberError) {
+      if (memberError.code === '23505') {
+        res.status(409).json({ error: { code: 'ALREADY_MEMBER', message: 'Already a member of this organization' } });
+        return;
+      }
+      throw memberError;
+    }
+
+    // Mark invitation as accepted
+    await supabase
+      .from('org_invitations')
+      .update({ status: 'accepted' })
+      .eq('id', inviteId);
+
+    res.json({ success: true, message: 'Invitation accepted' });
+  } catch (err) {
+    logger.error({ err }, 'Accept invitation error');
+    res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Failed to accept invitation' } });
+  }
+});
+
+// DELETE /organizations/invitations/:inviteId/decline — Decline invitation
+organizationsRouter.delete('/invitations/:inviteId/decline', async (req, res) => {
+  try {
+    const authUserId = req.user?.id;
+    if (!authUserId) {
+      res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } });
+      return;
+    }
+
+    const { inviteId } = req.params;
+
+    const { error } = await supabase
+      .from('org_invitations')
+      .update({ status: 'declined' })
+      .eq('id', inviteId)
+      .eq('status', 'pending');
+
+    if (error) throw error;
+
+    res.json({ success: true, message: 'Invitation declined' });
+  } catch (err) {
+    logger.error({ err }, 'Decline invitation error');
+    res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Failed to decline invitation' } });
+  }
+});
+
 // POST /organizations/switch/:orgId — Switch current org context
 organizationsRouter.post('/switch/:orgId', async (req, res) => {
   try {

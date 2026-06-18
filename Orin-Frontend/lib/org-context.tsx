@@ -97,10 +97,17 @@ export function OrgProvider({ children }: { children: ReactNode }) {
       setLoading(true);
       await refreshOrgs();
 
-      // Get current org from user profile
+      // Get current org from users table (not user_metadata)
       const { data: { user } } = await supabase!.auth.getUser();
-      if (user?.user_metadata?.current_org_id) {
-        setCurrentOrgId(user.user_metadata.current_org_id);
+      if (user) {
+        const { data: profile } = await supabase!
+          .from('users')
+          .select('current_org_id')
+          .eq('auth_user_id', user.id)
+          .maybeSingle();
+        if ((profile as any)?.current_org_id) {
+          setCurrentOrgId((profile as any).current_org_id);
+        }
       }
 
       setLoading(false);

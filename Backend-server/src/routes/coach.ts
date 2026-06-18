@@ -8,8 +8,12 @@ import { getPromptForNoteType, parseCoachResponse } from '../lib/prompts.js';
 import { checkRateLimit } from '../lib/rate-limit.js';
 import { buildAgentContext } from '../lib/context.js';
 import { userRateLimitMiddleware } from '../middleware/rate-limit.js';
+import { resolveOrgContext, getQueryScope } from '../middleware/org-scoping.js';
 
 export const coachRouter = Router();
+
+// Apply org context resolution to all coach routes
+coachRouter.use(resolveOrgContext);
 
 async function resolveUserId(authUserId: string): Promise<string | null> {
   const { data } = await supabase
@@ -91,10 +95,12 @@ coachRouter.post('/generate', userRateLimitMiddleware('coach-generate'), async (
     }
 
     // Save the note
+    const scope = getQueryScope(req);
     const { data: savedNote, error: saveError } = await supabase
       .from('coach_notes')
       .insert({
         user_id: context.userId,
+        org_id: scope.orgId,
         type: noteType,
         content: coachNote.content,
         action_label: coachNote.actionLabel || null,
@@ -150,12 +156,21 @@ coachRouter.get('/notes', async (req, res) => {
       return;
     }
 
-    const { data: notes, error } = await supabase
+    const scope = getQueryScope(req);
+
+    let query = supabase
       .from('coach_notes')
       .select('*')
-      .eq('user_id', userProfile.id)
       .is('deleted_at', null)
       .order('created_at', { ascending: false });
+
+    if (scope.orgId) {
+      query = query.eq('org_id', scope.orgId);
+    } else {
+      query = query.eq('user_id', userProfile.id);
+    }
+
+    const { data: notes, error } = await query;
 
     if (error) {
       res.status(500).json({ error: { code: 'DB_ERROR', message: error.message } });

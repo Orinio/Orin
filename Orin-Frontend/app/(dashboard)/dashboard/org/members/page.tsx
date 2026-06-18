@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useOrg } from '@/lib/org-context';
 import { supabase } from '@/lib/supabase';
-import { Crown, Shield, User, Eye, Trash2, UserPlus } from 'lucide-react';
+import { Crown, Shield, User, Eye, Trash2, UserPlus, Mail, X } from 'lucide-react';
 import type { OrgRole } from '@/lib/types';
 
 const ROLE_ICONS: Record<OrgRole, typeof Crown> = {
@@ -20,14 +20,50 @@ const ROLE_COLORS: Record<OrgRole, string> = {
   viewer: 'text-gray-500',
 };
 
+interface OrgInvitation {
+  id: string;
+  email: string;
+  role: string;
+  status: string;
+  created_at: string;
+  invited_by_user?: { username: string; full_name: string } | null;
+}
+
 export default function OrgMembersPage() {
   const { currentOrg, myRole, refreshCurrentOrg } = useOrg();
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<OrgRole>('member');
   const [inviting, setInviting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [invitations, setInvitations] = useState<OrgInvitation[]>([]);
+  const [loadingInvitations, setLoadingInvitations] = useState(false);
 
   const canManage = myRole === 'owner' || myRole === 'admin';
+
+  useEffect(() => {
+    if (!currentOrg || !canManage) return;
+    fetchInvitations();
+  }, [currentOrg, canManage]);
+
+  const fetchInvitations = async () => {
+    if (!currentOrg) return;
+    setLoadingInvitations(true);
+    try {
+      const { data: session } = await supabase!.auth.getSession();
+      const resp = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/organizations/${currentOrg.id}/invitations`,
+        { headers: { Authorization: `Bearer ${session?.session?.access_token}` } }
+      );
+      const data = await resp.json();
+      if (resp.ok && data.success) {
+        setInvitations(data.data.filter((i: OrgInvitation) => i.status === 'pending'));
+      }
+    } catch {
+      // ignore
+    } finally {
+      setLoadingInvitations(false);
+    }
+  };
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,14 +74,17 @@ export default function OrgMembersPage() {
 
     try {
       const { data: session } = await supabase!.auth.getSession();
-      const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/organizations/${currentOrg.id}/invite`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session?.session?.access_token}`,
-        },
-        body: JSON.stringify({ email: inviteEmail, role: inviteRole }),
-      });
+      const resp = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/organizations/${currentOrg.id}/invite`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session?.session?.access_token}`,
+          },
+          body: JSON.stringify({ email: inviteEmail, role: inviteRole }),
+        }
+      );
 
       const data = await resp.json();
       if (!resp.ok) {
@@ -56,6 +95,7 @@ export default function OrgMembersPage() {
       setInviteEmail('');
       setInviteRole('member');
       await refreshCurrentOrg();
+      await fetchInvitations();
     } catch {
       setError('Failed to invite member');
     } finally {
@@ -69,10 +109,10 @@ export default function OrgMembersPage() {
 
     try {
       const { data: session } = await supabase!.auth.getSession();
-      const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/organizations/${currentOrg.id}/members/${userId}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${session?.session?.access_token}` },
-      });
+      const resp = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/organizations/${currentOrg.id}/members/${userId}`,
+        { method: 'DELETE', headers: { Authorization: `Bearer ${session?.session?.access_token}` } }
+      );
 
       if (resp.ok) {
         await refreshCurrentOrg();
@@ -87,20 +127,42 @@ export default function OrgMembersPage() {
 
     try {
       const { data: session } = await supabase!.auth.getSession();
-      const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/organizations/${currentOrg.id}/members/${userId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session?.session?.access_token}`,
-        },
-        body: JSON.stringify({ role: newRole }),
-      });
+      const resp = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/organizations/${currentOrg.id}/members/${userId}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session?.session?.access_token}`,
+          },
+          body: JSON.stringify({ role: newRole }),
+        }
+      );
 
       if (resp.ok) {
         await refreshCurrentOrg();
       }
     } catch {
       // silently fail
+    }
+  };
+
+  const handleRevokeInvitation = async (inviteId: string) => {
+    if (!currentOrg) return;
+    if (!confirm('Revoke this invitation?')) return;
+
+    try {
+      const { data: session } = await supabase!.auth.getSession();
+      const resp = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/organizations/${currentOrg.id}/invitations/${inviteId}`,
+        { method: 'DELETE', headers: { Authorization: `Bearer ${session?.session?.access_token}` } }
+      );
+
+      if (resp.ok) {
+        await fetchInvitations();
+      }
+    } catch {
+      // ignore
     }
   };
 
@@ -156,8 +218,44 @@ export default function OrgMembersPage() {
         <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>
       )}
 
+      {/* Pending Invitations */}
+      {canManage && invitations.length > 0 && (
+        <div className="space-y-2">
+          <h2 className="text-sm font-semibold text-[var(--color-text-secondary)] uppercase tracking-wide">
+            Pending Invitations
+          </h2>
+          {invitations.map((inv) => (
+            <div
+              key={inv.id}
+              className="flex items-center gap-4 rounded-xl border border-dashed border-[var(--color-border)] bg-[var(--color-surface)] p-4 opacity-75"
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
+                <Mail className="h-4 w-4 text-gray-500" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="font-medium">{inv.email}</div>
+                <div className="text-sm text-[var(--color-text-tertiary)]">
+                  Invited as <span className="capitalize">{inv.role}</span>
+                  {inv.invited_by_user && ` by ${inv.invited_by_user.full_name || inv.invited_by_user.username}`}
+                </div>
+              </div>
+              <button
+                onClick={() => handleRevokeInvitation(inv.id)}
+                className="rounded-lg p-1 text-[var(--color-text-tertiary)] transition hover:bg-red-50 hover:text-red-600"
+                title="Revoke invitation"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Members list */}
       <div className="space-y-2">
+        <h2 className="text-sm font-semibold text-[var(--color-text-secondary)] uppercase tracking-wide">
+          Active Members
+        </h2>
         {currentOrg.members.map((member) => {
           const RoleIcon = ROLE_ICONS[member.role];
           const roleColor = ROLE_COLORS[member.role];

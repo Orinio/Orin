@@ -11,9 +11,12 @@ import { buildAgentContext } from '../lib/context.js';
 import { isNvidiaConfigured } from '../lib/ai/core/nvidia.js';
 import { userRateLimitMiddleware, getCached, setCache, checkTokenBudget } from '../middleware/rate-limit.js';
 import { validate } from '../middleware/validate.js';
+import { resolveOrgContext } from '../middleware/org-scoping.js';
 import type { SubscriptionPlan } from '../lib/types.js';
 
 export const aiRouter = Router();
+
+aiRouter.use(resolveOrgContext);
 
 // Simple in-memory cache for opportunities (shared across users, rarely changes)
 const opportunityCache = { data: null as any[] | null, expiresAt: 0 };

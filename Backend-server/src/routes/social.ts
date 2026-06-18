@@ -2,8 +2,12 @@ import { Router, type Request, type Response } from 'express';
 import { supabase } from '../lib/supabase.js';
 import { authMiddleware } from '../middleware/auth.js';
 import { logger } from '../lib/logger.js';
+import { resolveOrgContext, getQueryScope } from '../middleware/org-scoping.js';
 
 const socialRouter = Router();
+
+// Apply org context to all social routes
+socialRouter.use(resolveOrgContext);
 
 // ═══════════════════════════════════════════
 // POSTS
@@ -32,6 +36,7 @@ socialRouter.post('/posts', authMiddleware, async (req: Request, res: Response) 
       .from('posts')
       .insert({
         user_id: userId,
+        org_id: getQueryScope(req).orgId,
         content,
         media_urls: mediaUrls || [],
         post_type: postType || 'text',
@@ -59,39 +64,45 @@ socialRouter.post('/posts', authMiddleware, async (req: Request, res: Response) 
   }
 });
 
-// Get feed posts (from followed users)
+// Get feed posts (from followed users or org)
 socialRouter.get('/posts/feed', authMiddleware, async (req: Request, res: Response) => {
   try {
     const userId = req.query.userId as string;
     const page = parseInt(req.query.page as string) || 0;
     const limit = parseInt(req.query.limit as string) || 20;
+    const scope = getQueryScope(req);
 
     if (!userId) {
       res.status(400).json({ error: { code: 'MISSING_USER_ID', message: 'userId is required' } });
       return;
     }
 
-    // Get IDs of users the current user follows
-    const { data: followData } = await supabase
-      .from('follows')
-      .select('following_id')
-      .eq('follower_id', userId);
-
-    const followingIds = (followData || []).map((f) => f.following_id);
-    if (followingIds.length === 0) {
-      res.json({ data: [] });
-      return;
-    }
-
-    // Get posts from followed users
-    const { data: posts, error } = await supabase
+    let query = supabase
       .from('posts')
       .select('*, users(id, username, full_name, avatar_url, headline)')
-      .in('user_id', followingIds)
-      .eq('visibility', 'public')
       .is('deleted_at', null)
       .order('created_at', { ascending: false })
       .range(page * limit, (page + 1) * limit - 1);
+
+    if (scope.orgId) {
+      // Org context: show org posts
+      query = query.eq('org_id', scope.orgId);
+    } else {
+      // Personal context: show followed users' posts
+      const { data: followData } = await supabase
+        .from('follows')
+        .select('following_id')
+        .eq('follower_id', userId);
+
+      const followingIds = (followData || []).map((f) => f.following_id);
+      if (followingIds.length === 0) {
+        res.json({ data: [] });
+        return;
+      }
+      query = query.in('user_id', followingIds).eq('visibility', 'public');
+    }
+
+    const { data: posts, error } = await query;
 
     if (error) throw error;
 
@@ -380,6 +391,7 @@ socialRouter.post('/posts/:postId/comments', authMiddleware, async (req: Request
       .insert({
         post_id: postId,
         user_id: userId,
+        org_id: getQueryScope(req).orgId,
         content,
         parent_id: parentId || null,
         reply_to_user_id: replyToUserId || null,

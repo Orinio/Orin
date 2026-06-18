@@ -3,8 +3,11 @@ import { z } from 'zod';
 import { randomUUID } from 'crypto';
 import { supabase } from '../lib/supabase.js';
 import { logger } from '../lib/logger.js';
+import { resolveOrgContext, getQueryScope } from '../middleware/org-scoping.js';
 
 export const chatRouter = Router();
+
+chatRouter.use(resolveOrgContext);
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -25,12 +28,21 @@ chatRouter.get('/', async (req, res) => {
       res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } });
       return;
     }
-    const { data, error } = await supabase
+
+    const scope = getQueryScope(req);
+    let query = supabase
       .from('chat_conversations')
       .select('*')
-      .eq('user_id', userId)
       .order('updated_at', { ascending: false })
       .limit(100);
+
+    if (scope.orgId) {
+      query = query.eq('org_id', scope.orgId);
+    } else {
+      query = query.eq('user_id', userId);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       res.status(500).json({ error: { code: 'DB_ERROR', message: error.message } });
@@ -119,6 +131,7 @@ chatRouter.post('/', async (req, res) => {
       .upsert({
         id: conversationId,
         user_id: userId,
+        org_id: getQueryScope(req).orgId,
         agent_id: agentId,
         title: title || 'New conversation',
         messages: messages || [],

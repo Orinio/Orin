@@ -17,7 +17,7 @@ import {
   Pencil,
   Flag,
 } from 'lucide-react';
-import { useToggleReaction, useToggleBookmark, useDeletePost, type SocialPost } from '@/lib/social-posts';
+import { useToggleReaction, useToggleBookmark, useDeletePost, useRepost, useUpdatePost, type SocialPost } from '@/lib/social-posts';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
 import { useQuery } from '@tanstack/react-query';
@@ -49,10 +49,14 @@ export default function SocialPostCard({ post, index = 0, onRefresh }: SocialPos
   const toggleReaction = useToggleReaction();
   const toggleBookmark = useToggleBookmark();
   const deletePost = useDeletePost();
+  const repostMutation = useRepost();
+  const updatePost = useUpdatePost();
   const [showComments, setShowComments] = useState(false);
   const [showReactions, setShowReactions] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editContent, setEditContent] = useState(post.content);
 
   const { data: currentDbUser } = useQuery({
     queryKey: ['current-db-user', authUser?.id],
@@ -115,9 +119,32 @@ export default function SocialPostCard({ post, index = 0, onRefresh }: SocialPos
         // User cancelled share
       }
     } else {
-      // Fallback: copy to clipboard
       await navigator.clipboard.writeText(`${window.location.origin}/post/${post.id}`);
     }
+  };
+
+  const handleRepost = () => {
+    if (!currentDbUser?.id) return;
+    repostMutation.mutate(
+      { userId: currentDbUser.id, repostOfId: post.id },
+      { onSuccess: () => onRefresh?.() }
+    );
+  };
+
+  const handleEdit = () => {
+    setShowMenu(false);
+    setEditing(true);
+    setEditContent(post.content);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editContent.trim() || editContent === post.content) {
+      setEditing(false);
+      return;
+    }
+    await updatePost.mutateAsync({ postId: post.id, content: editContent.trim() });
+    setEditing(false);
+    onRefresh?.();
   };
 
   return (
@@ -192,7 +219,7 @@ export default function SocialPostCard({ post, index = 0, onRefresh }: SocialPos
                   {isOwner ? (
                     <>
                       <button
-                        onClick={() => setShowMenu(false)}
+                        onClick={handleEdit}
                         className="w-full flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
                       >
                         <Pencil className="w-4 h-4" />
@@ -224,20 +251,54 @@ export default function SocialPostCard({ post, index = 0, onRefresh }: SocialPos
 
       {/* Content */}
       <div className="px-5 py-4">
-        <p className="text-base leading-relaxed whitespace-pre-wrap" style={{ color: 'var(--color-ink)' }}>
-          {displayContent}
-        </p>
-        {shouldTruncate && (
-          <button
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="mt-1 text-sm font-semibold hover:underline"
-            style={{ color: 'var(--color-bloom)' }}
-          >
-            {isExpanded ? 'Show less' : 'Read more'}
-          </button>
-        )}
+        {editing ? (
+          <div>
+            <textarea
+              value={editContent}
+              onChange={(e) => setEditContent(e.target.value)}
+              className="w-full min-h-[80px] resize-none rounded-xl border bg-gray-50 px-3 py-2 text-base leading-relaxed focus:outline-none focus:ring-2 focus:ring-[var(--color-bloom)]/20"
+              style={{ borderColor: 'var(--color-border)', color: 'var(--color-ink)' }}
+              autoFocus
+            />
+            <div className="flex items-center justify-between mt-2">
+              <span className="text-xs" style={{ color: editContent.length > 280 ? 'var(--color-pulse)' : 'var(--color-text-tertiary)' }}>
+                {editContent.length}/280
+              </span>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setEditing(false)}
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                  style={{ color: 'var(--color-text-secondary)', backgroundColor: 'var(--color-surface-dim)' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveEdit}
+                  disabled={!editContent.trim() || editContent === post.content || editContent.length > 280 || updatePost.isPending}
+                  className="px-3 py-1.5 rounded-lg text-xs font-bold text-white transition-all disabled:opacity-50"
+                  style={{ backgroundColor: 'var(--color-bloom)' }}
+                >
+                  {updatePost.isPending ? 'Saving...' : 'Save'}
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+            <p className="text-base leading-relaxed whitespace-pre-wrap" style={{ color: 'var(--color-ink)' }}>
+              {displayContent}
+            </p>
+            {shouldTruncate && (
+              <button
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="mt-1 text-sm font-semibold hover:underline"
+                style={{ color: 'var(--color-bloom)' }}
+              >
+                {isExpanded ? 'Show less' : 'Read more'}
+              </button>
+            )}
 
-        {/* Hashtags */}
+            {/* Hashtags */}
         {post.hashtags && post.hashtags.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-3">
             {post.hashtags.map((tag) => (
@@ -252,13 +313,15 @@ export default function SocialPostCard({ post, index = 0, onRefresh }: SocialPos
           </div>
         )}
 
-        {/* Repost indicator */}
-        {post.post_type === 'repost' && post.repost_of && (
-          <div className="mt-3 p-3 rounded-xl bg-gray-50 ring-1 ring-black/[0.06]">
-            <p className="text-xs font-semibold" style={{ color: 'var(--color-text-tertiary)' }}>
-              Reposted from @{post.repost_of.users?.username}
-            </p>
-          </div>
+            {/* Repost indicator */}
+            {post.post_type === 'repost' && post.repost_of && (
+              <div className="mt-3 p-3 rounded-xl bg-gray-50 ring-1 ring-black/[0.06]">
+                <p className="text-xs font-semibold" style={{ color: 'var(--color-text-tertiary)' }}>
+                  Reposted from @{post.repost_of.users?.username}
+                </p>
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -356,7 +419,9 @@ export default function SocialPostCard({ post, index = 0, onRefresh }: SocialPos
 
         {/* Repost */}
         <button
-          className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 hover:bg-green-50 active:scale-95"
+          onClick={handleRepost}
+          disabled={repostMutation.isPending}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 hover:bg-green-50 active:scale-95 disabled:opacity-50"
           style={{ color: 'var(--color-text-tertiary)' }}
         >
           <Repeat2 className="w-[18px] h-[18px]" />

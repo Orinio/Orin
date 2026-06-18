@@ -5,6 +5,7 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/footer";
 import CommandPalette from "@/components/CommandPalette";
 import { PushNotificationBanner } from "@/components/PushNotificationBanner";
+import { FeedbackWidget } from "@/components/FeedbackWidget";
 import { OrgProvider } from "@/lib/org-context";
 import { useAuth } from "@/lib/auth-context";
 import { useInitializeKeys } from "@/lib/chat";
@@ -49,6 +50,7 @@ export default function DashboardLayout({
         <div className="lg:hidden h-[76px]" />
         <CommandPalette open={cmdOpen} onClose={() => setCmdOpen(false)} />
         <PushNotificationBanner />
+        <FeedbackWidget />
       </div>
     </OrgProvider>
   );

@@ -546,7 +546,7 @@ export default function SuperAgentChat() {
       setIsStreaming(false);
       abortRef.current = null;
     }
-  }, [conversation, user, createConversation, updateAssistant, selectedModel, addActivity]);
+  }, [conversation, user, session, createConversation, updateAssistant, selectedModel, addActivity]);
 
   const handleStop = useCallback(() => abortRef.current?.abort(), []);
 

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import { trackEvent } from '@/lib/analytics';
 import {
   Sparkles,
   Code2,
@@ -170,6 +171,7 @@ export default function OnboardingPage() {
 
   const next = () => {
     setDirection(1);
+    trackEvent('onboarding_step_completed', { step, role, skillsCount: skills.length, goalsCount: goals.length });
     setStep((s) => Math.min(s + 1, 2));
   };
 
@@ -180,6 +182,7 @@ export default function OnboardingPage() {
 
   const handleComplete = async () => {
     setSaving(true);
+    trackEvent('onboarding_completed', { role, skillsCount: skills.length, goalsCount: goals.length, sourcesCount: selectedSources.length });
     try {
       if (supabase && dbUserId) {
         await supabase.from('users').update({
@@ -216,7 +219,10 @@ export default function OnboardingPage() {
       <header className="flex items-center justify-between px-6 py-4">
         <Logo variant="full" size="md" href="/" />
         <button
-          onClick={() => router.push('/dashboard')}
+          onClick={() => {
+            trackEvent('onboarding_skipped', { step });
+            router.push('/dashboard');
+          }}
           className="flex items-center gap-1.5 text-sm font-medium transition-colors hover:opacity-70"
           style={{ color: 'var(--color-text-tertiary)' }}
         >

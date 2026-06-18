@@ -428,7 +428,11 @@ function MessageThread({
   }, [allMessages.length]);
 
   const handleSend = async () => {
-    if (!inputValue.trim() || !otherUserPublicKey) return;
+    if (!inputValue.trim()) return;
+
+    if (!otherUserPublicKey) {
+      return;
+    }
 
     const message = inputValue.trim();
     setInputValue('');
@@ -649,16 +653,17 @@ function MessageThread({
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleSend}
-            disabled={!inputValue.trim() || sendMessage.isPending}
+            disabled={!inputValue.trim() || sendMessage.isPending || !otherUserPublicKey}
             className={cn(
               'p-3.5 rounded-2xl transition-all',
-              inputValue.trim()
+              inputValue.trim() && otherUserPublicKey
                 ? 'text-white shadow-lg'
                 : 'opacity-50 cursor-not-allowed'
             )}
             style={{
-              backgroundColor: inputValue.trim() ? 'var(--color-bloom)' : 'var(--color-border)',
+              backgroundColor: inputValue.trim() && otherUserPublicKey ? 'var(--color-bloom)' : 'var(--color-border)',
             }}
+            title={!otherUserPublicKey ? 'Recipient has not set up encryption keys yet' : 'Send message'}
           >
             {sendMessage.isPending ? (
               <Loader2 className="h-5 w-5 animate-spin" />
@@ -670,9 +675,11 @@ function MessageThread({
 
         {/* Encryption indicator */}
         <div className="flex items-center justify-center gap-2 mt-2">
-          <Lock className="h-3 w-3" style={{ color: 'var(--color-bloom)' }} />
-          <span className="text-[10px] font-medium" style={{ color: 'var(--color-bloom)' }}>
-            Messages are end-to-end encrypted
+          <Lock className="h-3 w-3" style={{ color: otherUserPublicKey ? 'var(--color-bloom)' : 'var(--color-text-tertiary)' }} />
+          <span className="text-[10px] font-medium" style={{ color: otherUserPublicKey ? 'var(--color-bloom)' : 'var(--color-text-tertiary)' }}>
+            {otherUserPublicKey
+              ? 'Messages are end-to-end encrypted'
+              : 'Recipient has not set up encryption keys'}
           </span>
         </div>
       </div>

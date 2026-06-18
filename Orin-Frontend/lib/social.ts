@@ -64,6 +64,9 @@ export function useToggleFollow() {
       queryClient.invalidateQueries({ queryKey: ['follow-status', variables.followerId] });
       queryClient.invalidateQueries({ queryKey: ['user-profile'] });
     },
+    onError: (error) => {
+      console.error('Follow action failed:', error);
+    },
   });
 }
 

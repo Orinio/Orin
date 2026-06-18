@@ -11,6 +11,8 @@ import { useQuery } from '@tanstack/react-query';
 interface CreatePostModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialContent?: string;
+  onSubmit?: (content: string) => void;
 }
 
 const VISIBILITY_OPTIONS = [
@@ -19,12 +21,15 @@ const VISIBILITY_OPTIONS = [
   { value: 'private', label: 'Only me', icon: Lock, description: 'Only you can see this post' },
 ] as const;
 
-export default function CreatePostModal({ isOpen, onClose }: CreatePostModalProps) {
+const EMOJIS = ['😊', '🎉', '🔥', '💪', '🚀', '💡', '❤️', '👏', '🙏', '✨', '🎯', '💼', '📚', '🌟', '💻', '🎨', '🏆', '🤝', '👍', '😄'];
+
+export default function CreatePostModal({ isOpen, onClose, initialContent, onSubmit }: CreatePostModalProps) {
   const { user: authUser } = useAuth();
   const createPost = useCreatePost();
-  const [content, setContent] = useState('');
+  const [content, setContent] = useState(initialContent || '');
   const [visibility, setVisibility] = useState<'public' | 'followers' | 'private'>('public');
   const [showVisibility, setShowVisibility] = useState(false);
+  const [showEmoji, setShowEmoji] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const { data: currentDbUser } = useQuery({
@@ -50,6 +55,13 @@ export default function CreatePostModal({ isOpen, onClose }: CreatePostModalProp
   const handleSubmit = async () => {
     if (!content.trim() || !currentDbUser?.id) return;
 
+    if (onSubmit) {
+      onSubmit(content.trim());
+      setContent('');
+      onClose();
+      return;
+    }
+
     await createPost.mutateAsync({
       userId: currentDbUser.id,
       content: content.trim(),
@@ -68,12 +80,37 @@ export default function CreatePostModal({ isOpen, onClose }: CreatePostModalProp
     }
   };
 
-  // Auto-resize textarea
   const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const textarea = e.target;
-    textarea.style.height = 'auto';
-    textarea.style.height = `${Math.min(textarea.scrollHeight, 300)}px`;
     setContent(e.target.value);
+    e.target.style.height = 'auto';
+    e.target.style.height = `${e.target.scrollHeight}px`;
+  };
+
+  const insertAtCursor = (text: string) => {
+    const el = textareaRef.current;
+    if (!el) {
+      setContent((c) => c + text);
+      return;
+    }
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    const before = content.slice(0, start);
+    const after = content.slice(end);
+    setContent(before + text + after);
+    setTimeout(() => {
+      el.selectionStart = el.selectionEnd = start + text.length;
+      el.focus();
+    }, 0);
+  };
+
+  const handleLinkInsert = () => {
+    const url = prompt('Enter URL:');
+    if (url) insertAtCursor(url);
+  };
+
+  const handleEmojiInsert = (emoji: string) => {
+    insertAtCursor(emoji);
+    setShowEmoji(false);
   };
 
   const selectedVisibility = VISIBILITY_OPTIONS.find((v) => v.value === visibility);
@@ -223,25 +260,52 @@ export default function CreatePostModal({ isOpen, onClose }: CreatePostModalProp
 
               {/* Footer */}
               <div className="flex items-center justify-between px-5 py-4 border-t border-black/[0.06] bg-gray-50/50">
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 relative">
                   <button
+                    onClick={() => {
+                      const input = document.createElement('input');
+                      input.type = 'file';
+                      input.accept = 'image/*';
+                      input.onchange = (e) => {
+                        const file = (e.target as HTMLInputElement).files?.[0];
+                        if (file) insertAtCursor(`[Image: ${file.name}]`);
+                      };
+                      input.click();
+                    }}
                     className="p-2 rounded-xl hover:bg-black/[0.04] transition-colors"
                     title="Add image"
                   >
                     <Image className="w-5 h-5" style={{ color: 'var(--color-text-tertiary)' }} />
                   </button>
                   <button
+                    onClick={handleLinkInsert}
                     className="p-2 rounded-xl hover:bg-black/[0.04] transition-colors"
                     title="Add link"
                   >
                     <Link className="w-5 h-5" style={{ color: 'var(--color-text-tertiary)' }} />
                   </button>
-                  <button
-                    className="p-2 rounded-xl hover:bg-black/[0.04] transition-colors"
-                    title="Add emoji"
-                  >
-                    <Smile className="w-5 h-5" style={{ color: 'var(--color-text-tertiary)' }} />
-                  </button>
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowEmoji(!showEmoji)}
+                      className="p-2 rounded-xl hover:bg-black/[0.04] transition-colors"
+                      title="Add emoji"
+                    >
+                      <Smile className="w-5 h-5" style={{ color: 'var(--color-text-tertiary)' }} />
+                    </button>
+                    {showEmoji && (
+                      <div className="absolute bottom-full left-0 mb-2 p-2 bg-white rounded-xl shadow-lg ring-1 ring-black/10 grid grid-cols-5 gap-1 w-[180px] z-20">
+                        {EMOJIS.map((emoji) => (
+                          <button
+                            key={emoji}
+                            onClick={() => handleEmojiInsert(emoji)}
+                            className="p-1.5 rounded-lg hover:bg-gray-100 text-lg transition-colors"
+                          >
+                            {emoji}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="flex items-center gap-3">

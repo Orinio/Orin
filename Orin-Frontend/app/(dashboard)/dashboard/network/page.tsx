@@ -11,9 +11,9 @@ import { supabase } from '@/lib/supabase';
 import { useQuery } from '@tanstack/react-query';
 import { Search, MessageCircle, UserPlus, UserCheck, MapPin, Briefcase, Sparkles, Verified, TrendingUp } from 'lucide-react';
 
-function UserCard({ user, currentUserId, index }: { user: any; currentUserId: string; index: number }) {
+function UserCard({ user, currentUserId, index }: { user: any; currentUserId?: string; index: number }) {
   const router = useRouter();
-  const { data: followData } = useFollowStatus(user.id, currentUserId);
+  const { data: followData } = useFollowStatus(user.id, currentUserId || null);
   const toggleFollow = useToggleFollow();
   const startConvo = useStartConversation();
 
@@ -83,7 +83,7 @@ function UserCard({ user, currentUserId, index }: { user: any; currentUserId: st
           <div className="flex gap-2">
             <button
               onClick={handleFollow}
-              disabled={toggleFollow.isPending}
+              disabled={toggleFollow.isPending || user.id === currentUserId}
               className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold transition-all duration-200 hover:shadow-md active:scale-[0.97]"
               style={{
                 background: followData?.isFollowing
@@ -93,7 +93,9 @@ function UserCard({ user, currentUserId, index }: { user: any; currentUserId: st
                 border: followData?.isFollowing ? '1px solid var(--color-border)' : 'none',
               }}
             >
-              {followData?.isFollowing ? (
+              {user.id === currentUserId ? (
+                'This is you'
+              ) : followData?.isFollowing ? (
                 <>
                   <UserCheck className="w-3.5 h-3.5" />
                   Following
@@ -124,7 +126,7 @@ function UserCard({ user, currentUserId, index }: { user: any; currentUserId: st
   );
 }
 
-function SuggestedUsers({ currentUserId }: { currentUserId: string }) {
+function SuggestedUsers({ currentUserId }: { currentUserId?: string }) {
   const { data: suggestions, isLoading } = useQuery({
     queryKey: ['suggested-users', currentUserId],
     queryFn: async () => {
@@ -245,7 +247,7 @@ export default function NetworkPage() {
       ) : users && users.length > 0 ? (
         <div className="space-y-3">
           {users.map((user, i) => (
-            <UserCard key={user.id} user={user} currentUserId={currentDbUser?.id || ''} index={i} />
+            <UserCard key={user.id} user={user} currentUserId={currentDbUser?.id} index={i} />
           ))}
         </div>
       ) : (

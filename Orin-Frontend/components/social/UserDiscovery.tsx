@@ -9,8 +9,8 @@ import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
 import { useQuery } from '@tanstack/react-query';
 
-function UserCard({ user, currentUserId }: { user: DiscoverableUser; currentUserId: string }) {
-  const { data: followData } = useFollowStatus(user.id, currentUserId);
+function UserCard({ user, currentUserId }: { user: DiscoverableUser; currentUserId?: string }) {
+  const { data: followData } = useFollowStatus(user.id, currentUserId || null);
   const toggleFollow = useToggleFollow();
 
   const handleFollow = () => {
@@ -73,7 +73,7 @@ function UserCard({ user, currentUserId }: { user: DiscoverableUser; currentUser
           backgroundColor: followData?.isFollowing ? 'var(--color-surface-dim)' : 'var(--color-bloom)',
           color: followData?.isFollowing ? 'var(--color-text-secondary)' : 'white',
         }}
-        title={followData?.isFollowing ? 'Unfollow' : 'Follow'}
+        title={user.id === currentUserId ? 'This is you' : followData?.isFollowing ? 'Unfollow' : 'Follow'}
       >
         {followData?.isFollowing ? (
           <UserCheck className="w-4 h-4" />
@@ -160,7 +160,7 @@ export default function UserDiscovery() {
         ) : displayUsers && displayUsers.length > 0 ? (
           <div className="space-y-1">
             {displayUsers.map((user) => (
-              <UserCard key={user.id} user={user} currentUserId={currentDbUser?.id || ''} />
+              <UserCard key={user.id} user={user} currentUserId={currentDbUser?.id} />
             ))}
           </div>
         ) : (

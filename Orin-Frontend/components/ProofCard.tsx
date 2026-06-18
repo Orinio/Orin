@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { memo, lazy, Suspense, useState } from 'react';
 import type { Proof, VerificationStatus } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import {
@@ -11,15 +12,16 @@ import {
   Star,
   Eye,
   ExternalLink,
+  MessageCircle,
 } from 'lucide-react';
 import TypeBadge from './TypeBadge';
-import ShareableProofCard from './ShareableProofCard';
 import Image from 'next/image';
 import { useLikeStatus, useToggleLike, useComments, useAddComment } from '@/lib/social';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+
+const ShareableProofCard = lazy(() => import('./ShareableProofCard'));
 
 interface ProofCardProps {
   proof: Proof;
@@ -52,7 +54,7 @@ const statusConfig: Record<
   },
 };
 
-export default function ProofCard({ proof, variant = 'dashboard' }: ProofCardProps) {
+function ProofCardInner({ proof, variant = 'dashboard' }: ProofCardProps) {
   const {
     id,
     title,
@@ -82,6 +84,7 @@ export default function ProofCard({ proof, variant = 'dashboard' }: ProofCardPro
       return data;
     },
     enabled: !!authUser?.id,
+    staleTime: 5 * 60 * 1000,
   });
 
   const { data: likeData } = useLikeStatus(id, currentDbUser?.id || null);
@@ -127,6 +130,7 @@ export default function ProofCard({ proof, variant = 'dashboard' }: ProofCardPro
               fill
               className="object-cover"
               sizes="64px"
+              loading="lazy"
             />
           </div>
         )}
@@ -206,7 +210,7 @@ export default function ProofCard({ proof, variant = 'dashboard' }: ProofCardPro
               className="flex items-center gap-1 text-[11px] font-medium transition-colors"
               style={{ color: showComments ? 'var(--color-bloom)' : 'var(--color-text-tertiary)' }}
             >
-              💬 {comments?.length || 0}
+              <MessageCircle className="w-3 h-3" /> {comments?.length || 0}
             </button>
             {proof.sourceUrl && (
               <a
@@ -222,7 +226,9 @@ export default function ProofCard({ proof, variant = 'dashboard' }: ProofCardPro
               </a>
             )}
             <div className="flex items-center gap-2 ml-auto">
-              <ShareableProofCard proof={proof} />
+              <Suspense fallback={null}>
+                <ShareableProofCard proof={proof} />
+              </Suspense>
               <Link
                 href={`/dashboard/proof/${id}`}
                 className="text-xs font-semibold px-3 py-1.5 rounded-[var(--radius-md)] transition-all duration-200 hover:bg-[var(--color-surface-dim)]"
@@ -235,7 +241,7 @@ export default function ProofCard({ proof, variant = 'dashboard' }: ProofCardPro
         </div>
       </div>
 
-      {/* Comments section */}
+      {/* Comments section - lazy loaded */}
       {showComments && (
         <div className="mt-3 pt-3 border-t border-[var(--color-border)]">
           {comments && comments.length > 0 && (
@@ -283,3 +289,6 @@ export default function ProofCard({ proof, variant = 'dashboard' }: ProofCardPro
     </div>
   );
 }
+
+export const ProofCard = memo(ProofCardInner);
+export default ProofCard;

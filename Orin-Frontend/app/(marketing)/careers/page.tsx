@@ -1,4 +1,16 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
+
+export const metadata: Metadata = {
+  title: 'Careers - Join ORIN | Build Tools That Matter',
+  description: 'We are hiring across engineering, design, and growth. Remote-first team building tools that help students prove their skills.',
+  openGraph: {
+    title: 'Careers at ORIN',
+    description: 'Remote-first team building tools that help students prove their skills. Engineering, design, and growth roles open.',
+    url: 'https://orin-three.vercel.app/careers',
+  },
+  robots: { index: true, follow: true },
+};
 import { ArrowRight } from 'lucide-react';
 
 const openRoles = [

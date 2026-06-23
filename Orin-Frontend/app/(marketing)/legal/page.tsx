@@ -1,3 +1,16 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Legal Policies - Terms of Service & Privacy Policy | ORIN',
+  description: 'ORIN legal policies including Terms of Service, Privacy Policy, and Cookie Policy. Learn how we protect your data.',
+  openGraph: {
+    title: 'Legal Policies - ORIN',
+    description: 'ORIN legal policies including Terms of Service, Privacy Policy, and Cookie Policy.',
+    url: 'https://orin-three.vercel.app/legal',
+  },
+  robots: { index: true, follow: true },
+};
+
 const sections = [
   {
     title: 'Terms of Service',

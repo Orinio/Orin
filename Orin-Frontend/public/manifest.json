@@ -1,7 +1,7 @@
 {
-  "name": "ORIN — Career Proof Platform",
+  "name": "ORIN — Turn Work Into Career Proof",
   "short_name": "ORIN",
-  "description": "Turn your work into verified career proof. AI coach, proof cards, and real opportunities.",
+  "description": "Transform scattered projects, repos, and certificates into verified career proof. AI coach, proof cards, and real opportunities.",
   "start_url": "/dashboard",
   "display": "standalone",
   "background_color": "#F7F7F2",

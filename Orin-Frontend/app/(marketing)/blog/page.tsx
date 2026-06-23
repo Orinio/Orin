@@ -1,4 +1,16 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
+
+export const metadata: Metadata = {
+  title: 'Blog - ORIN Career Proof Platform',
+  description: 'Thoughts on career proof, AI coaching, and what it takes to stand out as a student. Insights from the Orin team.',
+  openGraph: {
+    title: 'Blog - ORIN',
+    description: 'Thoughts on career proof, AI coaching, and what it takes to stand out as a student.',
+    url: 'https://orin-three.vercel.app/blog',
+  },
+  robots: { index: true, follow: true },
+};
 import { ArrowRight } from 'lucide-react';
 
 const posts = [

@@ -24,9 +24,13 @@ const serif = Lora({
 });
 
 export const metadata: Metadata = {
-  title: "ORIN - Turn Work Into Career Proof",
+  title: {
+    default: 'ORIN - Turn Work Into Career Proof',
+    template: '%s | ORIN',
+  },
   description:
-    "Transform your scattered work into verified career proof. AI coach, proof cards, and real opportunities.",
+    'Transform scattered projects, repos, and certificates into verified career proof. AI coach, proof cards, and real opportunities.',
+  metadataBase: new URL('https://orin-three.vercel.app'),
   icons: {
     icon: [
       { url: '/favicon.png', sizes: '32x32', type: 'image/png' },
@@ -36,8 +40,17 @@ export const metadata: Metadata = {
     apple: '/logo.png',
   },
   openGraph: {
-    title: "ORIN - Turn Work Into Career Proof",
-    description: "Transform your scattered work into verified career proof. AI coach, proof cards, and real opportunities.",
+    title: 'ORIN - Turn Work Into Career Proof',
+    description: 'Transform scattered projects, repos, and certificates into verified career proof. AI coach, proof cards, and real opportunities.',
+    siteName: 'ORIN',
+    images: ['/logo.png'],
+    locale: 'en_US',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'ORIN - Turn Work Into Career Proof',
+    description: 'Transform scattered projects, repos, and certificates into verified career proof.',
     images: ['/logo.png'],
   },
   manifest: '/manifest.json',

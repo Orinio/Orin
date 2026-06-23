@@ -47,3 +47,4 @@ supabase/.temp/
 *.pdf
 screenshots/
 playwright-results.json
+Backend-server/.env.example

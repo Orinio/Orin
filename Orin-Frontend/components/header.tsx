@@ -71,7 +71,7 @@ export default function Navbar() {
             <Logo variant="full" size="lg" priority />
 
             {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center gap-0.5">
+            <nav className="hidden lg:flex items-center gap-0.5" aria-label="Main navigation">
               {mainLinks.map((link) => (
                 <Link
                   key={link.href}
@@ -230,7 +230,7 @@ export default function Navbar() {
             </div>
 
             {/* Mobile Links */}
-            <nav className="flex-1 overflow-y-auto px-4 py-6">
+            <nav className="flex-1 overflow-y-auto px-4 py-6" aria-label="Mobile navigation">
               <div className="space-y-1">
                 {mainLinks.map((link) => (
                   <Link

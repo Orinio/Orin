@@ -5,10 +5,14 @@ import { ArrowRight } from 'lucide-react';
 export const metadata: Metadata = {
   title: 'FAQ - ORIN Career Proof Platform',
   description: 'Frequently asked questions about ORIN. Learn about proof cards, verification, pricing, privacy, and how ORIN helps build your career.',
+  keywords: ['ORIN FAQ', 'proof cards FAQ', 'career proof questions', 'verification questions', 'pricing questions'],
   openGraph: {
     title: 'FAQ - ORIN Career Proof Platform',
     description: 'Frequently asked questions about ORIN. Learn about proof cards, verification, pricing, and privacy.',
     url: 'https://orin-three.vercel.app/faq',
+  },
+  alternates: {
+    canonical: 'https://orin-three.vercel.app/faq',
   },
 };
 
@@ -55,9 +59,26 @@ const faqs = [
   },
 ];
 
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faqs.map((faq) => ({
+    '@type': 'Question',
+    name: faq.q,
+    acceptedAnswer: {
+      '@type': 'Answer',
+      text: faq.a,
+    },
+  })),
+};
+
 export default function FAQPage() {
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
       {/* Hero */}
       <section
         className="relative overflow-hidden pt-28 pb-16 px-6"

@@ -5,10 +5,14 @@ import { ArrowRight } from 'lucide-react';
 export const metadata: Metadata = {
   title: 'Features - ORIN Career Proof Platform',
   description: 'Explore ORIN features: verifiable proof cards, AI career coaching, skill gap analysis, opportunity matching, and professional networking.',
+  keywords: ['proof cards', 'AI career coach', 'skill gap analysis', 'opportunity matching', 'career verification'],
   openGraph: {
     title: 'Features - ORIN Career Proof Platform',
     description: 'Explore ORIN features: verifiable proof cards, AI career coaching, skill gap analysis, opportunity matching.',
     url: 'https://orin-three.vercel.app/features',
+  },
+  alternates: {
+    canonical: 'https://orin-three.vercel.app/features',
   },
 };
 

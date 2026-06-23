@@ -1,0 +1,9 @@
+const webPush = require('web-push');
+
+const vapidKeys = webPush.generateVAPIDKeys();
+
+console.log('VAPID Keys Generated\n');
+console.log('Add these to your Backend-server/.env:\n');
+console.log(`VAPID_PUBLIC_KEY=${vapidKeys.publicKey}`);
+console.log(`VAPID_PRIVATE_KEY=${vapidKeys.privateKey}`);
+console.log(`VAPID_SUBJECT=mailto:admin@orin.app`);

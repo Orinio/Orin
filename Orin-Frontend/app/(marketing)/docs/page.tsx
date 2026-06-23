@@ -1,4 +1,16 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
+
+export const metadata: Metadata = {
+  title: 'Documentation - ORIN Career Proof Platform',
+  description: 'Everything you need to get the most out of Orin. Guides for proof cards, cloud connectors, AI coach, public profiles, and opportunities.',
+  openGraph: {
+    title: 'Documentation - ORIN',
+    description: 'Guides for proof cards, cloud connectors, AI coach, public profiles, and opportunities.',
+    url: 'https://orin-three.vercel.app/docs',
+  },
+  robots: { index: true, follow: true },
+};
 import { ArrowRight } from 'lucide-react';
 
 const sections = [

@@ -1,3 +1,16 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'System Status - ORIN',
+  description: 'Real-time status of all Orin services. Check uptime, incidents, and service health for the career proof platform.',
+  openGraph: {
+    title: 'System Status - ORIN',
+    description: 'Real-time status of all Orin services. Check uptime, incidents, and service health.',
+    url: 'https://orin-three.vercel.app/status',
+  },
+  robots: { index: true, follow: true },
+};
+
 const services = [
   { name: 'Web Application', status: 'operational', uptime: '99.98%' },
   { name: 'API', status: 'operational', uptime: '99.99%' },

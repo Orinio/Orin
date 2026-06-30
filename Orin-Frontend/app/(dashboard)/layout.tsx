@@ -47,7 +47,7 @@ export default function DashboardLayout({
           <Footer />
         </div>
         {/* Mobile bottom bar spacer */}
-        <div className="lg:hidden h-[76px]" />
+        <div className="lg:hidden h-[76px]" aria-hidden="true" />
         <CommandPalette open={cmdOpen} onClose={() => setCmdOpen(false)} />
         <PushNotificationBanner />
         <FeedbackWidget />

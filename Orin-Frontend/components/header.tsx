@@ -58,13 +58,9 @@ export default function Navbar() {
       <header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-out ${
           scrolled
-            ? 'bg-white/70 backdrop-blur-xl border-b border-white/20 shadow-[0_1px_3px_rgba(0,0,0,0.05),0_4px_12px_rgba(0,0,0,0.03)]'
+            ? 'bg-[var(--color-paper)] border-b border-[var(--color-border)] shadow-[0_1px_3px_rgba(0,0,0,0.04)]'
             : 'bg-transparent border-b border-transparent'
         }`}
-        style={{
-          WebkitBackdropFilter: scrolled ? 'blur(20px) saturate(180%)' : undefined,
-          backdropFilter: scrolled ? 'blur(20px) saturate(180%)' : undefined,
-        }}
       >
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
@@ -107,15 +103,11 @@ export default function Navbar() {
                 </button>
 
                 <div
-                  className={`absolute top-full right-0 mt-2.5 w-[280px] rounded-2xl shadow-[0_20px_60px_-12px_rgba(0,0,0,0.15)] ring-1 ring-black/[0.06] bg-white/90 backdrop-blur-xl py-2.5 transition-all duration-200 origin-top-right ${
+                  className={`absolute top-full right-0 mt-2.5 w-[280px] rounded-2xl shadow-[0_20px_60px_-12px_rgba(0,0,0,0.15)] ring-1 ring-black/[0.06] bg-white py-2.5 transition-all duration-200 origin-top-right ${
                     activeDropdown === 'resources'
                       ? 'opacity-100 visible scale-100'
                       : 'opacity-0 invisible scale-95'
                   }`}
-                  style={{
-                    WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-                    backdropFilter: 'blur(20px) saturate(180%)',
-                  }}
                   role="menu"
                   onMouseEnter={() => handleDropdownEnter('resources')}
                   onMouseLeave={handleDropdownLeave}
@@ -206,13 +198,9 @@ export default function Navbar() {
 
         {/* Panel */}
         <div
-          className={`absolute top-0 right-0 bottom-0 w-[min(85vw,360px)] bg-white/90 shadow-[-8px_0_30px_rgba(0,0,0,0.08)] transition-transform duration-300 ease-out ${
+          className={`absolute top-0 right-0 bottom-0 w-[min(85vw,360px)] bg-white shadow-[-8px_0_30px_rgba(0,0,0,0.08)] transition-transform duration-300 ease-out ${
             isOpen ? 'translate-x-0' : 'translate-x-full'
           }`}
-          style={{
-            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-            backdropFilter: 'blur(20px) saturate(180%)',
-          }}
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex flex-col h-full">

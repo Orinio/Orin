@@ -3,20 +3,23 @@
 
 @theme inline {
   --font-sans: var(--font-body);
-  --font-serif: var(--font-serif);
-  --color-ink: #000000;
-  --color-paper: #F7F7F2;
-  --color-mist: #CBD5E1;
-  --color-spark: #F4E409;
-  --color-pulse: #EE4266;
-  --color-ember: #F69226;
-  --color-bloom: #0BAB77;
-  --color-text-secondary: #0F172A;
-  --color-surface: #FFFFFF;
-  --color-surface-dim: #F1F5F9;
-  --color-border: #E2E8F0;
-  --color-border-strong: #CBD5E1;
-  --color-border-light: #E2E8F0;
+  --font-serif: var(--font-heading);
+  --font-mono: var(--font-mono);
+  --color-ink: var(--color-ink);
+  --color-paper: var(--color-paper);
+  --color-mist: var(--color-mist);
+  --color-spark: var(--color-spark);
+  --color-pulse: var(--color-pulse);
+  --color-ember: var(--color-ember);
+  --color-bloom: var(--color-bloom);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-text-tertiary: var(--color-text-tertiary);
+  --color-surface: var(--color-surface);
+  --color-surface-dim: var(--color-surface-dim);
+  --color-surface-hover: var(--color-surface-hover);
+  --color-border: var(--color-border);
+  --color-border-strong: var(--color-border-strong);
+  --color-danger: var(--color-danger);
 }
 
 /* ═══════════════════════════════════════════
@@ -84,9 +87,13 @@ img, svg, video {
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-spark);
+  outline: 2px solid var(--color-ink);
   outline-offset: 3px;
   border-radius: 4px;
+}
+
+.dark :focus-visible {
+  outline-color: var(--color-paper);
 }
 
 /* ═══════════════════════════════════════════
@@ -256,13 +263,11 @@ img, svg, video {
 .animate-float { animation: float 4s ease-in-out infinite; }
 .animate-float-slow { animation: floatSlow 6s ease-in-out infinite; }
 .animate-float-slower { animation: floatSlower 8s ease-in-out infinite; }
-.animate-floatSlower { animation: floatSlower 8s ease-in-out infinite; }
 
 .animate-pulseDot { animation: pulseDot 1.8s ease-in-out infinite; }
 .animate-pulse-soft { animation: pulseSoft 3s ease-in-out infinite; }
 .animate-pulse-slow { animation: pulseSlow 6s ease-in-out infinite; }
 .animate-pulse-slower { animation: pulseSlow 9s ease-in-out infinite; }
-.animate-pulseSlower { animation: pulseSlow 9s ease-in-out infinite; }
 
 .animate-glow { animation: glowPulse 3.5s ease-in-out infinite; }
 .animate-pop-in { animation: popIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }

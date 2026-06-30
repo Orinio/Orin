@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { supabase } from '../lib/supabase.js';
 import { logger } from '../lib/logger.js';
 import { encryptToken, decryptToken } from '../lib/token-crypto.js';
+import { triggerManualSync } from '../lib/cron.js';
 
 export const integrationsRouter = Router();
 
@@ -300,6 +301,38 @@ integrationsRouter.post('/:provider/import', async (req, res) => {
     res.json({ success: true, data: { imported, count: imported.length } });
   } catch (err) {
     logger.error({ err }, 'Integration import error');
+    res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } });
+  }
+});
+
+/**
+ * POST /integrations/sync-all
+ * Trigger manual sync for all connected GitHub users (admin only).
+ */
+integrationsRouter.post('/sync-all', async (req, res) => {
+  try {
+    const authUserId = req.user?.id;
+    if (!authUserId) {
+      res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } });
+      return;
+    }
+
+    // Check admin role
+    const { data: user } = await supabase
+      .from('users')
+      .select('role')
+      .eq('auth_user_id', authUserId)
+      .maybeSingle();
+
+    if (user?.role !== 'admin') {
+      res.status(403).json({ error: { code: 'FORBIDDEN', message: 'Admin access required' } });
+      return;
+    }
+
+    const result = await triggerManualSync();
+    res.json({ success: true, data: result });
+  } catch (err) {
+    logger.error({ err }, 'Manual sync trigger error');
     res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } });
   }
 });

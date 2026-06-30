@@ -103,6 +103,12 @@ export interface Proof {
   metadata: Record<string, unknown>;
   createdAt: Date;
   updatedAt: Date;
+  // ProofChain fields
+  contentHash?: string;
+  trustTier?: 'none' | 'bronze' | 'silver' | 'gold';
+  chainVersion?: number;
+  verificationCount?: number;
+  lastVerifiedAt?: Date;
 }
 
 export interface ProofSource {

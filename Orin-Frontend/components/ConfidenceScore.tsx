@@ -85,7 +85,15 @@ export function ConfidenceCard({ score, showDetails = false }: ConfidenceScorePr
       </div>
 
       {/* Progress bar */}
-      <div className="mt-4 h-2 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--color-border)' }}>
+      <div
+        className="mt-4 h-2 rounded-full overflow-hidden"
+        style={{ backgroundColor: 'var(--color-border)' }}
+        role="progressbar"
+        aria-valuenow={score}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label={`Confidence score: ${score}%`}
+      >
         <motion.div
           className="h-full rounded-full"
           style={{ backgroundColor: color }}

@@ -13,35 +13,18 @@ export default function Hero() {
     offset: ['start start', 'end start'],
   });
 
-  const y = useTransform(scrollYProgress, [0, 1], ['0%', '30%']);
   const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
-  const scale = useTransform(scrollYProgress, [0, 1], [1, 0.9]);
+  const scale = useTransform(scrollYProgress, [0, 1], [1, 0.95]);
 
   return (
     <section
       ref={sectionRef}
-      className="relative min-h-[90vh] pt-32 pb-24 px-6 overflow-hidden grain-overlay flex items-center"
+      className="relative min-h-[90vh] pt-28 pb-20 px-6 overflow-hidden flex items-center"
       style={{ backgroundColor: 'var(--color-paper)' }}
     >
-      {/* Ambient orbs with parallax */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <motion.div
-          className="absolute top-20 -left-20 w-[500px] h-[500px] rounded-full blur-[100px] opacity-[0.06]"
-          style={{ backgroundColor: 'var(--color-spark)', y }}
-        />
-        <motion.div
-          className="absolute -bottom-20 -right-20 w-[600px] h-[600px] rounded-full blur-[120px] opacity-[0.04]"
-          style={{ backgroundColor: 'var(--color-ember)', y: useTransform(scrollYProgress, [0, 1], ['0%', '15%']) }}
-        />
-        <motion.div
-          className="absolute top-1/3 left-1/3 w-[400px] h-[400px] rounded-full blur-[80px] opacity-[0.03]"
-          style={{ backgroundColor: 'var(--color-bloom)', y: useTransform(scrollYProgress, [0, 1], ['0%', '20%']) }}
-        />
-      </div>
-
       {/* Subtle grid pattern */}
       <div
-        className="absolute inset-0 pointer-events-none opacity-[0.025]"
+        className="absolute inset-0 pointer-events-none opacity-[0.03]"
         style={{
           backgroundImage: `linear-gradient(var(--color-ink) 1px, transparent 1px), linear-gradient(90deg, var(--color-ink) 1px, transparent 1px)`,
           backgroundSize: '60px 60px',
@@ -55,7 +38,12 @@ export default function Hero() {
         {/* Left: Copy */}
         <div className="order-1">
           <ScrollReveal direction="up" delay={0}>
-            <div className="badge-spark mb-6">Get Hired For What You Built</div>
+            <span
+              className="inline-block text-[11px] font-bold uppercase tracking-[0.08em] px-3 py-1.5 rounded-full mb-6"
+              style={{ backgroundColor: 'var(--color-spark)', color: 'var(--color-ink)' }}
+            >
+              Career proof for builders
+            </span>
           </ScrollReveal>
 
           <h1
@@ -63,69 +51,58 @@ export default function Hero() {
             style={{ color: 'var(--color-ink)' }}
           >
             <ScrollReveal direction="up" delay={0.05} duration={0.8}>
-              <span className="block">Get hired for what</span>
+              <span className="block">Stop collecting</span>
             </ScrollReveal>
             <ScrollReveal direction="up" delay={0.12} duration={0.8}>
-              <span className="block">you've actually</span>
+              <span className="block">certificates.</span>
             </ScrollReveal>
             <ScrollReveal direction="up" delay={0.2} duration={0.8}>
               <span className="relative inline-block">
-                <span className="gradient-text-ember">built</span>
-                <span
-                  aria-hidden="true"
-                  className="absolute -bottom-1 left-0 w-full h-3 -z-10 rounded-sm"
-                  style={{ backgroundColor: 'var(--color-spark)', opacity: 0.4 }}
-                />
+                <span className="gradient-text-ember">Start getting hired</span>
               </span>
+            </ScrollReveal>
+            <ScrollReveal direction="up" delay={0.28} duration={0.8}>
+              <span className="block">for what you built.</span>
             </ScrollReveal>
           </h1>
 
-          <ScrollReveal direction="up" delay={0.3} duration={0.7}>
+          <ScrollReveal direction="up" delay={0.35} duration={0.7}>
             <p
               className="text-lg mb-8 leading-relaxed max-w-lg"
               style={{ color: 'var(--color-text-secondary)' }}
             >
-              You've built real projects on GitHub, won competitions, earned certificates. Recruiters can't see any of it. ORIN turns your work into verified proof they can actually trust — and tells you exactly what to build next.
+              Six repos. Three PDFs. A Kaggle notebook you forgot about.
+              ORIN turns your scattered work into verified proof recruiters
+              actually trust — and tells you what to build next.
             </p>
           </ScrollReveal>
 
-          <ScrollReveal direction="up" delay={0.4} duration={0.7}>
-            <div className="flex gap-4 flex-wrap mb-8">
-              <Link href="/signup" className="btn-primary text-base shine-wrap">
+          <ScrollReveal direction="up" delay={0.45} duration={0.7}>
+            <div className="flex gap-4 flex-wrap">
+              <Link
+                href="/signup"
+                className="inline-flex items-center justify-center gap-2 font-semibold px-6 py-3 rounded-[var(--radius-md)] text-base transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-0.5 active:scale-[0.98]"
+                style={{
+                  backgroundColor: 'var(--color-pulse)',
+                  color: '#FFFFFF',
+                  boxShadow: 'var(--shadow-colored-pulse)',
+                }}
+              >
                 Start Building Proof — Free
               </Link>
-              <Link href="/demo" className="btn-outline text-base group">
-                <span className="flex items-center gap-2">
-                  <svg className="w-4 h-4 transition-transform group-hover:scale-110" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M8 5v14l11-7z"/>
-                  </svg>
-                  Try Instant Demo
-                </span>
+              <Link
+                href="/demo"
+                className="inline-flex items-center justify-center gap-2 font-semibold px-6 py-3 rounded-[var(--radius-md)] text-base border-2 transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-0.5 active:scale-[0.98]"
+                style={{
+                  borderColor: 'var(--color-border-strong)',
+                  color: 'var(--color-ink)',
+                }}
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M8 5v14l11-7z"/>
+                </svg>
+                Try Instant Demo
               </Link>
-            </div>
-          </ScrollReveal>
-
-          <ScrollReveal direction="up" delay={0.5} duration={0.7}>
-            <div className="flex items-center gap-6 flex-wrap">
-              {[
-                'Free forever tier',
-                'No card needed',
-                '5,000+ active students',
-              ].map((text) => (
-                <span
-                  key={text}
-                  className="flex items-center gap-2 text-sm"
-                  style={{ color: 'var(--color-text-secondary)' }}
-                >
-                  <span
-                    className="flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold"
-                    style={{ backgroundColor: 'var(--color-bloom)', color: '#fff' }}
-                  >
-                    ✓
-                  </span>
-                  {text}
-                </span>
-              ))}
             </div>
           </ScrollReveal>
         </div>
@@ -133,26 +110,6 @@ export default function Hero() {
         <div className="order-2">
           <PhoneMockup />
         </div>
-      </motion.div>
-
-      {/* Scroll indicator */}
-      <motion.div
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1.2, duration: 0.6 }}
-      >
-        <span className="text-xs font-medium tracking-widest uppercase" style={{ color: 'var(--color-text-secondary)', opacity: 0.4 }}>
-          Scroll
-        </span>
-        <motion.div
-          className="w-5 h-8 rounded-full border-2 flex items-start justify-center pt-1.5"
-          style={{ borderColor: 'var(--color-border-strong)', opacity: 0.4 }}
-          animate={{ y: [0, 4, 0] }}
-          transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-        >
-          <div className="w-1 h-1.5 rounded-full" style={{ backgroundColor: 'var(--color-ink)', opacity: 0.3 }} />
-        </motion.div>
       </motion.div>
     </section>
   );

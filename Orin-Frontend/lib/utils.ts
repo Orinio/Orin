@@ -86,6 +86,12 @@ export function mapDbProofToProof(db: DbProof): Proof {
     metadata: db.metadata || {},
     createdAt: new Date(db.created_at),
     updatedAt: new Date(db.updated_at),
+    // ProofChain fields (may not exist in DB yet)
+    contentHash: (db as any).content_hash ?? undefined,
+    trustTier: (db as any).trust_tier ?? 'none',
+    chainVersion: (db as any).chain_version ?? undefined,
+    verificationCount: (db as any).verification_count ?? undefined,
+    lastVerifiedAt: (db as any).last_verified_at ? new Date((db as any).last_verified_at) : undefined,
   };
 }
 

@@ -1,11 +1,13 @@
 'use client';
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { useProof } from "@/lib/queries";
 import { getStatusConfig, formatNumber, formatRelativeTime, getProofTypeColor } from "@/lib/utils";
-import { Sparkles, RefreshCw, AlertCircle } from "lucide-react";
+import { Sparkles, RefreshCw, AlertCircle, Shield, Link2, Clock } from "lucide-react";
+import TrustTierBadge from "@/components/TrustTierBadge";
+import { QRCodeSVG } from "qrcode.react";
 
 interface StatusConfig {
   label: string;
@@ -18,6 +20,15 @@ interface AIAnalysis {
   tokensUsed: number;
 }
 
+interface ChainEvent {
+  id: string;
+  eventType: string;
+  contentHash: string;
+  previousHash: string | null;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+}
+
 export default function ProofDetailPage() {
   const params = useParams();
   const id = params.id as string;
@@ -26,6 +37,8 @@ export default function ProofDetailPage() {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
   const [shareStatus, setShareStatus] = useState<'idle' | 'sharing' | 'done' | 'error'>('idle');
+  const [chainEvents, setChainEvents] = useState<ChainEvent[]>([]);
+  const [chainLoading, setChainLoading] = useState(false);
 
   const handleShare = async () => {
     if (!proof) return;
@@ -50,6 +63,21 @@ export default function ProofDetailPage() {
       setTimeout(() => setShareStatus('idle'), 2000);
     }
   };
+
+  // Fetch chain events
+  useEffect(() => {
+    if (!id) return;
+    setChainLoading(true);
+    fetch(`/api/proof/chain/${id}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.data?.events) {
+          setChainEvents(data.data.events);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setChainLoading(false));
+  }, [id]);
 
   if (loading) {
     return (
@@ -219,6 +247,7 @@ export default function ProofDetailPage() {
           <span className={`rounded-full px-2 py-1 text-xs font-medium ${statusConfig.className}`}>
             {statusConfig.label}
           </span>
+          <TrustTierBadge tier={proof.trustTier || 'none'} size="sm" />
           <span>&middot; {formatNumber(proof.viewCount)} views</span>
           <span>&middot; Updated {formatRelativeTime(proof.updatedAt)}</span>
           {proof.visibility === 'public' && (
@@ -371,6 +400,65 @@ export default function ProofDetailPage() {
             {!aiAnalysis && !aiLoading && !aiError && (
               <p className="mt-3 text-xs text-[var(--color-neutral-text-tertiary)]">
                 Get AI-powered feedback on your proof quality, description, and skills.
+              </p>
+            )}
+          </div>
+
+          {/* Verification Chain Timeline */}
+          <div className="rounded-lg border border-[var(--color-neutral-border)] bg-[var(--color-neutral-surface)] p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold font-serif">Verification Chain</h2>
+              {chainLoading && <RefreshCw className="h-3 w-3 animate-spin text-[var(--color-neutral-text-tertiary)]" />}
+            </div>
+
+            {proof.contentHash && (
+              <div className="mb-4 rounded-lg bg-[var(--color-neutral-bg)] p-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <Link2 className="h-3 w-3 text-[var(--color-neutral-text-tertiary)]" />
+                  <span className="text-xs font-medium text-[var(--color-neutral-text-secondary)]">Content Hash</span>
+                </div>
+                <p className="text-[11px] font-mono text-[var(--color-neutral-text-tertiary)] break-all">
+                  sha256:{proof.contentHash}
+                </p>
+                <div className="mt-3 flex justify-center">
+                  <QRCodeSVG
+                    value={`${window.location.origin}/verify/${proof.contentHash}`}
+                    size={80}
+                    bgColor="transparent"
+                    fgColor="var(--color-primary-emerald)"
+                    level="M"
+                  />
+                </div>
+              </div>
+            )}
+
+            {chainEvents.length > 0 ? (
+              <div className="space-y-3">
+                {chainEvents.map((event, index) => (
+                  <div key={event.id} className="flex gap-3">
+                    <div className="flex flex-col items-center">
+                      <div className={`h-2.5 w-2.5 rounded-full ${index === chainEvents.length - 1 ? 'bg-[var(--color-primary-emerald)]' : 'bg-[var(--color-neutral-border)]'}`} />
+                      {index < chainEvents.length - 1 && (
+                        <div className="w-px flex-1 bg-[var(--color-neutral-border)]" />
+                      )}
+                    </div>
+                    <div className="pb-3">
+                      <p className="text-xs font-medium text-[var(--color-neutral-text)]">
+                        {event.eventType.charAt(0).toUpperCase() + event.eventType.slice(1)}
+                      </p>
+                      <p className="text-[10px] text-[var(--color-neutral-text-tertiary)] mt-0.5">
+                        {new Date(event.createdAt).toLocaleString()}
+                      </p>
+                      <p className="text-[10px] font-mono text-[var(--color-neutral-text-tertiary)] mt-0.5">
+                        {event.contentHash}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-[var(--color-neutral-text-tertiary)]">
+                No chain events recorded yet.
               </p>
             )}
           </div>

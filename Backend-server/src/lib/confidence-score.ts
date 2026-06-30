@@ -12,6 +12,11 @@ export interface ConfidenceFactors {
   proofAge: number; // days since creation
   viewCount: number;
   shareCount: number;
+  // ProofChain additions
+  hasContentHash?: boolean;
+  isSigned?: boolean;
+  trustTier?: 'none' | 'bronze' | 'silver' | 'gold';
+  chainValid?: boolean;
 }
 
 export interface ConfidenceScore {
@@ -86,6 +91,27 @@ export function calculateConfidenceScore(factors: ConfidenceFactors): Confidence
     score += 1;
   }
 
+  // 8. Chain integrity (0-15 points)
+  if (factors.chainValid) {
+    score += 10;
+  } else if (factors.hasContentHash) {
+    score += 5;
+  }
+
+  // 9. Trust tier bonus (0-15 points)
+  if (factors.trustTier === 'gold') {
+    score += 15;
+  } else if (factors.trustTier === 'silver') {
+    score += 10;
+  } else if (factors.trustTier === 'bronze') {
+    score += 5;
+  }
+
+  // 10. Signature (0-5 points)
+  if (factors.isSigned) {
+    score += 5;
+  }
+
   // Cap at 100
   score = Math.min(100, score);
 
@@ -130,6 +156,31 @@ export function calculateConfidenceScore(factors: ConfidenceFactors): Confidence
       name: 'Recency',
       impact: factors.proofAge <= 30 ? 5 : factors.proofAge <= 90 ? 3 : 0,
       description: factors.proofAge <= 30 ? 'Created within 30 days' : `${factors.proofAge} days old`,
+    },
+    {
+      name: 'Chain Integrity',
+      impact: factors.chainValid ? 10 : factors.hasContentHash ? 5 : 0,
+      description: factors.chainValid
+        ? 'Cryptographic chain is valid'
+        : factors.hasContentHash
+          ? 'Content hash present but chain not verified'
+          : 'No chain integrity',
+    },
+    {
+      name: 'Trust Tier',
+      impact: factors.trustTier === 'gold' ? 15 : factors.trustTier === 'silver' ? 10 : factors.trustTier === 'bronze' ? 5 : 0,
+      description: factors.trustTier === 'gold'
+        ? 'Gold: Cryptographically proven'
+        : factors.trustTier === 'silver'
+          ? 'Silver: AI analyzed'
+          : factors.trustTier === 'bronze'
+            ? 'Bronze: Source verified'
+            : 'No trust tier',
+    },
+    {
+      name: 'Digital Signature',
+      impact: factors.isSigned ? 5 : 0,
+      description: factors.isSigned ? 'Proof is digitally signed' : 'No digital signature',
     },
   ];
 

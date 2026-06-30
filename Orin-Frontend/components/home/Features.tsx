@@ -4,41 +4,6 @@ import { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
 import ScrollReveal from './ScrollReveal';
 
-function TiltCard({ children, className = '' }: { children: React.ReactNode; className?: string }) {
-  const cardRef = useRef<HTMLDivElement>(null);
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const card = cardRef.current;
-    if (!card) return;
-    const rect = card.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-    const rotateX = ((y - centerY) / centerY) * -6;
-    const rotateY = ((x - centerX) / centerX) * 6;
-    card.style.transform = `perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
-  };
-
-  const handleMouseLeave = () => {
-    if (cardRef.current) {
-      cardRef.current.style.transform = 'perspective(800px) rotateX(0) rotateY(0) scale3d(1, 1, 1)';
-    }
-  };
-
-  return (
-    <div
-      ref={cardRef}
-      className={className}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      style={{ transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)', willChange: 'transform' }}
-    >
-      {children}
-    </div>
-  );
-}
-
 const features = [
   {
     icon: (
@@ -101,7 +66,7 @@ const features = [
       </svg>
     ),
     title: 'Skill Gap Engine',
-    desc: "Pick a target role. See exactly what you're missing. Get a 2-week action plan: Ship one deployed project this week and you're 90% ready.",
+    desc: "Pick a target role. See exactly what you're missing. Get a 2-week action plan.",
     gradient: 'linear-gradient(135deg, var(--color-spark) 0%, #d69e2e 100%)',
     span: 'sm:col-span-2',
   },
@@ -123,58 +88,56 @@ export default function Features() {
   const isInView = useInView(ref, { once: true, amount: 0.2 });
 
   return (
-    <section id="features" className="py-32 px-6 relative overflow-hidden grain-overlay" style={{ backgroundColor: 'var(--color-paper)' }}>
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/4 left-1/3 w-96 h-96 rounded-full blur-3xl opacity-[0.03]" style={{ backgroundColor: 'var(--color-bloom)' }} />
-        <div className="absolute bottom-1/3 right-1/4 w-80 h-80 rounded-full blur-3xl opacity-[0.02]" style={{ backgroundColor: 'var(--color-pulse)' }} />
-      </div>
-
-      <div className="max-w-6xl mx-auto text-center mb-20 relative z-10">
+    <section id="features" className="py-24 px-6 relative" style={{ backgroundColor: 'var(--color-paper)' }}>
+      <div className="max-w-6xl mx-auto text-center mb-16">
         <ScrollReveal direction="up" delay={0}>
-          <div className="badge-bloom mb-6">Features</div>
+          <span
+            className="inline-block text-[11px] font-bold uppercase tracking-[0.08em] px-3 py-1.5 rounded-full mb-6"
+            style={{ backgroundColor: 'var(--color-bloom)', color: '#FFFFFF' }}
+          >
+            Features
+          </span>
         </ScrollReveal>
         <ScrollReveal direction="up" delay={0.1}>
-          <h2 className="text-4xl md:text-6xl font-bold tracking-tight mb-5" style={{ color: 'var(--color-ink)' }}>
+          <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-5" style={{ color: 'var(--color-ink)' }}>
             Everything you need to{' '}
             <span className="gradient-text-bloom">get hired</span>
           </h2>
         </ScrollReveal>
         <ScrollReveal direction="up" delay={0.2}>
-          <p className="text-lg md:text-xl max-w-2xl mx-auto leading-relaxed" style={{ color: 'var(--color-text-secondary)', opacity: 0.7 }}>
+          <p className="text-lg max-w-2xl mx-auto leading-relaxed" style={{ color: 'var(--color-text-secondary)', opacity: 0.7 }}>
             No more sending resumes into the void. One link. Verified proof from real work. Jobs that actually match your skills.
           </p>
         </ScrollReveal>
       </div>
 
-      <div ref={ref} className="max-w-6xl mx-auto grid sm:grid-cols-2 gap-5 relative z-10">
+      <div ref={ref} className="max-w-6xl mx-auto grid sm:grid-cols-2 gap-4">
         {features.map((feature, i) => (
           <motion.div
             key={feature.title}
             className={feature.span || ''}
-            initial={{ opacity: 0, y: 50 }}
+            initial={{ opacity: 0, y: 40 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{
-              duration: 0.7,
+              duration: 0.6,
               delay: 0.05 + i * 0.08,
               ease: [0.16, 1, 0.3, 1],
             }}
           >
-            <TiltCard>
-              <div className="card-base p-8 h-full group glow-border card-accent-bottom">
-                <div
-                  className="w-14 h-14 rounded-[var(--radius-xl)] flex items-center justify-center mb-5 shadow-lg transition-all duration-500 group-hover:scale-110 group-hover:shadow-xl"
-                  style={{ background: feature.gradient, color: '#fff' }}
-                >
-                  {feature.icon}
-                </div>
-                <h3 className="text-xl font-bold mb-3" style={{ color: 'var(--color-ink)' }}>
-                  {feature.title}
-                </h3>
-                <p className="text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)', opacity: 0.8 }}>
-                  {feature.desc}
-                </p>
+            <div className="card-base p-6 h-full">
+              <div
+                className="w-12 h-12 rounded-[var(--radius-lg)] flex items-center justify-center mb-4"
+                style={{ background: feature.gradient, color: '#fff' }}
+              >
+                {feature.icon}
               </div>
-            </TiltCard>
+              <h3 className="text-lg font-bold mb-2" style={{ color: 'var(--color-ink)' }}>
+                {feature.title}
+              </h3>
+              <p className="text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)', opacity: 0.8 }}>
+                {feature.desc}
+              </p>
+            </div>
           </motion.div>
         ))}
       </div>

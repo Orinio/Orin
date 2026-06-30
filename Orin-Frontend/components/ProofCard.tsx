@@ -15,8 +15,10 @@ import {
   MessageCircle,
 } from 'lucide-react';
 import TypeBadge from './TypeBadge';
+import TrustTierBadge, { TrustTierIndicator } from './TrustTierBadge';
 import Image from 'next/image';
 import { useLikeStatus, useToggleLike, useComments, useAddComment } from '@/lib/social';
+import type { Comment } from '@/lib/social';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
 import { useQuery } from '@tanstack/react-query';
@@ -66,6 +68,7 @@ function ProofCardInner({ proof, variant = 'dashboard' }: ProofCardProps) {
     whatItProves,
     thumbnailUrl,
     isHighlighted,
+    trustTier = 'none',
   } = proof;
 
   const { user: authUser } = useAuth();
@@ -147,6 +150,7 @@ function ProofCardInner({ proof, variant = 'dashboard' }: ProofCardProps) {
                   {status.icon}
                   {status.label}
                 </span>
+                <TrustTierIndicator tier={trustTier} />
               </div>
             </div>
           </div>
@@ -202,6 +206,7 @@ function ProofCardInner({ proof, variant = 'dashboard' }: ProofCardProps) {
               disabled={toggleLike.isPending}
               className="flex items-center gap-1 text-[11px] font-medium transition-colors"
               style={{ color: likeData?.hasLiked ? 'var(--color-pulse)' : 'var(--color-text-tertiary)' }}
+              aria-label={likeData?.hasLiked ? 'Unlike' : 'Like'}
             >
               {likeData?.hasLiked ? '❤️' : '🤍'} {likeData?.likeCount || 0}
             </button>
@@ -209,6 +214,8 @@ function ProofCardInner({ proof, variant = 'dashboard' }: ProofCardProps) {
               onClick={() => setShowComments(!showComments)}
               className="flex items-center gap-1 text-[11px] font-medium transition-colors"
               style={{ color: showComments ? 'var(--color-bloom)' : 'var(--color-text-tertiary)' }}
+              aria-label={`${showComments ? 'Hide' : 'Show'} comments (${comments?.length || 0})`}
+              aria-expanded={showComments}
             >
               <MessageCircle className="w-3 h-3" /> {comments?.length || 0}
             </button>
@@ -246,7 +253,7 @@ function ProofCardInner({ proof, variant = 'dashboard' }: ProofCardProps) {
         <div className="mt-3 pt-3 border-t border-[var(--color-border)]">
           {comments && comments.length > 0 && (
             <div className="space-y-2 mb-3 max-h-40 overflow-y-auto">
-              {comments.map((comment: any) => (
+              {comments.map((comment: Comment) => (
                 <div key={comment.id} className="flex gap-2">
                   <div className="h-6 w-6 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0" style={{ backgroundColor: 'var(--color-surface-dim)', color: 'var(--color-text-secondary)' }}>
                     {(comment.users?.full_name || comment.users?.username)?.[0]?.toUpperCase() || '?'}
@@ -274,12 +281,14 @@ function ProofCardInner({ proof, variant = 'dashboard' }: ProofCardProps) {
               placeholder="Write a comment..."
               className="flex-1 rounded-lg border bg-[var(--color-surface)] px-3 py-1.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-[var(--color-bloom)]/30"
               style={{ borderColor: 'var(--color-border)' }}
+              aria-label="Add a comment"
             />
             <button
               onClick={handleComment}
               disabled={!commentText.trim() || addComment.isPending}
               className="rounded-lg px-3 py-1.5 text-[11px] font-semibold text-white transition-colors disabled:opacity-50"
               style={{ backgroundColor: 'var(--color-bloom)' }}
+              aria-label="Post comment"
             >
               Post
             </button>

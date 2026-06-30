@@ -23,8 +23,8 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
           variant === 'accent-pulse' && 'border-l-4 border-[var(--color-pulse)]',
           variant === 'accent-bloom' && 'border-l-4 border-[var(--color-bloom)]',
           variant === 'accent-spark' && 'border-l-4 border-[var(--color-spark)]',
-          hover && variant === 'default' && 'hover:shadow-[var(--shadow-lg)] hover:-translate-y-0.5',
-          hover && variant === 'premium' && 'hover:shadow-[var(--shadow-xl)] hover:-translate-y-0.5',
+          hover && variant === 'default' && 'hover:shadow-[var(--shadow-lg)] hover:-translate-y-0.5 hover:border-[var(--color-border-strong)]',
+          hover && variant === 'premium' && 'hover:shadow-[var(--shadow-xl)] hover:-translate-y-1',
           className
         )}
         {...props}

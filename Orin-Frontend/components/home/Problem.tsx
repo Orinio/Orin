@@ -51,39 +51,34 @@ export default function Problem() {
   const isInView = useInView(ref, { once: true, amount: 0.2 });
 
   return (
-    <section className="py-32 px-6 relative overflow-hidden grain-overlay" style={{ backgroundColor: 'var(--color-surface)' }}>
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/3 left-1/4 w-96 h-96 rounded-full blur-3xl opacity-[0.04]" style={{ backgroundColor: 'var(--color-pulse)' }} />
-        <div className="absolute bottom-1/4 right-1/3 w-80 h-80 rounded-full blur-3xl opacity-[0.03]" style={{ backgroundColor: 'var(--color-ember)' }} />
-      </div>
-
+    <section className="py-24 px-6 relative" style={{ backgroundColor: 'var(--color-surface)' }}>
       <div className="max-w-6xl mx-auto relative z-10">
         <div className="grid md:grid-cols-2 gap-16 items-start">
           {/* Left */}
           <div>
             <ScrollReveal direction="up" delay={0}>
-              <div className="badge-pulse mb-6">The Problem</div>
+              <span
+                className="inline-block text-[11px] font-bold uppercase tracking-[0.08em] px-3 py-1.5 rounded-full mb-6"
+                style={{ backgroundColor: 'var(--color-pulse)', color: '#FFFFFF' }}
+              >
+                The Problem
+              </span>
             </ScrollReveal>
             <ScrollReveal direction="up" delay={0.1}>
-              <h2 className="text-4xl md:text-6xl font-bold mb-6 leading-tight tracking-tight" style={{ color: 'var(--color-ink)' }}>
+              <h2 className="text-4xl md:text-5xl font-bold mb-6 leading-tight tracking-tight" style={{ color: 'var(--color-ink)' }}>
                 You built a lot.<br />
-                <span className="gradient-text-ember">Recruiters can't see it.</span>
+                <span className="gradient-text-ember">Recruiters can&apos;t see it.</span>
               </h2>
             </ScrollReveal>
             <ScrollReveal direction="up" delay={0.2}>
-              <p className="text-lg md:text-xl leading-relaxed max-w-md" style={{ color: 'var(--color-text-secondary)', opacity: 0.7 }}>
-                You've shipped code, won competitions, earned certificates. But recruiters see none of it — just a PDF resume that says "proficient in Python." Says who? Your proof is scattered. None of it connects. None of it gets you hired.
+              <p className="text-lg leading-relaxed max-w-md" style={{ color: 'var(--color-text-secondary)', opacity: 0.7 }}>
+                You&apos;ve shipped code, won competitions, earned certificates. But recruiters see none of it — just a PDF resume that says &quot;proficient in Python.&quot; Says who?
               </p>
-            </ScrollReveal>
-
-            {/* Decorative line */}
-            <ScrollReveal direction="up" delay={0.35}>
-              <div className="line-reveal mt-10" />
             </ScrollReveal>
           </div>
 
           {/* Right: Pain points */}
-          <div className="space-y-5" ref={ref}>
+          <div className="space-y-4" ref={ref}>
             {painPoints.map((point, i) => (
               <motion.div
                 key={point.title}
@@ -95,15 +90,15 @@ export default function Problem() {
                   ease: [0.16, 1, 0.3, 1],
                 }}
               >
-                <div className={`card-base ${point.accent} p-6 flex items-start gap-4 glow-border hover-lift`}>
+                <div className={`card-base ${point.accent} p-5 flex items-start gap-4`}>
                   <div
-                    className="w-12 h-12 rounded-[var(--radius-lg)] flex items-center justify-center flex-shrink-0 shadow-md transition-transform duration-500 hover:scale-110"
+                    className="w-10 h-10 rounded-[var(--radius-md)] flex items-center justify-center flex-shrink-0"
                     style={{ background: point.gradient, color: '#fff' }}
                   >
                     {point.icon}
                   </div>
                   <div>
-                    <h3 className="font-bold mb-1 text-lg" style={{ color: 'var(--color-ink)' }}>
+                    <h3 className="font-bold mb-1" style={{ color: 'var(--color-ink)' }}>
                       {point.title}
                     </h3>
                     <p className="text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)', opacity: 0.8 }}>

@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { mapDbProofToProof, getProofTypeColor } from '@/lib/utils';
+import { QRCodeSVG } from 'qrcode.react';
 
 interface EmbedProofPageProps {
   params: Promise<{ id: string }>;
@@ -54,6 +55,10 @@ export default async function EmbedProofPage({ params, searchParams }: EmbedProo
   const proof = mapDbProofToProof(proofData);
   const user = proofData.users as any;
   const color = getProofTypeColor(proof.sourceType);
+  const contentHash = (proofData as any).content_hash;
+  const trustTier = (proofData as any).trust_tier || 'none';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://orin.app';
+  const verifyUrl = contentHash ? `${baseUrl}/verify/${contentHash}` : undefined;
 
   const sourceTypeLabels: Record<string, string> = {
     github: 'GitHub',
@@ -248,18 +253,47 @@ export default async function EmbedProofPage({ params, searchParams }: EmbedProo
             alignItems: 'center',
             justifyContent: 'space-between',
           }}>
-            <span style={{
-              fontSize: '11px',
-              color: isDark ? '#6060a0' : '#9ca3af',
-            }}>
-              orin.app/{user?.username}
-            </span>
-            <span style={{
-              fontSize: '11px',
-              color: isDark ? '#6060a0' : '#9ca3af',
-            }}>
-              Built with Orin
-            </span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <span style={{
+                fontSize: '11px',
+                color: isDark ? '#6060a0' : '#9ca3af',
+              }}>
+                orin.app/{user?.username}
+              </span>
+              {contentHash && (
+                <span style={{
+                  fontSize: '9px',
+                  fontFamily: 'monospace',
+                  color: isDark ? '#4040a0' : '#b0b0b0',
+                }}>
+                  sha256:{contentHash.slice(0, 16)}...
+                </span>
+              )}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              {verifyUrl && (
+                <div style={{
+                  padding: '4px',
+                  backgroundColor: '#ffffff',
+                  borderRadius: '6px',
+                  border: `1px solid ${isDark ? '#2a2a4a' : '#e5e7eb'}`,
+                }}>
+                  <QRCodeSVG
+                    value={verifyUrl}
+                    size={40}
+                    bgColor="#ffffff"
+                    fgColor="#067A52"
+                    level="L"
+                  />
+                </div>
+              )}
+              <span style={{
+                fontSize: '11px',
+                color: isDark ? '#6060a0' : '#9ca3af',
+              }}>
+                Built with Orin
+              </span>
+            </div>
           </div>
         </div>
       </body>

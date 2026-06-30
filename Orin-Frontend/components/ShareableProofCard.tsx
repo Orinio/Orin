@@ -14,6 +14,7 @@ import {
   ExternalLink,
   Shield,
 } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import type { Proof } from '@/lib/types';
 import { getProofTypeColor } from '@/lib/utils';
 
@@ -25,6 +26,9 @@ interface ShareableProofCardProps {
 
 function ProofCardImage({ proof, username, userFullName }: ShareableProofCardProps) {
   const verified = proof.verificationStatus === 'verified';
+  const verifyUrl = proof.contentHash
+    ? `${typeof window !== 'undefined' ? window.location.origin : ''}/verify/${proof.contentHash}`
+    : undefined;
 
   return (
     <div
@@ -51,12 +55,20 @@ function ProofCardImage({ proof, username, userFullName }: ShareableProofCardPro
               <p className="text-xs text-white/50">Career Proof</p>
             </div>
           </div>
-          {verified && (
-            <div className="flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1.5">
-              <Shield className="h-3.5 w-3.5 text-white" />
-              <span className="text-xs font-bold text-white">Verified</span>
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            {proof.trustTier && proof.trustTier !== 'none' && (
+              <div className="flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1.5">
+                <Shield className="h-3.5 w-3.5 text-white" />
+                <span className="text-xs font-bold text-white capitalize">{proof.trustTier}</span>
+              </div>
+            )}
+            {verified && (
+              <div className="flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1.5">
+                <Shield className="h-3.5 w-3.5 text-white" />
+                <span className="text-xs font-bold text-white">Verified</span>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Proof content */}
@@ -93,8 +105,8 @@ function ProofCardImage({ proof, username, userFullName }: ShareableProofCardPro
           </div>
         )}
 
-        {/* Footer */}
-        <div className="mt-10 flex items-center justify-between border-t border-white/20 pt-6">
+        {/* Footer with QR */}
+        <div className="mt-10 flex items-end justify-between border-t border-white/20 pt-6">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20">
               <span className="text-sm font-bold text-white">
@@ -106,12 +118,32 @@ function ProofCardImage({ proof, username, userFullName }: ShareableProofCardPro
               <p className="text-xs text-white/60">@{username || 'username'}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 text-white/60">
-            <span className="text-xs">{proof.sourceType}</span>
-            <span className="text-xs">·</span>
-            <span className="text-xs">
-              {proof.viewCount.toLocaleString()} views
-            </span>
+
+          {/* QR Code + Hash */}
+          <div className="flex flex-col items-end gap-2">
+            {verifyUrl && (
+              <div className="rounded-xl bg-white p-2">
+                <QRCodeSVG
+                  value={verifyUrl}
+                  size={64}
+                  bgColor="#ffffff"
+                  fgColor="#067A52"
+                  level="M"
+                />
+              </div>
+            )}
+            {proof.contentHash && (
+              <p className="text-[9px] font-mono text-white/40">
+                sha256:{proof.contentHash.slice(0, 16)}...
+              </p>
+            )}
+            <div className="flex items-center gap-2 text-white/60">
+              <span className="text-xs">{proof.sourceType}</span>
+              <span className="text-xs">·</span>
+              <span className="text-xs">
+                {proof.viewCount.toLocaleString()} views
+              </span>
+            </div>
           </div>
         </div>
       </div>

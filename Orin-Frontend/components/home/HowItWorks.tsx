@@ -36,62 +36,63 @@ export default function HowItWorks() {
   const isInView = useInView(ref, { once: true, amount: 0.2 });
 
   return (
-    <section id="how" className="py-32 px-6 relative overflow-hidden grain-overlay" style={{ backgroundColor: 'var(--color-surface)' }}>
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/3 left-1/4 w-96 h-96 rounded-full blur-3xl opacity-[0.03]" style={{ backgroundColor: 'var(--color-ember)' }} />
-      </div>
-
-      <div className="max-w-6xl mx-auto text-center mb-20 relative z-10">
+    <section id="how" className="py-24 px-6 relative" style={{ backgroundColor: 'var(--color-surface)' }}>
+      <div className="max-w-6xl mx-auto text-center mb-16">
         <ScrollReveal direction="up" delay={0}>
-          <div className="badge-ember mb-6">How It Works</div>
+          <span
+            className="inline-block text-[11px] font-bold uppercase tracking-[0.08em] px-3 py-1.5 rounded-full mb-6"
+            style={{ backgroundColor: 'var(--color-ember)', color: '#FFFFFF' }}
+          >
+            How It Works
+          </span>
         </ScrollReveal>
         <ScrollReveal direction="up" delay={0.1}>
-          <h2 className="text-4xl md:text-6xl font-bold tracking-tight mb-5" style={{ color: 'var(--color-ink)' }}>
+          <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-5" style={{ color: 'var(--color-ink)' }}>
             Four steps to{' '}
             <span className="gradient-text-ember">getting hired</span>
           </h2>
         </ScrollReveal>
         <ScrollReveal direction="up" delay={0.2}>
-          <p className="text-lg md:text-xl max-w-2xl mx-auto" style={{ color: 'var(--color-text-secondary)', opacity: 0.7 }}>
+          <p className="text-lg max-w-2xl mx-auto" style={{ color: 'var(--color-text-secondary)', opacity: 0.7 }}>
             From scattered tabs to hired — in minutes, not months.
           </p>
         </ScrollReveal>
       </div>
 
-      <div ref={ref} className="max-w-5xl mx-auto relative z-10">
-        <div className="grid sm:grid-cols-2 gap-8">
+      <div ref={ref} className="max-w-5xl mx-auto">
+        <div className="grid sm:grid-cols-2 gap-5">
           {steps.map((step, i) => (
             <motion.div
               key={step.num}
-              className="relative"
-              initial={{ opacity: 0, y: 50 }}
+              initial={{ opacity: 0, y: 40 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{
-                duration: 0.7,
+                duration: 0.6,
                 delay: 0.05 + i * 0.1,
-                ease: [0.16,1,0.3,1]
+                ease: [0.16, 1, 0.3, 1],
               }}
             >
-              <div className="card-base p-8 h-full group glow-border card-accent-bottom relative overflow-hidden">
-                {/* Background number */}
-                <span className="absolute -top-4 -right-2 text-[120px] font-bold leading-none pointer-events-none select-none transition-all duration-500 group-hover:opacity-[0.1] group-hover:scale-110"
+              <div className="card-base p-6 h-full relative overflow-hidden">
+                <span
+                  className="absolute -top-4 -right-2 text-[100px] font-bold leading-none pointer-events-none select-none"
                   style={{
                     background: step.gradient,
                     WebkitBackgroundClip: 'text',
                     backgroundClip: 'text',
                     color: 'transparent',
-                    opacity: 0.05,
+                    opacity: 0.06,
                   }}
                 >
                   {step.num}
                 </span>
                 <div className="relative">
-                  <div className="w-12 h-12 rounded-[var(--radius-lg)] flex items-center justify-center text-base font-bold mb-5 shadow-lg transition-all duration-300 group-hover:scale-110 group-hover:shadow-xl"
+                  <div
+                    className="w-10 h-10 rounded-[var(--radius-md)] flex items-center justify-center text-sm font-bold mb-4"
                     style={{ background: step.gradient, color: '#fff' }}
                   >
                     {step.num}
                   </div>
-                  <h3 className="text-xl font-bold mb-3" style={{ color: 'var(--color-ink)' }}>
+                  <h3 className="text-lg font-bold mb-2" style={{ color: 'var(--color-ink)' }}>
                     {step.title}
                   </h3>
                   <p className="text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)', opacity: 0.8 }}>

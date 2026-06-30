@@ -40,46 +40,41 @@ export default function Testimonials() {
   const isInView = useInView(ref, { once: true, amount: 0.2 });
 
   return (
-    <section className="py-32 px-6 relative overflow-hidden grain-overlay" style={{ backgroundColor: 'var(--color-paper)' }}>
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/4 left-1/3 w-96 h-96 rounded-full blur-3xl opacity-[0.03]" style={{ backgroundColor: 'var(--color-pulse)' }} />
-      </div>
-
-      <div className="max-w-6xl mx-auto text-center mb-20 relative z-10">
+    <section className="py-24 px-6 relative" style={{ backgroundColor: 'var(--color-paper)' }}>
+      <div className="max-w-6xl mx-auto text-center mb-16">
         <ScrollReveal direction="up" delay={0}>
-          <div className="badge-ink mb-6">Testimonials</div>
+          <span
+            className="inline-block text-[11px] font-bold uppercase tracking-[0.08em] px-3 py-1.5 rounded-full mb-6"
+            style={{ backgroundColor: 'var(--color-ink)', color: 'var(--color-paper)' }}
+          >
+            Testimonials
+          </span>
         </ScrollReveal>
         <ScrollReveal direction="up" delay={0.1}>
-          <h2 className="text-4xl md:text-6xl font-bold tracking-tight mb-5" style={{ color: 'var(--color-ink)' }}>
+          <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-5" style={{ color: 'var(--color-ink)' }}>
             Students love <span className="gradient-text-ember">ORIN</span>
           </h2>
         </ScrollReveal>
-        <ScrollReveal direction="up" delay={0.2}>
-          <p className="text-lg md:text-xl max-w-2xl mx-auto" style={{ color: 'var(--color-text-secondary)', opacity: 0.7 }}>
-            Join 5,000+ students building verified career proof.
-          </p>
-        </ScrollReveal>
       </div>
 
-      <div ref={ref} className="max-w-6xl mx-auto grid sm:grid-cols-2 gap-6 relative z-10">
+      <div ref={ref} className="max-w-6xl mx-auto grid sm:grid-cols-2 gap-5">
         {testimonials.map((t, i) => (
           <motion.div
             key={t.name}
-            initial={{ opacity: 0, y: 50 }}
+            initial={{ opacity: 0, y: 40 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{
-              duration: 0.7,
+              duration: 0.6,
               delay: 0.05 + i * 0.1,
-              ease: [0.16,1,0.3,1]
+              ease: [0.16, 1, 0.3, 1],
             }}
           >
-            <div className="card-base p-8 h-full glow-border card-accent-bottom hover-lift">
-              {/* Stars */}
-              <div className="flex gap-1 mb-5">
+            <div className="card-base p-6 h-full flex flex-col">
+              <div className="flex gap-1 mb-4">
                 {[0, 1, 2, 3, 4].map((star) => (
                   <svg
                     key={star}
-                    className="w-5 h-5"
+                    className="w-4 h-4"
                     style={{ color: 'var(--color-spark)' }}
                     viewBox="0 0 24 24"
                     fill="currentColor"
@@ -89,21 +84,19 @@ export default function Testimonials() {
                   </svg>
                 ))}
               </div>
-              {/* Quote */}
-              <p className="text-base mb-8 leading-relaxed font-serif italic" style={{ color: 'var(--color-text-secondary)', opacity: 0.85 }}>
+              <p className="text-sm mb-6 leading-relaxed font-serif italic flex-1" style={{ color: 'var(--color-text-secondary)', opacity: 0.85 }}>
                 &ldquo;{t.quote}&rdquo;
               </p>
-              {/* Attribution */}
-              <div className="flex items-center gap-4 mt-auto pt-4" style={{ borderTop: '1px solid var(--color-border)' }}>
+              <div className="flex items-center gap-3 pt-4" style={{ borderTop: '1px solid var(--color-border)' }}>
                 <div
-                  className="w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold shadow-lg ring-2 ring-white"
+                  className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold"
                   style={{ background: t.gradient, color: '#fff' }}
                 >
                   {t.avatar}
                 </div>
                 <div>
                   <p className="text-sm font-bold" style={{ color: 'var(--color-ink)' }}>{t.name}</p>
-                  <p className="text-xs" style={{ color: 'var(--color-text-secondary)', opacity: 0.7 }}>{t.role}</p>
+                  <p className="text-xs" style={{ color: 'var(--color-text-secondary)', opacity: 0.6 }}>{t.role}</p>
                 </div>
               </div>
             </div>

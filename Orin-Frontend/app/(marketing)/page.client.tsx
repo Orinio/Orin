@@ -21,14 +21,8 @@ const Features = dynamic(() => import('@/components/home/Features'), {
 const HowItWorks = dynamic(() => import('@/components/home/HowItWorks'), {
   loading: () => <SectionSkeleton bg="var(--color-surface)" />,
 });
-const Stats = dynamic(() => import('@/components/home/Stats'), {
-  loading: () => <SectionSkeleton height="py-24" bg="var(--color-ink)" />,
-});
-const Testimonials = dynamic(() => import('@/components/home/Testimonials'), {
-  loading: () => <SectionSkeleton bg="var(--color-surface)" />,
-});
 const Pricing = dynamic(() => import('@/components/home/Pricing'), {
-  loading: () => <SectionSkeleton />,
+  loading: () => <SectionSkeleton bg="var(--color-surface)" />,
 });
 const FinalCTA = dynamic(() => import('@/components/home/FinalCTA'), {
   loading: () => <SectionSkeleton height="py-28" bg="var(--color-ink)" />,
@@ -54,8 +48,6 @@ export default function HomeClient() {
       <Problem />
       <Features />
       <HowItWorks />
-      <Stats />
-      <Testimonials />
       <Pricing />
       <FinalCTA />
     </>

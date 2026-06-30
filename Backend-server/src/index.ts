@@ -32,8 +32,10 @@ import { billingRouter } from './routes/billing.js';
 import { socialRouter } from './routes/social.js';
 import { organizationsRouter } from './routes/organizations.js';
 import { demoRouter } from './routes/demo.js';
+import { verifyRouter } from './routes/verify.js';
 import { initTools } from './lib/ai/tools/index.js';
 import { configureVapid } from './lib/push.js';
+import { startCron } from './lib/cron.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -151,6 +153,9 @@ app.use('/billing', authMiddleware, requestContextMiddleware, billingRouter);
   app.use('/social', authMiddleware, requestContextMiddleware, socialRouter);
   app.use('/organizations', authMiddleware, requestContextMiddleware, organizationsRouter);
 
+// ProofChain verify (public — no auth required)
+app.use('/verify', verifyRouter);
+
 // Metrics (no auth — internal use, protected by network)
 app.use('/metrics', metricsRouter);
 
@@ -189,6 +194,9 @@ app.use(errorHandler);
 const server = app.listen(PORT, () => {
   connectionTracker.track(server);
   logger.info(`Backend server running on port ${PORT}`);
+
+  // Start background cron jobs
+  startCron();
 
   if (!process.env.NVIDIA_API_KEY) {
     logger.warn('NVIDIA_API_KEY not set — AI agents will return fallback responses');

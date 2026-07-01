@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import EmployersWaitlistClient from './page.client';
+import { SITE_URL } from '@/lib/seo';
 
 export const metadata: Metadata = {
   title: 'Employer Waitlist - ORIN Verified Talent Platform',
@@ -7,7 +8,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Employer Waitlist - ORIN',
     description: 'Access students with verified, source-linked proof of their skills. Join the waitlist for early access.',
-    url: 'https://orin-three.vercel.app/employers/waitlist',
+    url: `${SITE_URL}/employers/waitlist`,
   },
   robots: { index: true, follow: true },
 };

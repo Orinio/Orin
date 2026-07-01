@@ -3,6 +3,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import type { Metadata } from 'next';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
+import { SITE_URL } from '@/lib/seo';
 import ProofCard from '@/components/ProofCard';
 import ProfileActions from '@/components/ProfileActions';
 import { mapDbUserToUser, mapDbProofToProof, getProofTypeColor } from '@/lib/utils';
@@ -34,8 +35,8 @@ export async function generateMetadata({ params }: PublicProfilePageProps): Prom
     : `${displayName}'s verified career proof profile on Orin. View skills, projects, and achievements backed by real proof.`;
 
   const ogImage = userData.avatar_url
-    ? `https://orin.app/api/og?title=${encodeURIComponent(displayName)}&subtitle=${encodeURIComponent(userData.headline || 'Verified Proof Profile')}&avatar=${encodeURIComponent(userData.avatar_url)}`
-    : `https://orin.app/api/og?title=${encodeURIComponent(displayName)}&subtitle=${encodeURIComponent(userData.headline || 'Verified Proof Profile')}`;
+    ? `${SITE_URL}/api/og?title=${encodeURIComponent(displayName)}&subtitle=${encodeURIComponent(userData.headline || 'Verified Proof Profile')}&avatar=${encodeURIComponent(userData.avatar_url)}`
+    : `${SITE_URL}/api/og?title=${encodeURIComponent(displayName)}&subtitle=${encodeURIComponent(userData.headline || 'Verified Proof Profile')}`;
 
   return {
     title,
@@ -43,8 +44,8 @@ export async function generateMetadata({ params }: PublicProfilePageProps): Prom
     openGraph: {
       title,
       description,
-      url: `https://orin.app/${userData.username}`,
-      siteName: 'Orin',
+      url: `${SITE_URL}/${userData.username}`,
+      siteName: 'ORIN',
       images: [
         {
           url: ogImage,
@@ -63,7 +64,7 @@ export async function generateMetadata({ params }: PublicProfilePageProps): Prom
       images: [ogImage],
     },
     alternates: {
-      canonical: `https://orin.app/${userData.username}`,
+      canonical: `${SITE_URL}/${userData.username}`,
     },
   };
 }
@@ -152,14 +153,14 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
     '@type': 'ProfilePage',
     name: user.fullName || user.username,
     description: user.bio || user.headline || `Verified proof profile on Orin`,
-    url: `https://orin.app/${user.username}`,
+    url: `${SITE_URL}/${user.username}`,
     mainEntity: {
       '@type': 'Person',
       name: user.fullName || user.username,
       headline: user.headline,
       description: user.bio,
       image: user.avatarUrl,
-      url: `https://orin.app/${user.username}`,
+      url: `${SITE_URL}/${user.username}`,
       sameAs: [
         user.githubUrl,
         user.linkedinUrl,

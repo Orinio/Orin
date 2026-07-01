@@ -7,6 +7,7 @@ import { FeatureFlagProvider } from "@/lib/feature-flag-context";
 import { ThemeProvider } from "@/lib/theme-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { PostHogProvider } from "@/lib/analytics";
+import { DEFAULT_SEO_DESCRIPTION, DEFAULT_SEO_TITLE, SITE_NAME, SITE_URL } from "@/lib/seo";
 import { Toaster } from "@/components/ui/toast";
 import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
 import "./globals.css";
@@ -25,12 +26,26 @@ const serif = Lora({
 
 export const metadata: Metadata = {
   title: {
-    default: 'ORIN - Turn Work Into Career Proof',
-    template: '%s | ORIN',
+    default: DEFAULT_SEO_TITLE,
+    template: `%s | ${SITE_NAME}`,
   },
-  description:
-    'Transform scattered projects, repos, and certificates into verified career proof. AI coach, proof cards, and real opportunities.',
-  metadataBase: new URL('https://orin-three.vercel.app'),
+  description: DEFAULT_SEO_DESCRIPTION,
+  applicationName: SITE_NAME,
+  metadataBase: new URL(SITE_URL),
+  alternates: {
+    canonical: SITE_URL,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+      'max-video-preview': -1,
+    },
+  },
   icons: {
     icon: [
       { url: '/favicon.png', sizes: '32x32', type: 'image/png' },
@@ -40,18 +55,26 @@ export const metadata: Metadata = {
     apple: '/logo.png',
   },
   openGraph: {
-    title: 'ORIN - Turn Work Into Career Proof',
-    description: 'Transform scattered projects, repos, and certificates into verified career proof. AI coach, proof cards, and real opportunities.',
-    siteName: 'ORIN',
-    images: ['/logo.png'],
+    title: DEFAULT_SEO_TITLE,
+    description: DEFAULT_SEO_DESCRIPTION,
+    url: SITE_URL,
+    siteName: SITE_NAME,
+    images: [
+      {
+        url: '/opengraph-image',
+        width: 1200,
+        height: 630,
+        alt: DEFAULT_SEO_TITLE,
+      },
+    ],
     locale: 'en_US',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'ORIN - Turn Work Into Career Proof',
-    description: 'Transform scattered projects, repos, and certificates into verified career proof.',
-    images: ['/logo.png'],
+    title: DEFAULT_SEO_TITLE,
+    description: DEFAULT_SEO_DESCRIPTION,
+    images: ['/twitter-image'],
   },
   manifest: '/manifest.json',
   other: {
@@ -60,6 +83,7 @@ export const metadata: Metadata = {
     'apple-mobile-web-app-status-bar-style': 'black-translucent',
     'apple-mobile-web-app-title': 'ORIN',
     'theme-color': '#0BAB77',
+    'google-site-verification': 'eoPnbWHCjN44bzAl1f3U9d2SqJGGIgBdNGKslbf_G1I',
   },
 };
 

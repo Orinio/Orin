@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { SITE_URL } from '@/lib/seo';
 
 export const metadata: Metadata = {
   title: 'Pricing - ORIN Career Proof Platform',
@@ -7,7 +8,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Pricing - ORIN Career Proof Platform',
     description: 'Free for individuals. Pro for power users. Team for organizations.',
-    url: 'https://orin-three.vercel.app/pricing',
+    url: `${SITE_URL}/pricing`,
     siteName: 'ORIN',
   },
   twitter: {
@@ -16,7 +17,7 @@ export const metadata: Metadata = {
     description: 'Free for individuals. Pro for power users. Team for organizations.',
   },
   alternates: {
-    canonical: 'https://orin-three.vercel.app/pricing',
+    canonical: `${SITE_URL}/pricing`,
   },
 };
 

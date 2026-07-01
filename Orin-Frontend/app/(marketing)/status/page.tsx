@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { SITE_URL } from '@/lib/seo';
 
 export const metadata: Metadata = {
   title: 'System Status - ORIN',
@@ -6,7 +7,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'System Status - ORIN',
     description: 'Real-time status of all Orin services. Check uptime, incidents, and service health.',
-    url: 'https://orin-three.vercel.app/status',
+    url: `${SITE_URL}/status`,
   },
   robots: { index: true, follow: true },
 };

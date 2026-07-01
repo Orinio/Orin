@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import DemoClient from './page.client';
+import { SITE_URL } from '@/lib/seo';
 
 export const metadata: Metadata = {
   title: 'Demo - See Your GitHub as Career Proof | ORIN',
@@ -7,7 +8,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Demo - See Your GitHub as Career Proof | ORIN',
     description: 'Enter your GitHub username and instantly see your repos as verified Proof Cards. No signup required.',
-    url: 'https://orin-three.vercel.app/demo',
+    url: `${SITE_URL}/demo`,
   },
   keywords: [
     'github demo',

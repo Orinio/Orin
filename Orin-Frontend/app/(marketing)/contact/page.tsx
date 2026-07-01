@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import ContactClient from './page.client';
+import { SITE_URL } from '@/lib/seo';
 
 export const metadata: Metadata = {
   title: 'Contact Us - ORIN Career Proof Platform',
@@ -7,7 +8,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Contact Us - ORIN',
     description: 'Have a question, feedback, or need support? Contact the Orin team.',
-    url: 'https://orin-three.vercel.app/contact',
+    url: `${SITE_URL}/contact`,
   },
   robots: { index: true, follow: true },
 };

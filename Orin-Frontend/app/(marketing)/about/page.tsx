@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
+import { SITE_URL } from '@/lib/seo';
 
 export const metadata: Metadata = {
   title: 'About ORIN - Turn Work Into Career Proof',
@@ -9,10 +10,10 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'About ORIN - Turn Work Into Career Proof',
     description: 'Learn about ORIN\'s mission to help students and professionals build verifiable career portfolios.',
-    url: 'https://orin-three.vercel.app/about',
+    url: `${SITE_URL}/about`,
   },
   alternates: {
-    canonical: 'https://orin-three.vercel.app/about',
+    canonical: `${SITE_URL}/about`,
   },
 };
 

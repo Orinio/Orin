@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import UniversitiesClient from './page.client';
+import { SITE_URL } from '@/lib/seo';
 
 export const metadata: Metadata = {
   title: 'Universities - ORIN Career Services Platform',
@@ -7,7 +8,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Universities - ORIN Career Services Platform',
     description: 'AI-powered career guidance, accreditation-ready data, and real-time readiness tracking for career services offices.',
-    url: 'https://orin-three.vercel.app/universities',
+    url: `${SITE_URL}/universities`,
   },
   keywords: [
     'university career services',

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { SITE_URL } from '@/lib/seo';
 
 export const metadata: Metadata = {
   title: 'Blog - ORIN Career Proof Platform',
@@ -7,7 +8,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Blog - ORIN',
     description: 'Thoughts on career proof, AI coaching, and what it takes to stand out as a student.',
-    url: 'https://orin-three.vercel.app/blog',
+    url: `${SITE_URL}/blog`,
   },
   robots: { index: true, follow: true },
 };

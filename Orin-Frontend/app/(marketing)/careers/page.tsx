@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { SITE_URL } from '@/lib/seo';
 
 export const metadata: Metadata = {
   title: 'Careers - Join ORIN | Build Tools That Matter',
@@ -7,7 +8,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Careers at ORIN',
     description: 'Remote-first team building tools that help students prove their skills. Engineering, design, and growth roles open.',
-    url: 'https://orin-three.vercel.app/careers',
+    url: `${SITE_URL}/careers`,
   },
   robots: { index: true, follow: true },
 };

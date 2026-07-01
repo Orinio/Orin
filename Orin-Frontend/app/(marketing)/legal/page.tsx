@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { SITE_URL } from '@/lib/seo';
 
 export const metadata: Metadata = {
   title: 'Legal Policies - Terms of Service & Privacy Policy | ORIN',
@@ -6,7 +7,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Legal Policies - ORIN',
     description: 'ORIN legal policies including Terms of Service, Privacy Policy, and Cookie Policy.',
-    url: 'https://orin-three.vercel.app/legal',
+    url: `${SITE_URL}/legal`,
   },
   robots: { index: true, follow: true },
 };

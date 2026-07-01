@@ -14,6 +14,15 @@ const nextConfig: NextConfig = {
   },
   headers: async () => [
     {
+      source: '/(dashboard|admin-dev|signin|signup|onboarding|reset-password|update-password|employer)/:path*',
+      headers: [
+        {
+          key: 'X-Robots-Tag',
+          value: 'noindex, nofollow, noarchive',
+        },
+      ],
+    },
+    {
       source: '/(.*)',
       headers: [
         { key: 'X-Frame-Options', value: 'DENY' },

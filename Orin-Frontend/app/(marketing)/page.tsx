@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import HomeClient from './page.client';
+import { SITE_URL } from '@/lib/seo';
 
 export const metadata: Metadata = {
   title: 'ORIN - Turn Work Into Career Proof',
@@ -20,11 +21,11 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'ORIN - Turn Work Into Career Proof',
     description: 'Transform scattered projects, repos, and certificates into verified career proof. AI coach, proof cards, and real opportunities.',
-    url: 'https://orin-three.vercel.app',
+    url: SITE_URL,
     siteName: 'ORIN',
     images: [
       {
-        url: '/og-home.png',
+        url: '/opengraph-image',
         width: 1200,
         height: 630,
         alt: 'ORIN - Turn Work Into Career Proof',
@@ -36,10 +37,10 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'ORIN - Turn Work Into Career Proof',
     description: 'Transform scattered projects, repos, and certificates into verified career proof.',
-    images: ['/og-home.png'],
+    images: ['/twitter-image'],
   },
   alternates: {
-    canonical: 'https://orin-three.vercel.app',
+    canonical: SITE_URL,
   },
   robots: { index: true, follow: true },
 };

@@ -1,14 +1,12 @@
-'use client';
-
-const BASE_URL = 'https://orin-three.vercel.app';
+import { SITE_NAME, SITE_URL } from '@/lib/seo';
 
 export function StructuredData() {
   const organizationSchema = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    name: 'ORIN',
-    url: BASE_URL,
-    logo: `${BASE_URL}/logo.png`,
+    name: SITE_NAME,
+    url: SITE_URL,
+    logo: `${SITE_URL}/logo.png`,
     description: 'Turn your work into verified career proof. AI coach, proof cards, and real opportunities.',
     sameAs: [
       'https://twitter.com/orin_app',
@@ -22,23 +20,14 @@ export function StructuredData() {
       availableLanguage: 'English',
     },
     foundingDate: '2024',
-    numberOfEmployees: {
-      '@type': 'QuantitativeValue',
-      value: 10,
-    },
   };
 
   const websiteSchema = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    name: 'ORIN',
-    url: BASE_URL,
+    name: SITE_NAME,
+    url: SITE_URL,
     description: 'Turn your work into verified career proof. AI coach, proof cards, and real opportunities.',
-    potentialAction: {
-      '@type': 'SearchAction',
-      target: `${BASE_URL}/search?q={search_term_string}`,
-      'query-input': 'required name=search_term_string',
-    },
     inLanguage: 'en-US',
   };
 
@@ -49,20 +38,13 @@ export function StructuredData() {
     applicationCategory: 'BusinessApplication',
     operatingSystem: 'Web',
     description: 'Transform your scattered work into verified career proof with AI coaching and verifiable proof cards.',
-    url: BASE_URL,
+    url: SITE_URL,
     offers: {
       '@type': 'AggregateOffer',
       lowPrice: '0',
       highPrice: '29',
       priceCurrency: 'USD',
       offerCount: 3,
-    },
-    aggregateRating: {
-      '@type': 'AggregateRating',
-      ratingValue: '4.8',
-      ratingCount: '150',
-      bestRating: '5',
-      worstRating: '1',
     },
   };
 
@@ -74,7 +56,7 @@ export function StructuredData() {
         '@type': 'ListItem',
         position: 1,
         name: 'Home',
-        item: BASE_URL,
+        item: SITE_URL,
       },
     ],
   };
